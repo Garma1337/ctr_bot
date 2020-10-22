@@ -125,7 +125,7 @@ module.exports = {
     if (!args.length) {
       return SignupsChannel.find({ guild: message.guild.id }).then((docs) => {
         if (!docs.length) {
-          return message.channel.send('There are no channels.');
+          return message.channel.send('There are no channels.\nTo add a new signups channel use: `!signups_channels add #channel`');
         }
 
         const out = docs.map((doc) => {
