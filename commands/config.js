@@ -35,10 +35,6 @@ module.exports = {
 
     let configName = args[1];
 
-    if (configName === 'signups_dm') {
-      configName = 'signup_dm';
-    }
-
     if (action === SHOW) {
       Config.findOne({ name: configName, editable: { $ne: false } }).then((config) => {
         if (config) {

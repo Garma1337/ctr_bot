@@ -61,9 +61,8 @@ ${messages.join('\n')}`);
         }
 
         let tz = args.pop();
-        if (tz === 'AEST') {
-          tz = 'Australia/Sydney'; // https://stackoverflow.com/questions/20753898/how-can-i-use-the-aest-timezone-with-moment-js
-        }
+        if (tz === 'CEST') { tz = 'CET'; }
+        if (tz === 'AEST') { tz = 'Australia/Sydney'; } // https://stackoverflow.com/questions/20753898
 
         const dateStr = args.slice(2).join(' ');
         const date = moment.tz(dateStr, 'YYYY-MM-DD h:mm A', tz);
@@ -78,9 +77,9 @@ ${messages.join('\n')}`);
 
         message.channel.send(`Scheduling post for ${channel} channel at ${dateFormat}.
 Send the text of the message. Use \`{everyone}\` and \`{here}\` instead of real pings.
-I'm waiting 1 minute. Type \`cancel\` to cancel.`).then(() => {
+I'm waiting 5 minutes. Type \`cancel\` to cancel.`).then(() => {
           message.channel
-            .awaitMessages((m) => m.author.id === message.author.id, { max: 1, time: 60000, errors: ['time'] })
+            .awaitMessages((m) => m.author.id === message.author.id, { max: 1, time: 5 * 60000, errors: ['time'] })
             .then((collected) => {
               const { content } = collected.first();
               if (content.toLowerCase() === 'cancel') {
@@ -92,7 +91,7 @@ I'm waiting 1 minute. Type \`cancel\` to cancel.`).then(() => {
               scheduledMessage.channel = channel.id;
               scheduledMessage.message = content;
               scheduledMessage.save().then(() => {
-                message.channel.send('Message scheduled.\n**Don\'t forget to change signups DM!**\n`!config edit signup_dm`');
+                message.channel.send('Message scheduled.`');
               });
             })
             .catch(() => message.channel.send('Command cancelled.'));

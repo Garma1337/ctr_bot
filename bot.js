@@ -9,25 +9,23 @@ const Cooldown = require('./db/models/cooldowns');
 const config = require('./config.js');
 const alarms = require('./alarms');
 const fun = require('./fun');
-const fetchMessages = require('./utils/fetchMessages');
 const getSignupsCount = require('./utils/getSignupsCount');
 const db = require('./db');
 const Command = require('./db/models/command');
 const Config = require('./db/models/config');
 const sendLogMessage = require('./utils/sendLogMessage');
-const { parseWCSignup, parseAndCheckUnique } = require('./utils/SignupsParser');
-const { parseTTSignup: parseSignup } = require('./utils/SignupsParser');
+const { parsers, parse, checkRepetitions } = require('./utils/SignupParsers');
 const { flags } = require('./utils/flags');
 const Mute = require('./db/models/mutes');
+const SignupsChannel = require('./db/models/signups_channels');
 
 const client = new Discord.Client({ partials: ['MESSAGE', 'CHANNEL', 'REACTION'] });
 module.exports.client = client;
 
-client.prefix = process.env.TEST ? config.test_prefix : config.prefix; // todo use prefix everywhere in help messages
+// todo use prefix everywhere in help messages
+client.prefix = process.env.TEST ? config.test_prefix : config.prefix;
 
 client.flags = flags;
-
-client.parseSignup = parseSignup;
 
 client.commands = new Discord.Collection();
 
@@ -67,10 +65,12 @@ client.on('ready', () => {
   alarms(client);
 
   guilds.cache.forEach((guild) => {
-    const channelsToFetch = guild.channels.cache.filter((c) => c.name.includes('signups'));
-    channelsToFetch.forEach((channel) => {
-      fetchMessages(channel, 500);
-      setSignupsCountTopic(channel);
+    SignupsChannel.find({ guild: guild.id }).then((docs) => {
+      const channels = docs.map((d) => d.channel);
+      const channelsToFetch = guild.channels.cache.filter((c) => channels.includes(c.id));
+      channelsToFetch.forEach((channel) => {
+        setSignupsCountTopic(channel); // it also fetches last 500 messages
+      });
     });
   });
 
@@ -93,54 +93,7 @@ client.on('ready', () => {
     });
   };
 
-  const setActivityTime = () => {
-    console.log('setActivityTime');
-    Config.findOne({ name: 'tournament_start' }).then((doc) => {
-      if (doc) {
-        const tournamentStartDate = moment(doc.value);
-        if (!tournamentStartDate.isValid()) {
-          return;
-        }
-        const diff = tournamentStartDate.diff(moment().subtract(1, 'minute'));
-        // console.log(diff);
-        if (diff < 0) {
-          // client.user.setActivity('ah yes');
-          // setConfigActivity();
-          // setTimeout(setActivityTime, 30000);
-          return;
-        }
-        const duration = moment.duration(diff);
-        // const formatDiff = moment(diff).format('HH:mm:ss');
-        // const formatDiff = [duration.hours(), duration.minutes(), duration.seconds()].join(':');
-        // const formatDiff = moment.utc(diff).format('HH[h] mm[m]');
-        const hours = Math.floor(duration.asHours());
-        const formatDiff = `${hours}h ${duration.minutes()}m`;
-        console.log(formatDiff);
-
-        client.user.setActivity(`in ${formatDiff}`);
-        // client.user.setActivity(`signups close ${formatDiff}`);
-      } else {
-        const conf = new Config();
-        conf.name = 'tournament_start';
-        conf.value = null;
-        conf.save();
-      }
-    });
-
-    // setTimeout(setConfigActivity, 9000);
-    // setTimeout(setActivityTime, 10000);
-  };
-  // setActivityTime();
   setConfigActivity();
-
-  Config.findOne({ name: 'signup_dm' }).then((doc) => {
-    if (!doc) {
-      const conf = new Config();
-      conf.name = 'signup_dm';
-      conf.value = '';
-      conf.save();
-    }
-  });
 });
 
 client.on('rateLimit', (rateLimitData) => {
@@ -156,101 +109,88 @@ client.on('guildCreate', (guild) => {
   channel.send('Hi guys! :slight_smile:');
 });
 
-function reactOnSignUp(message) {
-  if (message.type === 'PINS_ADD') {
-    return;
-  }
-
-  if (message.author.id === client.user.id) {
-    return;
-  }
-
-  console.log('reactOnSignUp');
-
-  const { channel } = message;
-  setSignupsCountTopic(channel);
-
-  let data;
-  if (message.channel.name === 'world-cup-signups') {
-    data = parseWCSignup(message);
-  } else {
-    data = parseSignup(message);
-  }
-  const DMCallback = (m, result) => {
-    let logMessage = `Sent message to ${m.channel.recipient}:\n\`\`\`${m.content}\`\`\``;
-    if (result.errors && result.errors.length) {
-      logMessage += `Errors:\n\`\`\`json\n${JSON.stringify(result.errors, null, 2)}\n\`\`\``;
+async function reactOnSignUp(message, oldMessage = null) {
+  try {
+    if (message.type === 'PINS_ADD') {
+      return;
     }
-    sendLogMessage(message.guild, logMessage);
-    console.log(logMessage);
-  };
 
-  const DMCatchCallback = (error) => {
-    const logMessage = `${error.message} ${message.author}`;
-    sendLogMessage(message.guild, logMessage);
-    console.log(logMessage);
-  };
-
-  const reactionCatchCallback = () => {
-    sendLogMessage(`Couldn't react to the message by ${message.author}.`);
-  };
-
-  const { reactions } = message;
-  reactions.cache.forEach((r) => {
-    if (r.me) {
-      r.remove();
+    if (message.author.id === client.user.id) {
+      return;
     }
-    if (r.emoji.name === '✅' || r.emoji.name === '❌') {
-      r.users.fetch().then((users) => {
-        users.forEach((reactionUser) => {
-          if (reactionUser.id !== client.user.id) {
-            r.users.remove(reactionUser).then().catch(console.error);
-          }
-        });
-      });
+
+    const signupsChannel = await SignupsChannel.findOne({ guild: message.guild.id, channel: message.channel.id });
+    if (!signupsChannel) {
+      return;
     }
-  });
 
-  if (data.errors && data.errors.length) {
-    message.react('❌').then().catch(reactionCatchCallback);
-    message.author.send(`Your signup is wrong. Please, be sure to follow the template (pinned message)!
-You can edit your message, and I will check it again`).then((m) => DMCallback(m, data)).catch(DMCatchCallback);
-  } else {
-    parseAndCheckUnique(message, data, parseSignup).then((result) => {
-      if (result && result.errors && !result.errors.length) {
-        message.react('✅').then().catch(reactionCatchCallback);
-        if (message.channel.name === 'world-cup-signups') {
-          return message.author.send(config.wc_signup_message).then((m) => DMCallback(m, result)).catch(DMCatchCallback);
-        }
+    const parser = parsers[signupsChannel.parser];
 
-        Config.findOne({ name: 'signup_dm' }).then((doc) => {
-          if (doc) {
-            if (doc.value) {
-              message.author.send(doc.value).then((m) => DMCallback(m, result)).catch(DMCatchCallback);
+    if (!parser) {
+      return;
+    }
+
+    console.log('reactOnSignUp');
+
+    const { channel } = message;
+    setSignupsCountTopic(channel);
+
+    const data = parse(message, parser.fields);
+
+    const DMCallback = (m, result) => {
+      let logMessage = `Sent message to ${m.channel.recipient}:\n\`\`\`${m.content}\`\`\``;
+      if (result.errors && result.errors.length) {
+        logMessage += `Errors:\n\`\`\`json\n${JSON.stringify(result.errors, null, 2)}\n\`\`\``;
+      }
+      sendLogMessage(message.guild, logMessage);
+      console.log(logMessage);
+    };
+
+    const DMCatchCallback = (error) => {
+      const logMessage = `${error.message} ${message.author}`;
+      sendLogMessage(message.guild, logMessage);
+      console.log(logMessage);
+    };
+
+    const reactionCatchCallback = () => {
+      sendLogMessage(`Couldn't react to the message by ${message.author}.`);
+    };
+
+    const { reactions } = message;
+    reactions.cache.forEach((r) => {
+      if (r.me) {
+        r.remove();
+      }
+      if (r.emoji.name === '✅' || r.emoji.name === '❌') {
+        r.users.fetch().then((users) => {
+          users.forEach((reactionUser) => {
+            if (reactionUser.id !== client.user.id) {
+              r.users.remove(reactionUser).then().catch(console.error);
             }
-          } else {
-            const conf = new Config();
-            conf.name = 'signup_dm';
-            conf.value = '';
-            conf.save();
-          }
+          });
         });
-      } else {
-        message.react('❌').then().catch(reactionCatchCallback);
-        message.author.send('Your signup is wrong. Please, contact Staff members.')
-          .then((m) => DMCallback(m, result)).catch(DMCatchCallback);
       }
     });
-  }
-}
 
-client.on('messageUpdate', (oldMessage, message) => {
-  console.log('messageUpdate', message.id);
-  if (!message) return;
+    if (data.errors && data.errors.length) {
+      message.react('❌').then().catch(reactionCatchCallback);
+      message.author.send(`Your signup is wrong. Please, be sure to follow the template (pinned message)!
+You can edit your message, and I will check it again.`).then((m) => DMCallback(m, data)).catch(DMCatchCallback);
+    } else {
+      checkRepetitions(message, data, parser.fields, (m) => parse(m, parser.fields))
+        .then((result) => {
+          if (result && result.errors && !result.errors.length) {
+            message.react('✅').then().catch(reactionCatchCallback);
+            message.author.send(signupsChannel.message).then((m) => DMCallback(m, result)).catch(DMCatchCallback);
+          } else {
+            message.react('❌').then().catch(reactionCatchCallback);
+            message.author.send('Your signup is wrong. Please, contact Staff members.')
+              .then((m) => DMCallback(m, result)).catch(DMCatchCallback);
+          }
+        });
+    }
 
-  try {
-    if (message.channel && message.channel.name && message.channel.name.includes('signups')) {
-      reactOnSignUp(message); // update
+    if (oldMessage) {
       const msg = `Signup by ${message.author} was edited
 
 **Old message:**
@@ -260,9 +200,15 @@ ${message.content}`;
       sendLogMessage(message.guild, msg, true);
     }
   } catch (e) {
-    console.log(e);
-    console.log(message);
+    console.error(e);
   }
+}
+
+client.on('messageUpdate', (oldMessage, message) => {
+  console.log('messageUpdate', message.id);
+  if (!message) return;
+
+  reactOnSignUp(message, oldMessage);
 });
 
 client.on('messageReactionAdd', (reaction) => {
@@ -379,9 +325,7 @@ client.on('message', (message) => {
 
   checkPings(message);
 
-  if (message.channel.name && message.channel.name.includes('signups')) {
-    reactOnSignUp(message);
-  }
+  reactOnSignUp(message);
 
   if (message.channel.name && message.channel.name.includes('streams')) {
     setTimeout(() => {
@@ -509,7 +453,9 @@ client.on('guildMemberAdd', (member) => {
 
     member.createDM()
       .then((dm) => dm.send(config.welcome_message)).then(DMCallback)
-      .catch(() => { sendLogMessage(guild, `Couldn't send welcome message to ${member}`); });
+      .catch(() => {
+        sendLogMessage(guild, `Couldn't send welcome message to ${member}`);
+      });
   }
 
   // let poggers = client.emojis.cache.find((e) => e.name === 'poggers');
@@ -546,14 +492,17 @@ client.on('messageDelete', (message) => {
   console.log('messageDelete');
   checkDeletedPings(message);
 
-  if (message && message.channel.name.includes('signups')) {
-    setSignupsCountTopic(message.channel);
-    const msg = `Signup by ${message.author} in the ${message.channel} was deleted
+  SignupsChannel.findOne({ guild: message.guild.id, channel: message.channel.id })
+    .then((doc) => {
+      if (doc) {
+        setSignupsCountTopic(message.channel);
+        const msg = `Signup by ${message.author} in the ${message.channel} was deleted
 
 **Message:**
 ${message.content}`;
-    sendLogMessage(message.guild, msg, true);
-  }
+        sendLogMessage(message.guild, msg, true);
+      }
+    });
 });
 
 function checkMutes() {
@@ -573,6 +522,7 @@ function checkMutes() {
     });
   });
 }
+
 new CronJob('* * * * *', checkMutes).start();
 
 console.log('TEST:', process.env.TEST);

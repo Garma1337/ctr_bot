@@ -1,8 +1,9 @@
 const { CronJob } = require('cron');
 const sendLogMessage = require('../utils/sendLogMessage');
 const Schedule = require('../db/models/scheduled_messages');
-const Config = require('../db/models/config');
-const config = require('../config.js');
+const SignupsChannel = require('../db/models/signups_channels');
+const { parsers } = require('../utils/SignupParsers');
+const getSignupsData = require('../utils/getSignupsData');
 
 /* eslint-disable no-unused-vars,no-console */
 const timer = (client, targetDate, callback) => {
@@ -31,13 +32,15 @@ const setAlarm = (client, date, callback) => {
 
 // callbacks
 
-const openSignups = (client, SERVER_ID) => {
+const openSignups = (client, doc) => {
   console.log('openSignups');
-  const guild = client.guilds.cache.get(SERVER_ID);
-  const channel = guild.channels.cache.find((c) => c.name === 'signups');
+  const guild = client.guilds.cache.get(doc.guild);
+  const channel = guild.channels.cache.get(doc.channel);
+  const parser = parsers[doc.parser];
+
   channel.createOverwrite(channel.guild.roles.everyone, { SEND_MESSAGES: true }).then(() => {
     sendLogMessage(guild, `Changed permission in channel${channel} for everyone SEND_MESSAGES: true`);
-    channel.send(client.parseSignup.prototype.template)
+    channel.send(parser.template)
       .then((msg) => {
         msg.pin().then(() => {
           const filter = channel.messages.cache.filter((m) => m.type === 'PINS_ADD' && m.author.id === client.user.id);
@@ -50,12 +53,25 @@ const openSignups = (client, SERVER_ID) => {
   });
 };
 
-const closeSignups = (client, SERVER_ID) => {
+const closeSignups = (client, doc) => {
   console.log('closeSignups');
-  const guild = client.guilds.cache.get(SERVER_ID);
-  const channel = guild.channels.cache.find((c) => c.name === 'signups');
+  const guild = client.guilds.cache.get(doc.guild);
+  const channel = guild.channels.cache.get(doc.channel);
   channel.send('Signups are now closed!').catch(console.error);
-  channel.createOverwrite(channel.guild.roles.everyone, { SEND_MESSAGES: false }).then().catch(console.error);
+  channel.createOverwrite(channel.guild.roles.everyone, { SEND_MESSAGES: false }).then(() => {
+    sendLogMessage(guild, `Changed permission in channel${channel} for everyone SEND_MESSAGES: false`);
+  }).catch(console.error)
+    .then(async () => {
+      const data = await getSignupsData(channel, doc);
+      const txt = data.rows.join('\n');
+      sendLogMessage(guild, {
+        content: `${data.count} signups\n${data.hosts} hosts`,
+        files: [{
+          attachment: Buffer.from(txt, 'utf-8'),
+          name: 'signups.csv',
+        }],
+      });
+    });
 };
 
 const sendScheduledMessage = (client, scheduledMessage) => {
@@ -74,10 +90,10 @@ const sendScheduledMessage = (client, scheduledMessage) => {
 };
 
 const areDatesEqualsToMinutes = (date, now) => date.getUTCFullYear() === now.getUTCFullYear()
-    && date.getUTCMonth() === now.getUTCMonth()
-    && date.getUTCDate() === now.getUTCDate()
-    && date.getUTCHours() === now.getUTCHours()
-    && date.getUTCMinutes() === now.getUTCMinutes();
+  && date.getUTCMonth() === now.getUTCMonth()
+  && date.getUTCDate() === now.getUTCDate()
+  && date.getUTCHours() === now.getUTCHours()
+  && date.getUTCMinutes() === now.getUTCMinutes();
 
 // scheduled messages
 const scheduler = async (client) => {
@@ -92,26 +108,17 @@ const scheduler = async (client) => {
         doc.save();
         sendScheduledMessage(client, doc);
       }
-
-      // console.log(moment(date).diff(now, 'minutes'));
     });
   });
 
-  const server = process.env.TEST ? config.test_guild : config.main_guild;
-  await Config.findOne({ name: 'signups_schedule' }).then((doc) => {
-    ['open', 'close'].forEach((type) => {
-      const date = doc.value[type];
-      if (date && areDatesEqualsToMinutes(date, now)) {
-        // eslint-disable-next-line no-param-reassign
-        doc.value[type] = null;
-        doc.markModified('value');
-        doc.save(); // todo change and add guild_id
-
-        if (type === 'open') {
-          openSignups(client, server);
-        } else {
-          closeSignups(client, server);
-        }
+  await SignupsChannel.find().then((docs) => {
+    docs.forEach((doc) => {
+      const { open, close } = doc;
+      if (areDatesEqualsToMinutes(open, now)) {
+        openSignups(client, doc);
+      }
+      if (areDatesEqualsToMinutes(close, now)) {
+        closeSignups(client, doc);
       }
     });
   });
