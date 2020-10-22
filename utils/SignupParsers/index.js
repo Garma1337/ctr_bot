@@ -7,6 +7,7 @@ const _3v3 = require('./3v3.js');
 const _4v4 = require('./4v4.js');
 const wc = require('./wc.js');
 const tt = require('./tt.js');
+const rng = require('./random.js');
 
 function getUserFromMention(client, mention) {
   if (!mention) return null;
@@ -215,4 +216,5 @@ module.exports.parsers = {
   '4v4': _4v4,
   WC: wc,
   TT: tt,
+  RNG: rng,
 };
