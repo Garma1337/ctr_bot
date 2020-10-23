@@ -56,7 +56,7 @@ function getTitle(doc) {
 
   title += ' Lobby';
 
-  if (doc.pools && doc.type !== DUOS) {
+  if (doc.pools) {
     title += ' (pools)';
   } else {
     title += ' (full rng)';
