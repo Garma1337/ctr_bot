@@ -360,6 +360,24 @@ client.on('message', (message) => {
     return message.reply('I can\'t execute that command inside DMs!');
   }
 
+  const isStaff = message.member.hasPermission(['MANAGE_CHANNELS', 'MANAGE_ROLES']);
+  const allowedChannels = message.channel.guild.channels.cache.filter((c) => {
+    const channels = [
+      'music-and-memes',
+      'bot-spam',
+      'war-search',
+      'private-lobby-chat',
+      'ranked-general',
+    ];
+
+    return channels.includes(c.name) || c.name.match(/^ranked-room-[0-9]{1,2}/i);
+  }).sort((a, b) => a.rawPosition - b.rawPosition);
+
+  if (!isStaff && !allowedChannels.find((c) => c.name === message.channel.name)) {
+    return message.channel.send(`You can only use commands in the following channels:
+${allowedChannels.map((c) => `<#${c.id}>`).join('\n')}`);
+  }
+
   if (command.permissions
     && !(message.member && message.member.hasPermission(command.permissions))) {
     return message.reply('you don\'t have permission to use this command!');
@@ -382,8 +400,6 @@ client.on('message', (message) => {
   const now = Date.now();
   const timestamps = cooldowns.get(command.name);
   const cooldownAmount = (command.cooldown || 1) * 1000;
-
-  const isStaff = message.member.hasPermission(['MANAGE_CHANNELS', 'MANAGE_ROLES']);
 
   if (!isStaff && cooldownAmount && timestamps.has(message.author.id)) {
     const expirationTime = timestamps.get(message.author.id) + cooldownAmount;
