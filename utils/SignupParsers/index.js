@@ -39,7 +39,7 @@ module.exports.getRowValue = getRowValue;
 
 async function checkRepetitions(message, data, fields, parseCallback) {
   const { channel } = message;
-  const nicknames = [];
+  let nicknames = [];
   const errors = [];
 
   fields.forEach((field) => {
@@ -47,7 +47,7 @@ async function checkRepetitions(message, data, fields, parseCallback) {
       const nickname = data[field.name];
       if (nicknames.includes(nickname)) {
         errors.push(`Repeating nickname: ${nickname}`);
-      } else {
+      } else if (nickname) {
         nicknames.push(nickname);
       }
     }
@@ -56,6 +56,8 @@ async function checkRepetitions(message, data, fields, parseCallback) {
   if (errors.length) {
     return { errors };
   }
+
+  nicknames = [];
 
   return fetchMessages(channel, 500).then((messages) => {
     messages.pop(); // remove (first template message)
@@ -78,13 +80,15 @@ async function checkRepetitions(message, data, fields, parseCallback) {
         }
 
         if (field.type === 'nickname') {
-          const nickname = data[field.name];
+          const nickname = tmpData[field.name];
           if (nicknames.includes(nickname)) {
             errors.push(`Repeating nickname: ${nickname}`);
             result = false;
             return;
           }
-          nicknames.push(nickname);
+          if (nickname) {
+            nicknames.push(nickname);
+          }
         }
 
         const dataValue = data[key];
