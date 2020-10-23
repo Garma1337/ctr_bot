@@ -39,7 +39,7 @@ module.exports.battleModes = [
         'Game Mode: Last Kart Driving',
         'Life Limit: 9 lives',
         'Time Limit: 6 minutes',
-        'Power-ups: DISABLED: Beaker, Shield, Mask, Super Engine, Triple Missile and Triple Bomb',
+        'Power-ups: DISABLED Beaker, Shield, Mask, Super Engine, Triple Missile and Triple Bomb',
       ],
       tracks: [],
     },

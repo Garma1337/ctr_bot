@@ -165,7 +165,7 @@ Edit clans:
             });
 
             if (!clanRole) {
-              guild.roles.create({ data: { name: fullName, hoist: true } })
+              guild.roles.create({ data: { name: fullName } })
                 .then(() => {
                   message.channel.send(`Role \`${fullName}\` was created.`);
                 });

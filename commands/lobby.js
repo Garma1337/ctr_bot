@@ -23,6 +23,7 @@ const { parseData } = require('../table');
 const sendLogMessage = require('../utils/sendLogMessage');
 const config = require('../config.js');
 const { battleModes } = require('../utils/modes_battle');
+const { regions } = require('../utils/regions');
 
 const lock = new AsyncLock();
 
@@ -184,6 +185,8 @@ async function getEmbed(doc, players, maps, roomChannel) {
 
   const iconUrl = getIcon(doc);
   const timestamp = doc.started ? doc.startedAt : doc.date;
+  const region = regions.find((r) => r.uid === doc.region);
+
   if (maps) {
     fields = [
       {
@@ -220,7 +223,14 @@ async function getEmbed(doc, players, maps, roomChannel) {
 
     if (lockedRank) {
       fields.push(lockedRank);
+    } else if (region) {
+      fields.push({
+        name: 'Region Lock',
+        value: region.description,
+        inline: true,
+      });
     }
+
     return {
       author: {
         name: `${getTitle(doc)} has started`,
@@ -252,12 +262,16 @@ async function getEmbed(doc, players, maps, roomChannel) {
       {
         name: 'Average Rank',
         value: avgRank,
-        inline: true,
       },
     ];
 
     if (lockedRank) {
       fields.splice(2, 0, lockedRank);
+    } else if (region) {
+      fields.push({
+        name: 'Region Lock',
+        value: region.description,
+      });
     }
 
     return {
@@ -271,14 +285,22 @@ async function getEmbed(doc, players, maps, roomChannel) {
     };
   }
 
-  fields = [{
-    name: 'Creator',
-    value: `<@${doc.creator}>`,
-    inline: true,
-  }];
+  fields = [
+    {
+      name: 'Creator',
+      value: `<@${doc.creator}>`,
+      inline: true,
+    },
+  ];
 
   if (lockedRank) {
     fields.push(lockedRank);
+  } else if (region) {
+    fields.push({
+      name: 'Region Lock',
+      value: region.description,
+      inline: true,
+    });
   }
 
   return {
@@ -338,7 +360,6 @@ async function findRoomChannel(guildId, n) {
   let channel = guild.channels.cache.find((c) => c.name === channelName);
   if (!channel) {
     const roleStaff = await findRole(guild, 'Staff');
-    const roleRankedStaff = await findRole(guild, 'Ranked Staff');
     const roleRanked = await findRole(guild, 'Ranked Verified');
     const roleRankedItems = await findRole(guild, 'Ranked Items');
     const roleRankedItemless = await findRole(guild, 'Ranked Itemless');
@@ -349,8 +370,8 @@ async function findRoomChannel(guildId, n) {
       type: 'text',
       parent: category,
     });
+
     channel.createOverwrite(roleStaff, { VIEW_CHANNEL: true });
-    channel.createOverwrite(roleRankedStaff, { VIEW_CHANNEL: true });
     channel.createOverwrite(roleRanked, { VIEW_CHANNEL: true });
     channel.createOverwrite(roleRankedItems, { VIEW_CHANNEL: true });
     channel.createOverwrite(roleRankedItemless, { VIEW_CHANNEL: true });
@@ -677,10 +698,16 @@ module.exports = {
   guildOnly: true,
   aliases: ['mogi', 'l'],
   async execute(message, args) {
+    const regionUids = regions.map((r) => r.uid);
     let action = args[0];
+    const region = regions.find((r) => r.uid === args[0]);
 
-    if (!action) {
+    if (!action || regionUids.includes(args[0])) {
       action = 'new';
+    }
+
+    if (regionUids.includes(args[0]) && !region) {
+      return message.channel.send('The region you specified does not exist.');
     }
 
     const lobbyID = args[1];
@@ -735,7 +762,7 @@ module.exports = {
         }
 
         message.channel.send(`Select lobby mode. Waiting 1 minute.
-0 - Items (full rng)
+\`\`\`0 - Items (full rng)
 1 - Items (pools)
 2 - Itemless (full rng)
 3 - Itemless (pools)
@@ -743,7 +770,7 @@ module.exports = {
 5 - Duos (pools)
 6 - 4v4 (full rng)
 7 - 4v4 (pools)
-8 - Battle Mode (full rng)
+8 - Battle Mode (full rng)\`\`\`
 `).then((confirmMessage) => {
           message.channel.awaitMessages((m) => m.author.id === message.author.id, {
             max: 1,
@@ -826,6 +853,11 @@ module.exports = {
                 lobby.creator = message.author.id;
                 lobby.type = type;
                 lobby.pools = pools;
+
+                if (region) {
+                  lobby.region = region.uid;
+                }
+
                 lobby.save().then(async (doc) => {
                   guild.channels.cache.find((c) => c.name === 'ranked-lobbies')
                     .send({
@@ -850,8 +882,8 @@ module.exports = {
         break;
       case 'locked':
         message.channel.send(`Select lobby mode. Waiting 1 minute.
-0 - Items (full rng)
-1 - Items (pools)`).then((confirmMessage) => {
+\`\`\`0 - Items (full rng)
+1 - Items (pools)\`\`\``).then((confirmMessage) => {
           message.channel.awaitMessages((m) => m.author.id === message.author.id, {
             max: 1,
             time: 60000,
@@ -1047,6 +1079,95 @@ async function tickCount(reaction, user) {
 const ITEMS_MAX = 8;
 const ITEMLESS_MAX = 4;
 
+async function restrictSoloQueue(user, reaction, channel, soloQueue) {
+  const player = await Player.findOne({ discordId: user.id });
+
+  if (!player.discordVc && !player.ps4Vc) {
+    reaction.users.remove(user);
+    const errorMsg = `${user}, you cannot join the solo queue without being able to use voice chat. Please set your voice chat options first by using \`!set_voice_chat\`.`;
+    user.createDM().then((dmChannel) => dmChannel.send(errorMsg));
+    channel.send(errorMsg).then((m) => m.delete({ timeout: 60000 }));
+    return true;
+  }
+
+  const playerLanguages = player.languages || [];
+  if (playerLanguages.length <= 0) {
+    reaction.users.remove(user);
+    const errorMsg = `${user}, you cannot join the solo queue without setting your language first. You can set your language by using \`!set_languages\`.`;
+    user.createDM().then((dmChannel) => dmChannel.send(errorMsg));
+    channel.send(errorMsg).then((m) => m.delete({ timeout: 60000 }));
+    return true;
+  }
+
+  if (soloQueue.length >= 1) {
+    const soloQueuers = await Player.find({ discordId: { $in: soloQueue } });
+
+    const referenceLanguages = [];
+    const languages = [];
+    let compatibleLanguage = false;
+
+    // Check all languages of all players,
+    // find those languages that everyone speaks
+    // and check if the player who wants to join speaks any of those languages
+    soloQueuers.forEach((p) => {
+      const soloQueuerLanguages = p.languages || [];
+
+      soloQueuerLanguages.forEach((l) => {
+        if (languages[l]) {
+          languages[l].count += 1;
+        } else {
+          languages[l] = {
+            language: l,
+            count: 1,
+          };
+        }
+
+        if (languages[l].count === soloQueue.length) {
+          referenceLanguages.push(languages[l]);
+
+          referenceLanguages.forEach((r) => {
+            playerLanguages.forEach((pl) => {
+              if (r.language === pl) {
+                compatibleLanguage = true;
+              }
+            });
+          });
+        }
+      });
+    });
+
+    if (!compatibleLanguage) {
+      reaction.users.remove(user);
+      const errorMsg = `${user}, you cannot join the solo queue because you don't speak the same language as the other players. You can set your language by using \`!set_languages\`.`;
+      user.createDM().then((dmChannel) => dmChannel.send(errorMsg));
+      channel.send(errorMsg).then((m) => m.delete({ timeout: 60000 }));
+      return true;
+    }
+
+    const soloQueuerVcs = { discord: 0, ps4: 0 };
+    let compatibleVc = false;
+
+    soloQueuers.forEach((p) => {
+      soloQueuerVcs.discord += p.discordVc ? 1 : 0;
+      soloQueuerVcs.ps4 += p.ps4Vc ? 1 : 0;
+
+      if ((soloQueuerVcs.discord === soloQueue.length && player.discordVc) || (soloQueuerVcs.ps4 === soloQueue.length && player.ps4Vc)) {
+        compatibleVc = true;
+      }
+    });
+
+    if (!compatibleVc) {
+      reaction.users.remove(user);
+      const errorMsg = `${user}, you cannot join the solo queue because you cannot use the same voice chat as the other players. You can set your voice chat options by using \`!set_voice_chat\`.`;
+      user.createDM().then((dmChannel) => dmChannel.send(errorMsg));
+      channel.send(errorMsg).then((m) => m.delete({ timeout: 60000 }));
+      return true;
+    }
+  }
+
+  return false;
+}
+
 async function mogi(reaction, user, removed = false) {
   if (user.id === client.user.id) {
     return;
@@ -1102,6 +1223,25 @@ async function mogi(reaction, user, removed = false) {
             errorMsg = `${user}, you need to set your PSN before you are able to join ranked lobbies. Example: \`!set_psn ctr_tourney_bot\`.`;
             user.createDM().then((dmChannel) => dmChannel.send(errorMsg));
             return rankedGeneral.send(errorMsg).then((m) => m.delete({ timeout: 60000 }));
+          }
+
+          if (doc.region) {
+            if (!player.region) {
+              reaction.users.remove(user);
+              errorMsg = `${user}, you need to set your region before you can join a region locked lobby. Use \`!set_region\`.`;
+              user.createDM().then((dmChannel) => dmChannel.send(errorMsg));
+              return rankedGeneral.send(errorMsg).then((m) => m.delete({ timeout: 60000 }));
+            }
+
+            if (player.region !== doc.region) {
+              const lobbyRegion = regions.find((r) => r.uid === doc.region);
+              const playerRegion = regions.find((r) => r.uid === player.region);
+
+              reaction.users.remove(user);
+              errorMsg = `${user}, you cannot join a lobby of ${lobbyRegion.name} because you are from ${playerRegion.name}.`;
+              user.createDM().then((dmChannel) => dmChannel.send(errorMsg));
+              return rankedGeneral.send(errorMsg).then((m) => m.delete({ timeout: 60000 }));
+            }
           }
 
           const repeatLobby = await RankedLobby.findOne({ guild: guild.id, players: user.id, _id: { $ne: doc._id } });
@@ -1184,6 +1324,27 @@ async function mogi(reaction, user, removed = false) {
                   rankedGeneral.send(errorMsg).then((m) => m.delete({ timeout: 60000 }));
                   return;
                 }
+
+                if (doc.region) {
+                  const partner = await Player.findOne({ discordId: savedPartner });
+                  if (!partner.region) {
+                    reaction.users.remove(user);
+                    const errorMsg = `${user}, you partner needs to set their region before you can join a region locked lobby. Use \`!set_region\`.`;
+                    user.createDM().then((dmChannel) => dmChannel.send(errorMsg));
+                    return rankedGeneral.send(errorMsg).then((m) => m.delete({ timeout: 60000 }));
+                  }
+
+                  if (partner.region !== doc.region) {
+                    const lobbyRegion = regions.find((r) => r.uid === doc.region);
+                    const partnerRegion = regions.find((r) => r.uid === partner.region);
+
+                    reaction.users.remove(user);
+                    const errorMsg = `${user}, you cannot join a lobby of ${lobbyRegion.name} because your partner is from ${partnerRegion.name}.`;
+                    user.createDM().then((dmChannel) => dmChannel.send(errorMsg));
+                    return rankedGeneral.send(errorMsg).then((m) => m.delete({ timeout: 60000 }));
+                  }
+                }
+
                 // if (playersCount > ITEMS_MAX - 2) {
                 //   reaction.users.remove(user);
                 //   const error = `${user}, there are already ${playersCount} people the lobby - you cannot join this lobby while you have a partner set.`;
@@ -1206,7 +1367,12 @@ async function mogi(reaction, user, removed = false) {
             } else if (removed) {
               players = players.filter((p) => p !== user.id);
             } else if (!players.includes(user.id)) {
-              players.push(user.id);
+              const soloQueue = players.filter((p) => !doc.teamList.flat().includes(p));
+              const restrict = await restrictSoloQueue(user, reaction, rankedGeneral, soloQueue);
+
+              if (!restrict) {
+                players.push(user.id);
+              }
             }
             doc.teamList = teamList;
           } else if (doc.is4v4()) {
@@ -1244,6 +1410,30 @@ async function mogi(reaction, user, removed = false) {
                   return;
                 }
 
+                if (doc.region) {
+                  const teammates = await Player.find({ discordId: { $in: teamPlayers } });
+                  for (const i in teammates) {
+                    const teammate = teammates[i];
+
+                    if (!teammate.region) {
+                      reaction.users.remove(user);
+                      const errorMsg = `${user}, your teammate ${teammate.psn} needs to set their region before you can join a region locked lobby. Use \`!set_region\`.`;
+                      user.createDM().then((dmChannel) => dmChannel.send(errorMsg));
+                      return rankedGeneral.send(errorMsg).then((m) => m.delete({ timeout: 60000 }));
+                    }
+
+                    if (teammate.region !== doc.region) {
+                      const lobbyRegion = regions.find((r) => r.uid === doc.region);
+                      const teammateRegion = regions.find((r) => r.uid === teammate.region);
+
+                      reaction.users.remove(user);
+                      const errorMsg = `${user}, you cannot join a lobby of ${lobbyRegion.name} because your teammate ${teammate.psn} is from ${partnerRegion.name}.`;
+                      user.createDM().then((dmChannel) => dmChannel.send(errorMsg));
+                      return rankedGeneral.send(errorMsg).then((m) => m.delete({ timeout: 60000 }));
+                    }
+                  }
+                }
+
                 if (playersCount > 4) {
                   const soloQueue = players.filter((p) => !doc.teamList.flat().includes(p));
                   if (doc.teamList.length) {
@@ -1262,7 +1452,12 @@ async function mogi(reaction, user, removed = false) {
             } else if (removed) {
               players = players.filter((p) => p !== user.id);
             } else if (!players.includes(user.id)) {
-              players.push(user.id);
+              const soloQueue = players.filter((p) => !doc.teamList.flat().includes(p));
+              const restrict = await restrictSoloQueue(user, reaction, rankedGeneral, soloQueue);
+
+              if (!restrict) {
+                players.push(user.id);
+              }
             }
             doc.teamList = teamList;
           } else if (removed) {
@@ -1602,11 +1797,15 @@ client.on('ready', () => {
       const guild = client.guilds.cache.get(doc.guild);
       if (!guild) {
         doc.delete();
+        return;
       }
+
       const channel = guild.channels.cache.get(doc.channel);
       if (!channel) {
         doc.delete();
+        return;
       }
+
       channel.messages.fetch(doc.message).catch(() => {
         doc.delete();
       });

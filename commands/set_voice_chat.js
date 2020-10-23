@@ -5,6 +5,11 @@ module.exports = {
   description: 'Set your voice chat options.',
   guildOnly: true,
   execute(message, args) {
+    if (args.length > 0 && args[0] === 'unset') {
+      Player.updateOne({ discordId: message.author.id }, { discordVc: null, ps4Vc: null }).exec();
+      return message.channel.send('Your voice chat options have been unset.');
+    }
+
     const voiceChats = [
       'Discord',
       'PS4',

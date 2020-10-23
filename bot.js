@@ -8,7 +8,6 @@ const { CronJob } = require('cron');
 const Cooldown = require('./db/models/cooldowns');
 const config = require('./config.js');
 const alarms = require('./alarms');
-const fun = require('./fun');
 const fetchMessages = require('./utils/fetchMessages');
 const getSignupsCount = require('./utils/getSignupsCount');
 const db = require('./db');
@@ -341,7 +340,7 @@ function checkPings(message) {
   const { guild } = message;
 
   // ranked pings
-  if (roles.find((r) => ['ranked items', 'ranked itemless'].includes(r.name.toLowerCase()))) {
+  if (roles.find((r) => ['ranked items', 'ranked itemless', 'ranked duos', 'ranked battle', 'ranked 4v4'].includes(r.name.toLowerCase()))) {
     Cooldown.findOneAndUpdate(
       { guildId: guild.id, discordId: message.author.id, name: 'ranked pings' },
       { $inc: { count: 1 }, $set: { updatedAt: now } },
@@ -387,25 +386,6 @@ client.on('message', (message) => {
     setTimeout(() => {
       message.suppressEmbeds(true);
     }, 1000);
-  }
-
-  if (!client.stop) {
-    try {
-      fun(message);
-    } catch (error) {
-      console.error(error);
-    }
-
-    if (message.mentions.users.has(client.user.id)) {
-      if (!message.channel.name.includes('signups')) {
-        const pingwoah = 'pingwoah';
-        let emote = client.getEmote(pingwoah);
-        if (emote === pingwoah) {
-          emote = '🤬';
-        }
-        message.react(emote);
-      }
-    }
   }
 
   const { prefix } = client;

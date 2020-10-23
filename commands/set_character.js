@@ -8,7 +8,10 @@ module.exports = {
   guildOnly: true,
   execute(message, args) {
     fs.readFile('characters.txt', 'utf8', (err, data) => {
-      if (err) throw err;
+      if (err) {
+        throw err;
+      }
+
       const characters = data.trim().split('\n');
 
       if (args.length < 1) {

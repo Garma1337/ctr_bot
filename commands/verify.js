@@ -27,7 +27,7 @@ module.exports = {
 
     const { guild } = message;
     const roleName = 'ranked verified';
-    let role = guild.roles.cache.find((r) => r.name === roleName);
+    let role = guild.roles.cache.find((r) => r.name.toLowerCase() === roleName);
     if (!role) {
       role = await guild.roles.create({
         data: { name: roleName, mentionable: true },

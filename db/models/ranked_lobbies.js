@@ -26,6 +26,7 @@ const RankedLobby = new Schema({
   closed: { type: Boolean, default: false },
   players: [String],
   locked: { rank: Number, shift: Number },
+  region: String,
   teamList: Array,
   type: { type: String, enum: [ITEMS, ITEMLESS, DUOS, BATTLE, _4V4] },
 });

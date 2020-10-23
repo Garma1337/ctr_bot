@@ -3,6 +3,7 @@ const Clan = require('../db/models/clans');
 const Player = require('../db/models/player');
 const Rank = require('../db/models/rank');
 const calculateSuperScore = require('../utils/calculateSuperScore');
+const { regions } = require('../utils/regions');
 
 const {
   _4V4, BATTLE, DUOS, ITEMLESS, ITEMS,
@@ -63,6 +64,21 @@ function getRankingRating(rank, mode) {
 }
 
 /**
+ * Gets a region name by uid
+ * @param regionUid
+ * @return String
+ */
+function getRegionName(regionUid) {
+  const region = regions.find((r) => r.uid === regionUid);
+
+  if (region) {
+    return region.name;
+  }
+
+  return '-';
+}
+
+/**
  * Returns the profile embed
  * @param guildMember
  * @param fields
@@ -96,6 +112,7 @@ function getEmbed(guildMember, fields) {
     'donator',
     'tournament champion',
     'ranked champion',
+    'challenge master',
     'captain',
     'server booster',
   ];
@@ -142,6 +159,7 @@ module.exports = {
         /* Profile */
         let psn;
         let flag;
+        let region;
         let languages = [];
         let birthday;
         let voiceChat = [];
@@ -153,6 +171,7 @@ module.exports = {
         if (!player) {
           psn = '-';
           flag = '-';
+          region = '-';
           languages = ['-'];
           birthday = '-';
           nat = '-';
@@ -162,6 +181,7 @@ module.exports = {
         } else {
           psn = player.psn || '-';
           flag = player.flag || '-';
+          region = getRegionName(player.region);
           languages = player.languages || ['-'];
           nat = player.nat || '-';
           timeZone = player.timeZone || '-';
@@ -195,6 +215,7 @@ module.exports = {
         const profile = [
           `**PSN**: ${psn}`,
           `**Country**: ${flag}`,
+          `**Region**: ${region}`,
           `**Languages**: ${languages.join(', ')}`,
           `**Birthday**: ${birthday}`,
           `**Voice Chat**: ${voiceChat.join(', ')}`,
@@ -310,6 +331,10 @@ module.exports = {
             achievements.push('Ranked Champion');
           }
 
+          if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === 'challenge master')) {
+            achievements.push('Challenge Master');
+          }
+
           if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === 'captain')) {
             achievements.push('Captain');
           }
@@ -366,6 +391,7 @@ module.exports = {
           const commands = [
             '`!set_psn`',
             '`!set_country`',
+            '`!set_region`',
             '`!set_languages`',
             '`!set_birthday`',
             '`!set_voice_chat`',

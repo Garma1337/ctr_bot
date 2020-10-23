@@ -6,6 +6,7 @@ const Player = new Schema({
   discordId: String,
   psn: String,
   flag: String,
+  region: String,
   languages: [String],
   birthday: String,
   discordVc: Boolean,
