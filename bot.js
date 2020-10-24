@@ -341,6 +341,24 @@ client.on('message', (message) => {
     return;
   }
 
+  const isStaff = message.member.hasPermission(['MANAGE_CHANNELS', 'MANAGE_ROLES']);
+  const allowedChannels = message.channel.guild.channels.cache.filter((c) => {
+    const channels = [
+      'music-and-memes',
+      'bot-spam',
+      'war-search',
+      'private-lobby-chat',
+      'ranked-general',
+    ];
+
+    return channels.includes(c.name) || c.name.match(/^ranked-room-[0-9]{1,2}/i);
+  }).sort((a, b) => a.rawPosition - b.rawPosition);
+
+  if (!isStaff && !allowedChannels.find((c) => c.name === message.channel.name)) {
+    return message.channel.send(`You can only use commands in the following channels:
+${allowedChannels.map((c) => `<#${c.id}>`).join('\n')}`);
+  }
+
   const firstRow = message.content.split('\n')[0];
   const args = firstRow.slice(prefix.length).trim().split(/ +/);
   const commandName = args.shift().toLowerCase();
@@ -358,24 +376,6 @@ client.on('message', (message) => {
 
   if (command.guildOnly && message.channel.type !== 'text') {
     return message.reply('I can\'t execute that command inside DMs!');
-  }
-
-  const isStaff = message.member.hasPermission(['MANAGE_CHANNELS', 'MANAGE_ROLES']);
-  const allowedChannels = message.channel.guild.channels.cache.filter((c) => {
-    const channels = [
-      'music-and-memes',
-      'bot-spam',
-      'war-search',
-      'private-lobby-chat',
-      'ranked-general',
-    ];
-
-    return channels.includes(c.name) || c.name.match(/^ranked-room-[0-9]{1,2}/i);
-  }).sort((a, b) => a.rawPosition - b.rawPosition);
-
-  if (!isStaff && !allowedChannels.find((c) => c.name === message.channel.name)) {
-    return message.channel.send(`You can only use commands in the following channels:
-${allowedChannels.map((c) => `<#${c.id}>`).join('\n')}`);
   }
 
   if (command.permissions

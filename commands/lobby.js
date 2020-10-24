@@ -1033,7 +1033,7 @@ The value should be in range: \`${diffMin} - ${diffMax}\`. Defaults to \`${diffD
   },
 };
 
-const banDuration = moment.duration(1, 'hour');
+const banDuration = moment.duration(5, 'minutes');
 
 // todo rewrite with Cooldown model
 async function tickCount(reaction, user) {

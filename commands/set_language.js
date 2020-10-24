@@ -46,6 +46,26 @@ module.exports = {
           });
         }
       });
+
+      collector.on('remove', ((reaction) => {
+        const language = serverLanguages.find((l) => l.char === reaction.emoji.name);
+
+        if (language) {
+          Player.findOne({ discordId: message.author.id }).then((player) => {
+            const { languages } = player;
+
+            if (languages.includes(language.emote)) {
+              const index = languages.indexOf(language.emote);
+              languages.splice(index, 1);
+            }
+
+            player.languages = languages;
+            player.save();
+
+            message.channel.send(`${language.name} has been removed from your languages.`);
+          });
+        }
+      }));
     }).catch(() => message.channel.send('Command canceled.'));
   },
 };
