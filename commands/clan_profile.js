@@ -56,7 +56,7 @@ module.exports = {
         }
       });
 
-      if (!playerClans.find((pc) => pc === clan)) {
+      if (!playerClans.find((pc) => pc === clan) && !isStaff) {
         return message.channel.send(`You are not a member of ${clan}.`);
       }
 
