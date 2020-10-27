@@ -97,7 +97,7 @@ function getEmbed(guildMember, fields) {
       url: avatarUrl,
     },
     footer: {
-      text: `ID: ${guildMember.user.id}`,
+      text: `!profile help  •  id: ${guildMember.user.id}`,
     },
     author: {
       name: `${guildMember.user.username}#${guildMember.user.discriminator}'s profile${guildMember.user.bot ? ' (Bot)' : ''}`,
@@ -141,6 +141,20 @@ module.exports = {
   guildOnly: true,
   aliases: ['p'],
   execute(message, args) {
+    if (args[0] === 'help') {
+      return message.channel.send(`To customize your profile, use these commands:
+\`!set_psn\`
+\`!set_country\`
+\`!set_region\`
+\`!set_languages\`
+\`!set_birthday\`
+\`!set_voice_chat\`
+\`!set_nat\`
+\`!set_time_zone\`
+\`!set_character\`
+\`!set_track\``);
+    }
+
     let user = message.author;
 
     if (args.length > 0) {
@@ -213,7 +227,7 @@ module.exports = {
         }
 
         const profile = [
-          `**PSN**: ${psn}`,
+          `**PSN**: ${psn.replace(/_/g, '\\_')}`,
           `**Country**: ${flag}`,
           `**Region**: ${region}`,
           `**Languages**: ${languages.join(', ')}`,
@@ -362,48 +376,6 @@ module.exports = {
           embedFields.push({
             name: `:trophy: Achievements (${achievementCount})`,
             value: achievements.join('\n'),
-            inline: true,
-          });
-
-          embedFields.push({ name: '\u200B', value: '\u200B' });
-
-          /* Roles */
-          const roles = [];
-
-          guildMember.roles.cache.sort((a, b) => b.rawPosition - a.rawPosition || b.id - a.id).forEach((r) => {
-            if (r.name.toLowerCase() !== '@everyone') {
-              roles.push(`<@&${r.id}>`);
-            }
-          });
-
-          const roleCount = roles.length;
-          if (roleCount < 1) {
-            roles.push('None');
-          }
-
-          embedFields.push({
-            name: `:art: Roles (${roleCount})`,
-            value: roles.join(', '),
-            inline: true,
-          });
-
-          /* Commands */
-          const commands = [
-            '`!set_psn`',
-            '`!set_country`',
-            '`!set_region`',
-            '`!set_languages`',
-            '`!set_birthday`',
-            '`!set_voice_chat`',
-            '`!set_nat`',
-            '`!set_time_zone`',
-            '`!set_character`',
-            '`!set_track`',
-          ];
-
-          embedFields.push({
-            name: ':gear: Customize your profile!',
-            value: commands.join('\n'),
             inline: true,
           });
 

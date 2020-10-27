@@ -13,7 +13,35 @@ module.exports = {
       tracks.push('Retro Stadium'); // Missing in the file
 
       if (args.length < 1) {
-        return message.channel.send('You need to specify a track.');
+        const column1 = tracks.slice(0, 15);
+        const column2 = tracks.slice(15, 30);
+        const column3 = tracks.slice(30);
+
+        message.channel.send('You need to specify a track. Here is the list of available tracks:');
+        return message.channel.send({
+          embed: {
+            author: {
+              name: 'Select your favorite track!',
+            },
+            fields: [
+              {
+                name: 'Tracks',
+                value: column1.join('\n'),
+                inline: true,
+              },
+              {
+                name: '\u200B',
+                value: column2.join('\n'),
+                inline: true,
+              },
+              {
+                name: '\u200B',
+                value: column3.join('\n'),
+                inline: true,
+              },
+            ],
+          },
+        });
       }
 
       const input = args.join(' ');

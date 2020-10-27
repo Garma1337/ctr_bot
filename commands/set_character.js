@@ -15,7 +15,35 @@ module.exports = {
       const characters = data.trim().split('\n');
 
       if (args.length < 1) {
-        return message.channel.send('You need to specify a character.');
+        const column1 = characters.slice(0, 20);
+        const column2 = characters.slice(20, 40);
+        const column3 = characters.slice(40);
+
+        message.channel.send('You need to specify a character. Here is the list of available characters:');
+        return message.channel.send({
+          embed: {
+            author: {
+              name: 'Select your favorite character!',
+            },
+            fields: [
+              {
+                name: 'Characters',
+                value: column1.join('\n'),
+                inline: true,
+              },
+              {
+                name: '\u200B',
+                value: column2.join('\n'),
+                inline: true,
+              },
+              {
+                name: '\u200B',
+                value: column3.join('\n'),
+                inline: true,
+              },
+            ],
+          },
+        });
       }
 
       const input = args.join(' ');

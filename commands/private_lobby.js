@@ -195,7 +195,8 @@ Example usage: !private_lobby FFA 8.\`\`\``);
                 if (!p.psn) {
                   psns.push('---');
                 } else {
-                  psns.push(p.psn);
+                  const psn = p.psn.replace(/_/g, '\\_');
+                  psns.push(psn);
                 }
 
                 if (players.length >= maxPlayers) {
@@ -222,10 +223,6 @@ Example usage: !private_lobby FFA 8.\`\`\``);
             m.edit({ embed });
             updatePrivateLobby(privateLobby, players, psns, message.member.user.id);
           }));
-
-          collector.on('end', () => {
-            deletePrivateLobbyByUser(message.channel, message.member.user.id);
-          });
         });
 
         message.channel.send('Your private lobby was created.');

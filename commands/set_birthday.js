@@ -21,6 +21,19 @@ module.exports = {
       return message.channel.send('Your birthday has been unset.');
     }
 
+    if (args.length > 0) {
+      let birthdate = moment(args[0]);
+
+      if (!birthdate.isValid()) {
+        return message.channel.send(`The date "${args[0]}" is invalid.`);
+      }
+
+      birthdate = birthdate.format('YYYY-MM-DD');
+
+      Player.updateOne({ discordId: message.author.id }, { birthday: birthdate }).exec();
+      return message.channel.send(`Your birthday has been set to ${args[0]}.`);
+    }
+
     const currentDate = new Date();
 
     const years = range(40, currentDate.getFullYear() - 50);

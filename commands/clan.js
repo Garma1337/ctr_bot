@@ -12,6 +12,72 @@ function createCaseInsensitiveRegEx(s) {
   return new RegExp(`^${(escapeRegExp(s))}$`, 'i');
 }
 
+function getProfileEmbed(data) {
+  const { name } = data;
+  const { tag } = data;
+  const color = Number(data.color) || 0;
+  const { description } = data;
+  const logo = data.logo || 'https://www.crashbandicoot.com/content/dam/atvi/Crash/crash-touchui/ctr/home/ctr-full-logo.png';
+  const score = data.score || 0;
+  const discord = data.discord || '-';
+  const players = data.players.length > 0 ? data.players : ['-'];
+  const scores = data.scores.length > 0 ? data.scores : ['-'];
+  const roles = data.roles.length > 0 ? data.roles : ['-'];
+
+  const profileFields = [
+    `**Name**: ${name}`,
+    `**Tag**: ${tag}`,
+    `**Score**: ${score}`,
+    `**Discord**: ${discord}`,
+  ];
+
+  const embed = {
+    timestamp: new Date(),
+    color,
+    footer: {
+      text: '!clan_profile help',
+    },
+    thumbnail: {
+      url: logo,
+    },
+    author: {
+      name,
+      icon_url: logo,
+    },
+    fields: [
+      {
+        name: ':shield: Profile',
+        value: profileFields.join('\n'),
+      },
+      {
+        name: ':bust_in_silhouette: Player',
+        value: players.join('\n'),
+        inline: true,
+      },
+      {
+        name: ':diamond_shape_with_a_dot_inside: Role',
+        value: roles.join('\n'),
+        inline: true,
+      },
+      {
+        name: ':checkered_flag: Score',
+        value: scores.join('\n'),
+        inline: true,
+      },
+    ],
+  };
+
+  if (description) {
+    embed.description = description;
+  }
+
+  if (data.discord) {
+    embed.author.url = data.discord;
+  }
+
+  return embed;
+}
+
 module.exports = {
   name: 'clans',
   description(message) {
@@ -204,15 +270,14 @@ Edit clans:
       ])
         .then((clan) => {
           if (clan) {
-            const clanRole = message.guild.roles.cache
-              .find((c) => c.name.toLowerCase() === clan.fullName.toLowerCase());
+            const clanRole = message.guild.roles.cache.find((c) => c.name.toLowerCase() === clan.fullName.toLowerCase());
 
-            if (!clanRole) return message.channel.send('Clan role was not found.');
+            if (!clanRole) {
+              return message.channel.send(`The clan role "${clan.fullName}" was not found.`);
+            }
 
             message.guild.members.fetch().then((members) => {
-              const captains = [];
-              const players = [];
-
+              const clanMembers = [];
               const memberIds = members.map((m) => m.id);
 
               Player.find({ discordId: { $in: memberIds } }).then((docs) => {
@@ -231,50 +296,78 @@ Edit clans:
                   let superScoreSum = 0;
                   let superScoreCount = 0;
 
-                  members
-                    .sort((a, b) => a.displayName.localeCompare(b.displayName))
-                    .forEach((m) => {
-                      if (m.roles.cache.has(clanRole.id)) {
-                        if (m.roles.cache.find((r) => r.name === 'Captain')) {
-                          captains.push(m);
-                        } else {
-                          players.push(m);
-                        }
+                  const captains = [];
+                  const players = [];
 
-                        const psn = psnMapping[m.user.id] || null;
-                        if (psn) {
-                          const rank = ranks.find((r) => r.name === psn);
+                  members.forEach((m) => {
+                    if (m.roles.cache.has(clanRole.id)) {
+                      if (m.roles.cache.find((r) => r.name.toLowerCase() === 'captain')) {
+                        captains.push(m);
+                      } else {
+                        players.push(m);
+                      }
 
-                          if (rank) {
-                            const superScore = calculateSuperScore(rank);
-                            superScores[psn] = superScore;
-                            superScoreSum += superScore;
+                      const psn = psnMapping[m.user.id] || null;
+                      if (psn) {
+                        const rank = ranks.find((r) => r.name === psn);
 
-                            superScoreCount += 1;
-                          }
+                        if (rank) {
+                          const superScore = calculateSuperScore(rank);
+                          superScores[psn] = superScore;
+                          superScoreSum += superScore;
+
+                          superScoreCount += 1;
                         }
                       }
-                    });
+                    }
+                  });
+
+                  clanMembers.push(...captains);
+                  clanMembers.push(...players);
 
                   const averageSuperScore = Math.floor(superScoreSum / superScoreCount);
 
-                  const toPing = (p) => {
-                    let s = p.toString();
-                    const player = docs.find((f) => f.discordId === p.user.id);
-                    if (player && player.flag) s += ` ${player.flag}${superScores[player.psn] ? ` (Score: ${superScores[player.psn]})` : ''}`;
-                    return s;
+                  const format = (c) => {
+                    let out = '';
+                    const player = docs.find((p) => p.discordId === c.user.id);
+
+                    if (player && player.flag) {
+                      out += `${player.flag}`;
+                    }
+
+                    out += ` <@!${c.user.id}>`;
+
+                    return out;
                   };
-                  const description = `**${clanRole.name}** (Score: ${averageSuperScore} - Members: ${clanRole.members.size})
-  
-Captain:
-${captains.map(toPing).join('\n')}
 
-Members:
-${players.map(toPing).join('\n')}`;
+                  const scores = clanMembers.map((m) => {
+                    const psn = psnMapping[m.user.id] || null;
 
-                  message.channel.send('...').then((m) => {
-                    m.edit(description).then();
+                    return superScores[psn] || '-';
                   });
+
+                  const roles = clanMembers.map((m) => {
+                    if (captains.find((c) => c.user.id === m.user.id)) {
+                      return 'Captain';
+                    }
+
+                    return 'Member';
+                  });
+
+                  const embed = getProfileEmbed({
+                    name: clan.fullName,
+                    tag: clan.shortName,
+                    color: clan.color,
+                    description: clan.description,
+                    logo: clan.logo,
+                    score: averageSuperScore,
+                    discord: clan.discord,
+                    players: clanMembers.map(format),
+                    scores,
+                    roles,
+                  });
+
+                  message.channel.send({ embed });
                 });
               });
             });
