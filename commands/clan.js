@@ -21,8 +21,7 @@ function getProfileEmbed(data) {
   const score = data.score || 0;
   const discord = data.discord || '-';
   const players = data.players.length > 0 ? data.players : ['-'];
-  const scores = data.scores.length > 0 ? data.scores : ['-'];
-  const roles = data.roles.length > 0 ? data.roles : ['-'];
+  const psns = data.psns.length > 0 ? data.psns : ['-'];
 
   const profileFields = [
     `**Name**: ${name}`,
@@ -50,18 +49,13 @@ function getProfileEmbed(data) {
         value: profileFields.join('\n'),
       },
       {
-        name: ':bust_in_silhouette: Player',
+        name: ':busts_in_silhouette: Players',
         value: players.join('\n'),
         inline: true,
       },
       {
-        name: ':diamond_shape_with_a_dot_inside: Role',
-        value: roles.join('\n'),
-        inline: true,
-      },
-      {
-        name: ':checkered_flag: Score',
-        value: scores.join('\n'),
+        name: ':credit_card: PSN IDs',
+        value: psns.join('\n'),
         inline: true,
       },
     ],
@@ -327,32 +321,42 @@ Edit clans:
 
                   const averageSuperScore = Math.floor(superScoreSum / superScoreCount);
 
-                  const format = (c) => {
+                  const formatPlayers = (m) => {
                     let out = '';
-                    const player = docs.find((p) => p.discordId === c.user.id);
+                    const player = docs.find((p) => p.discordId === m.user.id);
+                    const isCaptain = captains.find((c) => c.user.id === m.user.id);
 
                     if (player && player.flag) {
                       out += `${player.flag}`;
+                    } else {
+                      out += ':united_nations:';
                     }
 
-                    out += ` <@!${c.user.id}>`;
+                    out += ` <@!${m.user.id}>`;
+
+                    if (isCaptain) {
+                      out += ' :crown:';
+                    }
 
                     return out;
                   };
 
-                  const scores = clanMembers.map((m) => {
-                    const psn = psnMapping[m.user.id] || null;
+                  const formatPsns = (m) => {
+                    let out;
+                    const player = docs.find((p) => p.discordId === m.user.id);
 
-                    return superScores[psn] || '-';
-                  });
+                    if (player && player.psn) {
+                      out = `${player.psn}`;
 
-                  const roles = clanMembers.map((m) => {
-                    if (captains.find((c) => c.user.id === m.user.id)) {
-                      return 'Captain';
+                      if (superScores[player.psn]) {
+                        out += ` (Score: ${superScores[player.psn]})`;
+                      }
+                    } else {
+                      out = '-';
                     }
 
-                    return 'Member';
-                  });
+                    return out;
+                  };
 
                   const embed = getProfileEmbed({
                     name: clan.fullName,
@@ -362,9 +366,8 @@ Edit clans:
                     logo: clan.logo,
                     score: averageSuperScore,
                     discord: clan.discord,
-                    players: clanMembers.map(format),
-                    scores,
-                    roles,
+                    players: clanMembers.map(formatPlayers),
+                    psns: clanMembers.map(formatPsns),
                   });
 
                   message.channel.send({ embed });

@@ -8,6 +8,7 @@ const RankedBan = new Schema({
   bannedAt: Date,
   bannedTill: Date,
   bannedBy: String,
+  reason: String,
 });
 
 module.exports = model('ranked_bans', RankedBan);

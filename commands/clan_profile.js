@@ -24,10 +24,10 @@ module.exports = {
   execute(message, args) {
     if (args[0] === 'help') {
       return message.channel.send(`To edit your clan profile you can use the following commands:
-\`!clan_profile GSC set_color 1871d4\`
-\`!clan_profile GSC set_description Our clan is very cool ah yes imagine\`
-\`!clan_profile GSC set_logo https://www.domain.com/logo.png\`
-\`!clan_profile GSC set_discord https://discord.gg/abcd123\``);
+\`!clan_profile [clan] set_color 1871d4\`
+\`!clan_profile [clan] set_description [description]\`
+\`!clan_profile [clan] set_logo https://www.domain.com/logo.png\`
+\`!clan_profile [clan] set_discord https://discord.gg/abcd123\``);
     }
 
     if (args.length < 3) {
@@ -42,22 +42,31 @@ module.exports = {
     }
 
     const clan = args.shift();
-    const action = args.shift();
+    const action = args.shift().toLowerCase();
     const value = args.join(' ');
 
     Clan.find().then((clans) => {
+      let clanExists = false;
       const playerClans = [];
 
       clans.forEach((c) => {
-        const clanRole = message.member.roles.cache.find((r) => r.name.toLowerCase() === c.fullName.toLowerCase());
+        if (c.shortName.toLowerCase() === clan.toLowerCase()) {
+          clanExists = true;
 
-        if (clanRole) {
-          playerClans.push(c.shortName);
+          const clanRole = message.member.roles.cache.find((r) => r.name.toLowerCase() === c.fullName.toLowerCase());
+
+          if (clanRole) {
+            playerClans.push(c.shortName);
+          }
         }
       });
 
-      if (!playerClans.find((pc) => pc === clan) && !isStaff) {
-        return message.channel.send(`You are not a member of ${clan}.`);
+      if (!clanExists) {
+        return message.channel.send(`The clan "${clan}" does not exist.`);
+      }
+
+      if (!playerClans.find((pc) => pc.toLowerCase() === clan.toLowerCase()) && !isStaff) {
+        return message.channel.send(`You are not a member of "${clan}".`);
       }
 
       switch (action) {
@@ -82,7 +91,7 @@ module.exports = {
           message.channel.send('The clan discord invite has been updated.');
           break;
         default:
-          return message.channel.send(`Action "${action}" does not exist.`);
+          return message.channel.send(`The action "${action}" does not exist.`);
       }
 
       return true;

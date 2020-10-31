@@ -20,7 +20,7 @@ module.exports = {
 
       RankedBan.findOne({ guildId: message.guild.id, discordId: member.id }).then((doc) => {
         if (!doc) {
-          return message.channel.send('Banned user not found');
+          return message.channel.send('Banned user not found.');
         }
 
         const promises = [];
@@ -37,7 +37,7 @@ module.exports = {
         const msg = message.channel.send('...');
 
         Promise.all([msg, ...promises]).then(([m]) => {
-          m.edit(`${member} was unbanned in ranked FFAs`);
+          m.edit(`${member} was unbanned from ranked lobbies.`);
         });
       });
     }

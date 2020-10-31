@@ -454,15 +454,6 @@ client.on('guildMemberAdd', (member) => {
       });
   }
 
-  // let poggers = client.emojis.cache.find((e) => e.name === 'poggers');
-  // poggers = poggers ? ` ${poggers}` : '';
-  //
-  // if (memberCount % 100 === 0) {
-  //   const message = `We have ${memberCount} members!${poggers}`;
-  //   const channel = guild.channels.cache.find((c) => c.name.includes('general'));
-  //   channel.send(message);
-  // }
-
   const now = new Date();
   const { user } = member;
 
