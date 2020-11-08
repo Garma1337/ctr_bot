@@ -57,8 +57,6 @@ module.exports = {
     splittedFirstLine.shift();
     const question = splittedFirstLine.join(' ');
 
-    console.log(question.length);
-
     if (lines.length < 3 || question.length < 1) {
       return message.channel.send(wrongSyntax);
     }

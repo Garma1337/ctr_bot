@@ -59,11 +59,14 @@ module.exports = {
     const conditions = [
       'No Turbo Pads',
       'No Powersliding',
-      'No U-Turning',
       'No Jumps',
       'Only steering left',
       'Only steering right',
       'No Acceleration',
+      'No Blue Fire Pads',
+      'Reverse Camera in Lap 3',
+      'Full Reverse Camera',
+      'Driving Backwards',
     ];
 
     for (let i = 1; i <= count; i += 1) {
@@ -94,7 +97,7 @@ module.exports = {
       }
 
       let randomCondition;
-      const useCondition = Math.random() > 0.15;
+      const useCondition = Math.random() > 0.35;
       if (useCondition) {
         if (battleModes.includes(randomMode)) {
           conditions.splice(0, 1);

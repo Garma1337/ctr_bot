@@ -1,21 +1,27 @@
+const SignupsChannel = require('../db/models/signups_channels');
 const fetchMessages = require('../utils/fetchMessages');
 
 const limit = 500;
 
 module.exports = {
   name: 'purge_signups',
-  description: `Delete last ${limit} messages in #signups channel.`,
+  description: `Delete last ${limit} messages in the specified channel.`,
   guildOnly: true,
   permissions: ['MANAGE_CHANNELS', 'MANAGE_ROLES'],
-  execute(message) {
+  async execute(message) {
     if (!(message.member && message.member.roles.cache.find((r) => r.name === 'Admin'))) {
       const adminRole = message.guild.roles.cache.find((r) => r.name === 'Admin');
       return message.reply(`you should have a role ${adminRole} to use this command!`);
     }
 
-    const channel = message.guild.channels.cache.find((c) => c.name === 'signups');
+    const channel = message.mentions.channels.first();
     if (!channel) {
-      return message.channel.send('Couldn\'t find a signups channel');
+      return message.channel.send('You need to mention a channel.');
+    }
+
+    const signupsChannel = await SignupsChannel.findOne({ channel: channel.id });
+    if (!signupsChannel) {
+      return message.channel.send(`The channel <#${channel.id}> is not a signups channel.`);
     }
 
     return message.channel.send(`This command will delete **all** messages in ${channel} channel.

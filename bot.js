@@ -355,8 +355,7 @@ client.on('message', (message) => {
   }).sort((a, b) => a.rawPosition - b.rawPosition);
 
   if (!isStaff && !allowedChannels.find((c) => c.name === message.channel.name)) {
-    return message.channel.send(`You can only use commands in the following channels:
-${allowedChannels.map((c) => `<#${c.id}>`).join('\n')}`);
+    return message.channel.send('You cannot use commands in this channel.');
   }
 
   const firstRow = message.content.split('\n')[0];

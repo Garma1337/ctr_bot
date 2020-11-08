@@ -109,10 +109,9 @@ function getEmbed(guildMember, fields) {
   const colorRoles = [
     'admin',
     'staff',
+    'ranked updater',
+    'champion',
     'donator',
-    'tournament champion',
-    'ranked champion',
-    'challenge master',
     'captain',
     'server booster',
   ];
@@ -140,6 +139,7 @@ module.exports = {
   description: 'Check a player profile.',
   guildOnly: true,
   aliases: ['p'],
+  cooldown: 10,
   execute(message, args) {
     if (args[0] === 'help') {
       return message.channel.send(`To customize your profile, use these commands:

@@ -20,7 +20,7 @@ function getProfileEmbed(data) {
   const logo = data.logo || 'https://www.crashbandicoot.com/content/dam/atvi/Crash/crash-touchui/ctr/home/ctr-full-logo.png';
   const score = data.score || 0;
   const discord = data.discord || '-';
-  const players = data.players.length > 0 ? data.players : ['-'];
+  const members = data.members.length > 0 ? data.members : ['-'];
   const psns = data.psns.length > 0 ? data.psns : ['-'];
 
   const profileFields = [
@@ -49,8 +49,8 @@ function getProfileEmbed(data) {
         value: profileFields.join('\n'),
       },
       {
-        name: ':busts_in_silhouette: Players',
-        value: players.join('\n'),
+        name: ':busts_in_silhouette: Members',
+        value: members.join('\n'),
         inline: true,
       },
       {
@@ -86,6 +86,7 @@ Edit clans:
   },
   aliases: ['clan'],
   guildOnly: true,
+  cooldown: 10,
   execute(message, args) {
     if (!args.length) {
       Clan.find().then((clans) => {
@@ -321,7 +322,7 @@ Edit clans:
 
                   const averageSuperScore = Math.floor(superScoreSum / superScoreCount);
 
-                  const formatPlayers = (m) => {
+                  const formatMembers = (m) => {
                     let out = '';
                     const player = docs.find((p) => p.discordId === m.user.id);
                     const isCaptain = captains.find((c) => c.user.id === m.user.id);
@@ -366,7 +367,7 @@ Edit clans:
                     logo: clan.logo,
                     score: averageSuperScore,
                     discord: clan.discord,
-                    players: clanMembers.map(formatPlayers),
+                    members: clanMembers.map(formatMembers),
                     psns: clanMembers.map(formatPsns),
                   });
 

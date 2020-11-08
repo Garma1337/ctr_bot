@@ -29,6 +29,7 @@ const RankedLobby = new Schema({
   region: String,
   teamList: Array,
   type: { type: String, enum: [ITEMS, ITEMLESS, DUOS, BATTLE, _4V4] },
+  allowPremadeTeams: { type: Boolean, default: true },
 });
 
 RankedLobby.methods = {

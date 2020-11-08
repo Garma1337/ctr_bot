@@ -5,6 +5,7 @@ module.exports = {
   name: 'set_languages',
   description: 'Set your languages.',
   guildOnly: true,
+  cooldown: 60,
   execute(message, args) {
     if (args[0] === 'unset') {
       Player.updateOne({ discordId: message.author.id }, { languages: [] }).exec();
@@ -14,7 +15,7 @@ module.exports = {
     return message.channel.send('Select your languages. Waiting 1 minute.').then((confirmMessage) => {
       const emoteChars = [];
 
-      serverLanguages.forEach((l, i) => {
+      serverLanguages.forEach((l) => {
         emoteChars.push(l.char);
         confirmMessage.react(l.char);
       });

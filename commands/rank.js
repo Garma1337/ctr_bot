@@ -48,12 +48,21 @@ module.exports = {
   description: 'Check your rank',
   guildOnly: true,
   cooldown: 10,
-  execute(message, args) {
+  async execute(message, args) {
     if (args.length) {
-      const psn = args[0];
+      let psn;
+
+      const user = message.mentions.users.first();
+      if (!user) {
+        psn = args[0];
+      } else {
+        const player = await Player.findOne({ discordId: user.id });
+        psn = player.psn || '-';
+      }
+
       Rank.findOne({ name: psn }).then((rank) => {
         if (!rank) {
-          return message.channel.send('Player has no rank');
+          return message.channel.send(`${psn} has not played any ranked matches yet.`);
         }
 
         sendMessage(message, rank);
@@ -61,12 +70,12 @@ module.exports = {
     } else {
       Player.findOne({ discordId: message.author.id }).then((player) => {
         if (!player || !player.psn) {
-          return message.reply('you have no rank');
+          return message.reply('You have not played any ranked matches yet.');
         }
 
         Rank.findOne({ name: player.psn }).then((rank) => {
           if (!rank) {
-            return message.reply('you have no rank');
+            return message.reply('You have not played any ranked matches yet.');
           }
 
           sendMessage(message, rank);
