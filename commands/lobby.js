@@ -785,7 +785,7 @@ module.exports = {
             collectedMessage.delete();
 
             const choice = parseInt(content, 10);
-            const modes = Array.from(Array(6).keys());
+            const modes = [1, 2, 3, 4, 5];
             if (modes.includes(choice)) {
               let type;
               switch (choice) {
@@ -862,7 +862,7 @@ module.exports = {
                       const { content } = collectedMessage2;
                       collectedMessage2.delete();
 
-                      return content === 'yes';
+                      return content.toLowerCase() === 'yes';
                     }).catch(() => false);
 
                     if (mmrLock) {
@@ -920,7 +920,7 @@ The value should be in the range of \`${diffMin} to ${diffMax}\`. The value defa
                       const { content } = collectedMessage2;
                       collectedMessage2.delete();
 
-                      return content === 'yes';
+                      return content.toLowerCase() !== 'no';
                     });
                   }
 
