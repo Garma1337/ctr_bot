@@ -1313,17 +1313,11 @@ async function validateNatTypes(doc) {
   let valid = true;
   const conflicts = [];
 
-  if ((hasNat3 || hasNat2C) && !hasNat1 && !hasNat2O) {
+  if (hasNat3 && !hasNat1 && !hasNat2O) {
     valid = false;
 
     if (hasNat3) {
       nat3Players.forEach((n) => {
-        conflicts.push(`<@!${n.discordId}> [${n.nat}]`);
-      });
-    }
-
-    if (hasNat2C) {
-      nat2CPlayers.forEach((n) => {
         conflicts.push(`<@!${n.discordId}> [${n.nat}]`);
       });
     }

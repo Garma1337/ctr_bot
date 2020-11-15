@@ -5,7 +5,6 @@ const SignupsChannel = require('../db/models/signups_channels');
 const { parsers } = require('../utils/SignupParsers');
 const getSignupsData = require('../utils/getSignupsData');
 const formatRolePings = require('../utils/formatRolePings');
-const config = require('../config');
 
 /* eslint-disable no-unused-vars,no-console */
 const timer = (client, targetDate, callback) => {
@@ -84,10 +83,8 @@ const sendScheduledMessage = (client, scheduledMessage) => {
     return;
   }
 
-  const guild = client.guilds.cache.get(config.main_guild);
-
   let { message } = scheduledMessage;
-  message = formatRolePings(message, guild.roles.cache);
+  message = formatRolePings(message, scheduledMessage.guild.roles.cache);
 
   channel.send(message).then((sentMessage) => {});
 };
