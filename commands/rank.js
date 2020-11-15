@@ -1,6 +1,7 @@
 const Player = require('../db/models/player');
 const Rank = require('../db/models/rank');
 const calculateSuperScore = require('../utils/calculateSuperScore');
+const createPageableContent = require('../utils/createPageableContent');
 
 const {
   _4V4, BATTLE, DUOS, ITEMLESS, ITEMS,
@@ -50,23 +51,71 @@ module.exports = {
   cooldown: 10,
   async execute(message, args) {
     if (args.length) {
-      let psn;
+      if (args[0] === 'list') {
+        Player.find().then((players) => {
+          const rankedPlayers = [];
+          const psns = [];
+          const psnMapping = {};
 
-      const user = message.mentions.users.first();
-      if (!user) {
-        psn = args[0];
+          players.forEach((p) => {
+            if (p.psn) {
+              psns.push(p.psn);
+              psnMapping[p.psn] = p.discordId;
+            }
+          });
+
+          Rank.find({ name: { $in: psns } }).then((playerRanks) => {
+            playerRanks.forEach((r) => {
+              const superScore = calculateSuperScore(r);
+              const discordId = psnMapping[r.name];
+
+              rankedPlayers.push({
+                discordId,
+                psn: r.name,
+                superScore,
+              });
+            });
+
+            // Remove players who left the server
+            message.guild.members.fetch().then((guildMembers) => {
+              rankedPlayers.forEach((r, i) => {
+                const member = guildMembers.get(r.discordId);
+                if (!member) {
+                  rankedPlayers.splice(i, 1);
+                }
+              });
+            });
+
+            const sortedRanking = rankedPlayers.sort((a, b) => b.superScore - a.superScore).map((rp, i) => `${i + 1}. <@!${rp.discordId}> (${rp.psn}) - Score: ${rp.superScore}`);
+
+            createPageableContent(message.channel, message.author.id, {
+              outputType: 'embed',
+              elements: sortedRanking,
+              elementsPerPage: 20,
+              embedOptions: { heading: 'Superscore Ranking' },
+              reactionCollectorOptions: { time: 3600000 },
+            });
+          });
+        });
       } else {
-        const player = await Player.findOne({ discordId: user.id });
-        psn = player.psn || '-';
-      }
+        let psn;
 
-      Rank.findOne({ name: psn }).then((rank) => {
-        if (!rank) {
-          return message.channel.send(`${psn} has not played any ranked matches yet.`);
+        const user = message.mentions.users.first();
+        if (!user) {
+          psn = args[0];
+        } else {
+          const player = await Player.findOne({ discordId: user.id });
+          psn = player.psn || '-';
         }
 
-        sendMessage(message, rank);
-      });
+        Rank.findOne({ name: psn }).then((rank) => {
+          if (!rank) {
+            return message.channel.send(`${psn} has not played any ranked matches yet.`);
+          }
+
+          sendMessage(message, rank);
+        });
+      }
     } else {
       Player.findOne({ discordId: message.author.id }).then((player) => {
         if (!player || !player.psn) {

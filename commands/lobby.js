@@ -91,6 +91,18 @@ const roleNames = {
 
 const PLAYER_DEFAULT_RANK = 1000;
 const DEFAULT_RANK = PLAYER_DEFAULT_RANK;
+const ITEMS_MAX = 8;
+const ITEMLESS_MAX = 4;
+const NAT1 = 'NAT 1';
+const NAT2O = 'NAT 2 Open';
+const FORCE_START_COOLDOWN = 0;
+const LOBBY_END_COOLDOWNS = {
+  [ITEMS]: 50,
+  [ITEMLESS]: 30,
+  [DUOS]: 50,
+  [BATTLE]: 30,
+  [_4V4]: 60,
+};
 
 function getIcon(doc) {
   return icons[doc.type];
@@ -116,7 +128,15 @@ async function getPlayerInfo(playerId, doc) {
   }
 
   const flag = p.flag ? ` ${p.flag}` : ':united_nations:';
-  const tag = `${flag} <@${playerId}>`;
+  let tag = `${flag} <@${playerId}>`;
+  if (p.nat) {
+    if (p.nat === NAT1 || p.nat === NAT2O) {
+      tag += ' :small_blue_diamond:';
+    } else {
+      tag += ' :small_orange_diamond:';
+    }
+  }
+
   let { psn } = p;
   if (psn) {
     psn = psn.replace(/_/g, '\\_');
@@ -556,30 +576,18 @@ function confirmLobbyStart(doc, message, override = false) {
     return message.channel.send('Lobby has already been started.');
   }
 
-  if (!override && minutes < 15) {
-    return message.channel.send(`You need to wait at least ${15 - minutes} more minutes to force start the lobby.`);
+  if (!override && minutes < FORCE_START_COOLDOWN) {
+    return message.channel.send(`You need to wait at least ${FORCE_START_COOLDOWN - minutes} more minutes to force start the lobby.`);
   }
 
   const playersCount = doc.players.length;
-
-  if (!override && doc.is4v4() && playersCount < 8) {
-    return message.channel.send(`Lobby \`${doc.id}\` has ${playersCount} players.\nYou cannot force start 4v4 lobby.`);
-  }
-
-  if (!override && doc.isItemless() && playersCount < 4) {
-    return message.channel.send(`Lobby \`${doc.id}\` has ${playersCount} players.\nYou cannot start itemless lobby with less than 4 players.`);
-  }
-
-  if (!override && !doc.isItemless() && !doc.isBattle() && playersCount < 6) {
-    return message.channel.send(`Lobby \`${doc.id}\` has ${playersCount} players.\nYou cannot start item lobby with less than 6 players.`);
-  }
 
   if (doc.isDuos() && playersCount % 2 !== 0) {
     return message.channel.send(`Lobby \`${doc.id}\` has ${playersCount} players.\nYou cannot start Duos lobby with player count not divisible by 2.`);
   }
 
-  if (!override && doc.isBattle() && playersCount < 2) {
-    return message.channel.send(`Lobby \`${doc.id}\` has ${playersCount} players.\nYou cannot start battle mode lobby with less than 2 players.`);
+  if (!doc.hasMinimumRequiredPlayers()) {
+    return message.channel.send(`You cannot start a ${doc.type} lobby with less than ${doc.getMinimumRequiredPlayers()} players.`);
   }
 
   if (override) {
@@ -762,7 +770,7 @@ module.exports = {
         const cooldown = await Cooldown.findOne({ guildId: guild.id, discordId: message.author.id, name: 'lobby' });
         if (!isStaff && cooldown && cooldown.count >= 1) {
           const updatedAt = moment(cooldown.updatedAt);
-          updatedAt.add(30, 'm');
+          updatedAt.add(5, 'm');
           const wait = moment.duration(now.diff(updatedAt));
           return message.reply(`you cannot create multiple lobbies so often. You have to wait ${wait.humanize()}.`);
         }
@@ -825,7 +833,10 @@ module.exports = {
 
                   const choice = parseInt(content, 10);
                   return (choice === 2);
-                }).catch(() => false);
+                }).catch(() => {
+                  sentMessage.delete();
+                  return false;
+                });
               }
 
               return message.channel.send(`Select region lock. Waiting 1 minute.
@@ -863,7 +874,10 @@ module.exports = {
                       collectedMessage2.delete();
 
                       return content.toLowerCase() === 'yes';
-                    }).catch(() => false);
+                    }).catch(() => {
+                      sentMessage.delete();
+                      return false;
+                    });
 
                     if (mmrLock) {
                       const diffMin = 200;
@@ -887,10 +901,14 @@ The value should be in the range of \`${diffMin} to ${diffMax}\`. The value defa
                         }
 
                         return diff;
+                      }).catch(() => {
+                        sentMessage.delete();
+                        return false;
                       });
 
                       const rank = await Rank.findOne({ name: player.psn });
                       playerRank = PLAYER_DEFAULT_RANK;
+
                       if (rank) {
                         switch (type) {
                           case ITEMS:
@@ -921,6 +939,9 @@ The value should be in the range of \`${diffMin} to ${diffMax}\`. The value defa
                       collectedMessage2.delete();
 
                       return content.toLowerCase() !== 'no';
+                    }).catch(() => {
+                      sentMessage.delete();
+                      return false;
                     });
                   }
 
@@ -951,15 +972,6 @@ The value should be in the range of \`${diffMin} to ${diffMax}\`. The value defa
                     }
                   }
 
-                  const roleName = getRoleName(type);
-                  let role = guild.roles.cache.find((r) => r.name.toLowerCase() === roleName);
-                  if (!role) {
-                    role = await guild.roles.create({
-                      data: { name: roleName, mentionable: true },
-                      reason: `imagine not having ${roleName} role smh`,
-                    });
-                  }
-
                   await Cooldown.findOneAndUpdate(
                     { guildId: guild.id, discordId: message.author.id, name: 'lobby' },
                     { $inc: { count: 1 }, $set: { updatedAt: now } },
@@ -980,11 +992,13 @@ The value should be in the range of \`${diffMin} to ${diffMax}\`. The value defa
                   if (mmrLock) {
                     lobby.locked = {
                       rank: playerRank,
-                      shift: rankDiff,
+                      shift: Number(rankDiff),
                     };
                   }
 
                   lobby.save().then(async (doc) => {
+                    const role = await findRole(guild, getRoleName(type));
+
                     guild.channels.cache.find((c) => c.name === 'ranked-lobbies')
                       .send({
                         content: role,
@@ -1023,7 +1037,7 @@ The value should be in the range of \`${diffMin} to ${diffMax}\`. The value defa
         findLobby(lobbyID, isStaff, message, (doc, msg) => {
           if (doc.started) {
             const minutes = diffMinutes(new Date(), doc.startedAt);
-            const confirmationMinutes = doc.isItemless() || doc.isBattle() ? 30 : 50;
+            const confirmationMinutes = LOBBY_END_COOLDOWNS[doc.type];
             if (minutes < confirmationMinutes) {
               Room.findOne({ lobby: doc.id }).then((room) => {
                 if (!room) {
@@ -1056,6 +1070,70 @@ The value should be in the range of \`${diffMin} to ${diffMax}\`. The value defa
             }
           } else {
             return deleteLobby(doc, msg);
+          }
+        });
+        break;
+      case 'redo':
+        findLobby(lobbyID, isStaff, message, (doc, msg) => {
+          if (doc.started) {
+            const minutes = diffMinutes(new Date(), doc.startedAt);
+            const confirmationMinutes = LOBBY_END_COOLDOWNS[doc.type];
+
+            if (minutes >= confirmationMinutes) {
+              Room.findOne({ lobby: doc.id }).then((room) => {
+                if (!room) {
+                  return deleteLobby(doc, msg);
+                }
+
+                const roomChannel = message.guild.channels.cache.find((c) => c.name === `ranked-room-${room.number}`);
+                if (roomChannel) {
+                  const maxReactions = Math.ceil(doc.players.length / 2);
+                  const pings = doc.players.map((p) => `<@${p}>`).join(' ');
+                  roomChannel.send(`I need reactions from ${maxReactions} other people in the lobby to confirm.\n${pings}`).then((voteMessage) => {
+                    voteMessage.react('✅');
+
+                    const filter = (r, u) => ['✅'].includes(r.emoji.name) && doc.players.includes(u.id) && u.id !== message.author.id;
+                    voteMessage.awaitReactions(filter, {
+                      max: maxReactions,
+                      time: 60000,
+                      errors: ['time'],
+                    }).then(async () => {
+                      const relobby = new RankedLobby();
+                      relobby.guild = guild.id;
+                      relobby.creator = message.author.id;
+                      relobby.type = doc.type;
+                      relobby.pools = doc.pools;
+                      relobby.region = doc.region;
+                      relobby.locked = doc.locked;
+                      relobby.players = doc.players;
+                      relobby.teamList = doc.teamList;
+                      relobby.allowPremadeTeams = doc.allowPremadeTeams;
+
+                      deleteLobby(doc, msg);
+
+                      relobby.save().then(async (savedRelobby) => {
+                        const role = await findRole(guild, getRoleName(relobby.type));
+                        const channel = guild.channels.cache.find((c) => c.name === 'ranked-lobbies');
+                        channel.send({ content: role, embed: await getEmbed(savedRelobby) }).then((m) => {
+                          savedRelobby.channel = m.channel.id;
+                          savedRelobby.message = m.id;
+                          savedRelobby.save().then((document) => {
+                            m.react('✅');
+                            message.channel.send(`${getTitle(savedRelobby)} has been recreated.`);
+
+                            startLobby(document._id);
+                          });
+                        });
+                      });
+                    }).catch(() => {
+                      voteMessage.channel.send('Command cancelled.');
+                    });
+                  });
+                }
+              });
+            } else {
+              return message.channel.send('You cannot redo a lobby that has not been finished yet.');
+            }
           }
         });
         break;
@@ -1107,9 +1185,6 @@ async function tickCount(reaction, user) {
       }
     });
 }
-
-const ITEMS_MAX = 8;
-const ITEMLESS_MAX = 4;
 
 async function restrictSoloQueue(user, reaction, channel, soloQueue) {
   const player = await Player.findOne({ discordId: user.id });
@@ -1200,6 +1275,66 @@ async function restrictSoloQueue(user, reaction, channel, soloQueue) {
   return false;
 }
 
+/**
+ * Validates NAT Types in a lobby
+ * @param doc
+ * @returns {Promise<{valid: boolean, conflicts: []}>}
+ */
+async function validateNatTypes(doc) {
+  const players = await Player.find({ discordId: { $in: doc.players } });
+
+  let hasNat1 = false;
+  let hasNat2O = false;
+  let hasNat2C = false;
+  let hasNat3 = false;
+  const nat2CPlayers = [];
+  const nat3Players = [];
+
+  players.forEach((p) => {
+    if (p.nat === 'NAT 1') {
+      hasNat1 = true;
+    }
+
+    if (p.nat === 'NAT 2 Open') {
+      hasNat2O = true;
+    }
+
+    if (p.nat === 'NAT 2 Closed') {
+      hasNat2C = true;
+      nat2CPlayers.push(p);
+    }
+
+    if (p.nat === 'NAT 3') {
+      hasNat3 = true;
+      nat3Players.push(p);
+    }
+  });
+
+  let valid = true;
+  const conflicts = [];
+
+  if ((hasNat3 || hasNat2C) && !hasNat1 && !hasNat2O) {
+    valid = false;
+
+    if (hasNat3) {
+      nat3Players.forEach((n) => {
+        conflicts.push(`<@!${n.discordId}> [${n.nat}]`);
+      });
+    }
+
+    if (hasNat2C) {
+      nat2CPlayers.forEach((n) => {
+        conflicts.push(`<@!${n.discordId}> [${n.nat}]`);
+      });
+    }
+  }
+
+  return {
+    valid,
+    conflicts,
+  };
+}
+
 async function mogi(reaction, user, removed = false) {
   if (user.id === client.user.id) {
     return;
@@ -1253,6 +1388,13 @@ async function mogi(reaction, user, removed = false) {
           if (!player || !player.psn) {
             reaction.users.remove(user);
             errorMsg = `${user}, you need to set your PSN before you are able to join ranked lobbies. Example: \`!set_psn ctr_tourney_bot\`.`;
+            user.createDM().then((dmChannel) => dmChannel.send(errorMsg));
+            return rankedGeneral.send(errorMsg).then((m) => m.delete({ timeout: 60000 }));
+          }
+
+          if (!player.nat) {
+            reaction.users.remove(user);
+            errorMsg = `${user}, you need to set your NAT Type before you are able to join ranked lobbies. Use \`!set_nat\` and then follow the bot instructions.`;
             user.createDM().then((dmChannel) => dmChannel.send(errorMsg));
             return rankedGeneral.send(errorMsg).then((m) => m.delete({ timeout: 60000 }));
           }
@@ -1312,9 +1454,10 @@ async function mogi(reaction, user, removed = false) {
 
           const playersCount = players.length;
           if (!removed) {
-            if (doc.isItemless() && playersCount >= ITEMLESS_MAX) {
+            if ((doc.isItemless() || doc.isBattle()) && doc.hasMinimumRequiredPlayers()) {
               return;
             }
+
             if (playersCount >= ITEMS_MAX) {
               return;
             }
@@ -1364,8 +1507,16 @@ async function mogi(reaction, user, removed = false) {
                   return;
                 }
 
+                const partner = await Player.findOne({ discordId: savedPartner });
+
+                if (!partner.nat) {
+                  reaction.users.remove(user);
+                  const errorMsg = `${user}, you partner needs to set their NAT Type before you can join a lobby. Use \`!set_nat\`.`;
+                  user.createDM().then((dmChannel) => dmChannel.send(errorMsg));
+                  return rankedGeneral.send(errorMsg).then((m) => m.delete({ timeout: 60000 }));
+                }
+
                 if (doc.region) {
-                  const partner = await Player.findOne({ discordId: savedPartner });
                   if (!partner.region) {
                     reaction.users.remove(user);
                     const errorMsg = `${user}, you partner needs to set their region before you can join a region locked lobby. Use \`!set_region\`.`;
@@ -1384,13 +1535,6 @@ async function mogi(reaction, user, removed = false) {
                   }
                 }
 
-                // if (playersCount > ITEMS_MAX - 2) {
-                //   reaction.users.remove(user);
-                //   const error = `${user}, there are already ${playersCount} people the lobby - you cannot join this lobby while you have a partner set.`;
-                //   user.createDM().then((dmChannel) => dmChannel.send(error));
-                //   rankedGeneral.send(error).then((m) => m.delete({ timeout: 60000 }));
-                //   return;
-                // }
                 if (playersCount === ITEMS_MAX - 1) {
                   const soloQueue = players.filter((p) => !doc.teamList.flat().includes(p));
                   const lastSoloQueuePlayer = soloQueue.pop();
@@ -1456,11 +1600,18 @@ async function mogi(reaction, user, removed = false) {
                   return;
                 }
 
-                if (doc.region) {
-                  const teammates = await Player.find({ discordId: { $in: teamPlayers } });
-                  for (const i in teammates) {
-                    const teammate = teammates[i];
+                const teammates = await Player.find({ discordId: { $in: teamPlayers } });
+                for (const i in teammates) {
+                  const teammate = teammates[i];
 
+                  if (!teammate.nat) {
+                    reaction.users.remove(user);
+                    const errorMsg = `${user}, your teammate ${teammate.psn} needs to set their NAT Type before you can join a lobby. Use \`!set_nat\`.`;
+                    user.createDM().then((dmChannel) => dmChannel.send(errorMsg));
+                    return rankedGeneral.send(errorMsg).then((m) => m.delete({ timeout: 60000 }));
+                  }
+
+                  if (doc.region) {
                     if (!teammate.region) {
                       reaction.users.remove(user);
                       const errorMsg = `${user}, your teammate ${teammate.psn} needs to set their region before you can join a region locked lobby. Use \`!set_region\`.`;
@@ -1513,6 +1664,20 @@ async function mogi(reaction, user, removed = false) {
           }
 
           doc.players = players;
+
+          if (doc.hasMinimumRequiredPlayers()) {
+            const validation = await validateNatTypes(doc);
+
+            if (!validation.valid) {
+              reaction.users.remove(user);
+              const errorMsg = `${user}, you cannot join the lobby because due to incompatible NAT Types (no suitable host).`;
+              user.createDM().then((dmChannel) => dmChannel.send(errorMsg));
+              return rankedGeneral.send('...').then((m) => {
+                m.edit(errorMsg);
+                m.delete({ timeout: 60000 });
+              });
+            }
+          }
 
           return doc.save().then(async (newDoc) => {
             const count = players.length;
@@ -1631,12 +1796,25 @@ const checkOldLobbies = () => {
     docs.forEach((doc) => {
       const minutes = diffMinutes(new Date(), doc.startedAt);
 
-      const remindMinutes = doc.isItemless() ? [30, 45] : [45, 60];
-      const pingMinutes = doc.isItemless() ? [60, 75, 90, 105, 120] : [75, 90, 105, 120];
+      const remindMinutes = {
+        [ITEMLESS]: [30, 45],
+        [BATTLE]: [30, 45],
+        [ITEMS]: [45, 60],
+        [DUOS]: [45, 60],
+        [_4V4]: [60, 75],
+      };
 
-      if (remindMinutes.includes(minutes)) {
+      const pingMinutes = {
+        [ITEMLESS]: [60, 75, 90, 105, 120],
+        [BATTLE]: [60, 75, 90, 105, 120],
+        [ITEMS]: [75, 90, 105, 120],
+        [DUOS]: [75, 90, 105, 120],
+        [_4V4]: [90, 105, 120, 135],
+      };
+
+      if (remindMinutes[doc.type].includes(minutes)) {
         findRoomAndSendMessage(doc);
-      } else if (pingMinutes.includes(minutes)) {
+      } else if (pingMinutes[doc.type].includes(minutes)) {
         findRoomAndSendMessage(doc, true);
       }
     });

@@ -1,4 +1,5 @@
 const Discord = require('discord.js');
+const formatRolePings = require('../utils/formatRolePings');
 
 module.exports = {
   name: 'post',
@@ -9,9 +10,8 @@ module.exports = {
   execute(message, args) {
     const server = message.guild;
 
-    const post = message.content.split('\n').slice(1).join('\n')
-      .replace('{everyone}', '@everyone')
-      .replace('{here}', '@here');
+    const post = formatRolePings(message.content.split('\n').slice(1).join('\n'), message.guild.roles.cache);
+
     const attachment = message.attachments.first();
     const attachments = [];
     if (attachment) {

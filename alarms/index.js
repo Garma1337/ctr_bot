@@ -4,6 +4,8 @@ const Schedule = require('../db/models/scheduled_messages');
 const SignupsChannel = require('../db/models/signups_channels');
 const { parsers } = require('../utils/SignupParsers');
 const getSignupsData = require('../utils/getSignupsData');
+const formatRolePings = require('../utils/formatRolePings');
+const config = require('../config');
 
 /* eslint-disable no-unused-vars,no-console */
 const timer = (client, targetDate, callback) => {
@@ -81,12 +83,13 @@ const sendScheduledMessage = (client, scheduledMessage) => {
     console.error(`Scheduled message${scheduledMessage._id} error: no channel.`);
     return;
   }
+
+  const guild = client.guilds.cache.get(config.main_guild);
+
   let { message } = scheduledMessage;
-  message = message.replace('{everyone}', '@everyone').replace('{here}', '@here');
+  message = formatRolePings(message, guild.roles.cache);
 
-  channel.send(message).then((sentMessage) => {
-
-  });
+  channel.send(message).then((sentMessage) => {});
 };
 
 const areDatesEqualsToMinutes = (date, now) => date.getUTCFullYear() === now.getUTCFullYear()

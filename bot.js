@@ -491,6 +491,24 @@ ${message.content}`;
     });
 });
 
+client.on('presenceUpdate', (oldPresence, newPresence) => {
+  const livestreamsChannel = newPresence.guild.channels.cache.find((c) => c.name.toLowerCase() === 'livestreams');
+
+  if (livestreamsChannel) {
+    newPresence.activities.forEach((a) => {
+      if (a.type === 'STREAMING' && a.state.includes('crash team')) {
+        let out = `<@!${newPresence.userID}> is streaming \`${a.details}\`.`;
+        out += '\n';
+        out += `Watch live at <${a.url}>!`;
+
+        livestreamsChannel.send('...').then((m) => {
+          m.edit(out);
+        });
+      }
+    });
+  }
+});
+
 function checkMutes() {
   const now = new Date();
   Mute.find({ mutedTill: { $lte: now } }).then((docs) => {

@@ -39,6 +39,18 @@ RankedLobby.methods = {
   isBattle() { return this.type === BATTLE; },
   is4v4() { return this.type === _4V4; },
   isTeams() { return [DUOS, _4V4].includes(this.type); },
+  getMinimumRequiredPlayers() {
+    const requirements = {
+      [ITEMS]: 6,
+      [ITEMLESS]: 4,
+      [DUOS]: 6,
+      [BATTLE]: 2,
+      [_4V4]: 8,
+    };
+
+    return requirements[this.type];
+  },
+  hasMinimumRequiredPlayers() { return this.players.length >= this.getMinimumRequiredPlayers(); },
 };
 
 module.exports.default = model('ranked_lobbies', RankedLobby);

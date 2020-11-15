@@ -76,7 +76,7 @@ ${messages.join('\n')}`);
         const dateFormat = date.format('YYYY-MM-DD h:mm A z');
 
         message.channel.send(`Scheduling post for ${channel} channel at ${dateFormat}.
-Send the text of the message. Use \`{everyone}\` and \`{here}\` instead of real pings.
+Send the text of the message. Use \`{roleName}\` instead of real pings.
 I'm waiting 5 minutes. Type \`cancel\` to cancel.`).then(() => {
           message.channel
             .awaitMessages((m) => m.author.id === message.author.id, { max: 1, time: 5 * 60000, errors: ['time'] })
@@ -121,7 +121,7 @@ I'm waiting 5 minutes. Type \`cancel\` to cancel.`).then(() => {
             // message.channel.send(`<#${doc.channel}> ${moment.tz(doc.date, 'UTC').format('YYYY-MM-DD h:mm A z')}`);
             // message.channel.send(`${doc.message}`);
             message.channel.send(`Editing <#${doc.channel}> ${moment.tz(doc.date, 'UTC').format('YYYY-MM-DD h:mm A z')}
-Send the new text of the message. Use \`{everyone}\` and \`{here}\` instead of real pings.
+Send the new text of the message. Use \`{roleName}\` instead of real pings.
 I'm waiting 1 minute. Type \`cancel\` to cancel.`).then(() => {
               message.channel
                 .awaitMessages((m) => m.author.id === message.author.id, { max: 1, time: 60000, errors: ['time'] })
