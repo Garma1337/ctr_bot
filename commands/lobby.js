@@ -95,7 +95,7 @@ const ITEMS_MAX = 8;
 const ITEMLESS_MAX = 4;
 const NAT1 = 'NAT 1';
 const NAT2O = 'NAT 2 Open';
-const FORCE_START_COOLDOWN = 0;
+const FORCE_START_COOLDOWN = 5;
 const LOBBY_END_COOLDOWNS = {
   [ITEMS]: 50,
   [ITEMLESS]: 30,
