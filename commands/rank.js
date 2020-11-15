@@ -92,7 +92,7 @@ module.exports = {
               outputType: 'embed',
               elements: sortedRanking,
               elementsPerPage: 20,
-              embedOptions: { heading: 'Superscore Ranking' },
+              embedOptions: { heading: 'Super Score Ranking' },
               reactionCollectorOptions: { time: 3600000 },
             });
           });

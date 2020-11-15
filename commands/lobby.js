@@ -1285,9 +1285,7 @@ async function validateNatTypes(doc) {
 
   let hasNat1 = false;
   let hasNat2O = false;
-  let hasNat2C = false;
   let hasNat3 = false;
-  const nat2CPlayers = [];
   const nat3Players = [];
 
   players.forEach((p) => {
@@ -1297,11 +1295,6 @@ async function validateNatTypes(doc) {
 
     if (p.nat === 'NAT 2 Open') {
       hasNat2O = true;
-    }
-
-    if (p.nat === 'NAT 2 Closed') {
-      hasNat2C = true;
-      nat2CPlayers.push(p);
     }
 
     if (p.nat === 'NAT 3') {
