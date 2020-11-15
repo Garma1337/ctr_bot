@@ -45,10 +45,6 @@ module.exports = {
         title: 'Help',
         fields: [
           ...fields,
-          {
-            name: 'Created by',
-            value: '<@548878570722820097>',
-          },
         ],
       },
     };
