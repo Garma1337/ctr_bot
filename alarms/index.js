@@ -10,31 +10,27 @@ const formatRolePings = require('../utils/formatRolePings');
 const timer = (client, targetDate, callback) => {
   const now = new Date();
   const target = targetDate;
-  // console.log(target, now);
+
   if (target <= now) {
     callback(client);
     return;
   }
 
-  // console.log('tick');
   setTimeout(timer, 1000, client, targetDate, callback); // tick every second
 };
 
 const setAlarm = (client, date, callback) => {
   const now = new Date();
   const target = date;
-  console.log('setAlarm', target, now);
+
   if (target > now) {
     timer(client, date, callback);
-  } else {
-    console.log('target < now');
   }
 };
 
 // callbacks
 
 const openSignups = (client, doc) => {
-  console.log('openSignups');
   const guild = client.guilds.cache.get(doc.guild);
   const channel = guild.channels.cache.get(doc.channel);
   const parser = parsers[doc.parser];
@@ -55,7 +51,6 @@ const openSignups = (client, doc) => {
 };
 
 const closeSignups = (client, doc) => {
-  console.log('closeSignups');
   const guild = client.guilds.cache.get(doc.guild);
   const channel = guild.channels.cache.get(doc.channel);
   channel.send('Signups are now closed!').catch(console.error);
@@ -97,7 +92,6 @@ const areDatesEqualsToMinutes = (date, now) => date.getUTCFullYear() === now.get
 
 // scheduled messages
 const scheduler = async (client) => {
-  // console.log('tick scheduler');
   const now = new Date();
   await Schedule.find({ sent: false }).then((docs) => {
     docs.forEach((doc) => {

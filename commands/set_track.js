@@ -44,7 +44,7 @@ module.exports = {
         });
       }
 
-      const input = args.join(' ');
+      const input = args.join(' ').trim();
       const track = tracks.find((t) => t.toLowerCase() === input.toLowerCase());
 
       if (!track) {

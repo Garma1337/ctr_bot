@@ -24,8 +24,6 @@ module.exports = {
     getSignupsCount(channel).then((count) => {
       if (message) {
         message.edit(`Signups count: ${count}`);
-      } else {
-        console.log(count);
       }
     });
   },

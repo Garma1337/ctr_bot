@@ -46,7 +46,7 @@ module.exports = {
         });
       }
 
-      const input = args.join(' ');
+      const input = args.join(' ').trim();
       const character = characters.find((c) => c.toLowerCase() === input.toLowerCase());
 
       if (!character) {

@@ -81,7 +81,7 @@ module.exports = {
 
     const teammatesPing = teammates.map((t) => t.toString()).join(', ');
     message.channel.send('...')
-      .then((msg) => msg.edit(`${teammatesPing}, please confirm that you are teammates of ${author} for Ranked 4v4.`))
+      .then((msg) => msg.edit(`${teammatesPing}, please confirm that you are teammates of ${author} for ranked 4 vs. 4.`))
       .then((confirmMessage) => {
         confirmMessage.react('✅');
 

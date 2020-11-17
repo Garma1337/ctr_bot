@@ -48,15 +48,9 @@ module.exports = function getSignupsData(channel, doc) {
       out.push(row.join(SEPARATOR));
 
       data.createdAt = m.createdTimestamp;
-      // table.push(data);
-      // console.log(`OK: ${isValid}`);
-      // console.log(data);
-      // console.log('----------');
     });
 
     out.unshift(firstRow);
-
-    // console.table(table);
 
     return { count, hosts, rows: out };
   });

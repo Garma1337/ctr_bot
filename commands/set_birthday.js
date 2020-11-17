@@ -22,7 +22,7 @@ module.exports = {
     }
 
     if (args.length > 0) {
-      let birthdate = moment(args[0]);
+      let birthdate = moment(args[0].trim());
 
       if (!birthdate.isValid()) {
         return message.channel.send(`The date "${args[0]}" is invalid.`);

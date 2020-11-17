@@ -322,7 +322,6 @@ function parseData(str) {
 
   let bestAssignmentScore = -100000;
   let bestAttempt = assignmentAttempts[0];
-  // console.log("== attempts ==")
   for (const attempt of assignmentAttempts) {
     let assignmentScore = 0;
 
@@ -342,11 +341,6 @@ function parseData(str) {
     if (clanWithoutTag) {
       assignmentScore -= clanWithoutTag.players.length;
     }
-
-    // console.log(assignmentScore)
-    // console.log(attempt.clanTags)
-    // console.log(attempt.clans)
-    // console.log(";")
 
     if (assignmentScore > bestAssignmentScore) {
       bestAssignmentScore = assignmentScore;
@@ -500,8 +494,6 @@ function assignPlayersToExtractedClans(clanTags, players) {
         clan.possiblePlayersWithTag += 1;
       }
     });
-
-    // console.log("[" + clan.tag + "] possible players: " + clan.possiblePlayersWithTag)
   }
 
   for (const player of players) {
@@ -789,9 +781,7 @@ async function drawTableDefault(elem, totalElem, warningElem, gamedata) {
       let src = player.flag.toLowerCase();
       if (src === 'uk') src = 'gb';
 
-      // console.log(src);
       const url = `./table/assets/flags/${src}.svg`;
-      // console.log(url);
       let flag = '';
       try {
         flag = await Canvas.loadImage(

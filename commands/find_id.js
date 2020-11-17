@@ -11,10 +11,11 @@ module.exports = {
     const out = [];
     for (const id of rows) {
       const user = await message.client.users.fetch(id);
+
       if (!user) {
         out.push(`Couldn't find \`${id}\``);
       }
-      console.log(user);
+
       out.push(`${user.id} ${user.tag}`);
     }
 

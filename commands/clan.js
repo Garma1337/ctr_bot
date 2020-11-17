@@ -347,7 +347,7 @@ Edit clans:
                     const player = docs.find((p) => p.discordId === m.user.id);
 
                     if (player && player.psn) {
-                      out = `${player.psn}`;
+                      out = `${player.psn.replace(/_/g, '\\_')}`;
 
                       if (superScores[player.psn]) {
                         out += ` (Score: ${superScores[player.psn]})`;

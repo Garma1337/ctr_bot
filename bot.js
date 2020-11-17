@@ -55,12 +55,7 @@ const setSignupsCountTopic = (channel) => {
 };
 
 client.on('ready', () => {
-  // eslint-disable-next-line no-console
-  console.log(`Logged in as ${client.user.tag}!`);
-
   const { guilds } = client;
-  console.log(guilds);
-
   alarms(client);
 
   guilds.cache.forEach((guild) => {
@@ -102,8 +97,6 @@ client.on('rateLimit', (rateLimitData) => {
 
 // joined a server
 client.on('guildCreate', (guild) => {
-  console.log(`Joined a new guild: ${guild.name}`);
-
   const channel = guild.channels.cache.find((c) => c.name === 'general');
   channel.send('Hi guys! :slight_smile:');
 });
@@ -129,8 +122,6 @@ async function reactOnSignUp(message, oldMessage = null) {
       return;
     }
 
-    console.log('reactOnSignUp');
-
     const { channel } = message;
     setSignupsCountTopic(channel);
 
@@ -142,13 +133,11 @@ async function reactOnSignUp(message, oldMessage = null) {
         logMessage += `Errors:\n\`\`\`json\n${JSON.stringify(result.errors, null, 2)}\n\`\`\``;
       }
       sendLogMessage(message.guild, logMessage);
-      console.log(logMessage);
     };
 
     const DMCatchCallback = (error) => {
       const logMessage = `${error.message} ${message.author}`;
       sendLogMessage(message.guild, logMessage);
-      console.log(logMessage);
     };
 
     const reactionCatchCallback = () => {
@@ -204,7 +193,6 @@ ${message.content}`;
 }
 
 client.on('messageUpdate', (oldMessage, message) => {
-  console.log('messageUpdate', message.id);
   if (!message) return;
 
   reactOnSignUp(message, oldMessage);
@@ -242,8 +230,6 @@ const logDM = async (message) => {
     attachments.push(attachment.url);
   }
   channelDM.send(`New DM by ${message.author} ${message.author.tag}\n${message.content}`, { files: attachments });
-
-  console.log('DM:', message.author.id, message.author.tag, '\n', message.content);
 };
 
 const muteDuration = moment.duration(1, 'h');
@@ -319,11 +305,9 @@ function checkPings(message) {
 }
 
 client.on('message', (message) => {
-  console.log('message');
   if (message.author.bot) return;
 
   checkPings(message);
-
   reactOnSignUp(message);
 
   if (message.channel.name && message.channel.name.includes('streams')) {
@@ -348,6 +332,8 @@ client.on('message', (message) => {
       'bot-spam',
       'war-search',
       'private-lobby-chat',
+      'tournament-results',
+      'tournament-discussion',
       'ranked-general',
     ];
 
@@ -436,7 +422,6 @@ client.on('message', (message) => {
 });
 
 client.on('guildMemberAdd', (member) => {
-  console.log('guildMemberAdd', member);
   const { guild } = member;
   const { memberCount } = guild;
 
@@ -453,14 +438,18 @@ client.on('guildMemberAdd', (member) => {
       });
   }
 
+  if (memberCount % 100 === 0) {
+    const message = `We have ${memberCount} members! :partying_face:`;
+    const channel = guild.channels.cache.find((c) => c.name.toLowerCase() === 'general');
+    channel.send(message);
+  }
+
   const now = new Date();
   const { user } = member;
 
   Mute.findOne(({ discordId: user.id, guildId: guild.id, mutedTill: { $gte: now } })).then(async (doc) => {
     if (doc) {
-      mute(member).then(() => {
-        console.log(user.id, 'muted on rejoin');
-      });
+      mute(member).then(() => {});
     }
   });
 });
@@ -475,7 +464,6 @@ function checkDeletedPings(message) {
 }
 
 client.on('messageDelete', (message) => {
-  console.log('messageDelete');
   checkDeletedPings(message);
 
   SignupsChannel.findOne({ guild: message.guild.id, channel: message.channel.id })
@@ -517,10 +505,9 @@ function checkMutes() {
       guild.members.fetch(doc.discordId).then((member) => {
         const mutedRole = guild.roles.cache.find((r) => r.name.toLowerCase() === 'muted');
         if (mutedRole && member.roles.cache.has(mutedRole.id)) {
-          member.roles.remove(mutedRole).then(() => {
-            console.log(doc.discordId, 'unmuted');
-          });
+          member.roles.remove(mutedRole).then(() => {});
         }
+
         doc.delete();
       });
     });
@@ -529,10 +516,9 @@ function checkMutes() {
 
 new CronJob('* * * * *', checkMutes).start();
 
-console.log('TEST:', process.env.TEST);
 try {
   db(() => {
-    console.log('Bot is connected to database');
+    console.log('Bot startup successful!');
     client.login(process.env.TEST ? config.test_token : config.token);
   });
 } catch (e) {

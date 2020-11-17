@@ -21,21 +21,19 @@ module.exports = {
             type: 'text',
             parent: category,
           }).then(async (c) => {
-            console.log(c);
             await c.lockPermissions();
             await c.createOverwrite(role, {
               VIEW_CHANNEL: true,
             });
             await role.edit({ mentionable: true });
           }).catch((e) => {
-            console.log(e);
             message.channel.send(`\`${e.name}: ${e.message}\``);
           });
         }).catch((e) => {
-          console.log(e);
           message.channel.send(`\`${e.name}: ${e.message}\``);
         });
     });
+
     message.channel.send(outMessageRows.join('\n'));
   },
 };

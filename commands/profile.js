@@ -109,6 +109,8 @@ function getEmbed(guildMember, fields) {
   const colorRoles = [
     'admin',
     'staff',
+    'bot developer',
+    'crashteamranking staff',
     'ranked updater',
     'champion',
     'donator',
@@ -327,6 +329,14 @@ module.exports = {
 
           if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === 'staff')) {
             achievements.push('Staff Member');
+          }
+
+          if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === 'bot developer')) {
+            achievements.push('Bot Developer');
+          }
+
+          if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === 'crashteamranking staff')) {
+            achievements.push('CTRanking Staff');
           }
 
           if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === 'donator')) {

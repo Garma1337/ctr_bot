@@ -1,4 +1,3 @@
-const Discord = require('discord.js');
 const drawTable = require('../utils/drawTable');
 const sendLogMessage = require('../utils/sendLogMessage');
 
@@ -55,7 +54,6 @@ Team2: p1,p2,p3
     const encodedData = encodeURI(data);
     const url = `https://gb.hlorenzi.com/table?data=${encodedData}`;
 
-    console.log(url.length);
     if (url.length > 1700) {
       message.reply('template is too long.');
       return;
@@ -81,6 +79,5 @@ Team2: p1,p2,p3
         message.channel.send({ files: [attachment] });
       });
     });
-    // message.channel.send(`<${url}>`);
   },
 };

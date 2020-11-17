@@ -1,14 +1,5 @@
 const fs = require('fs');
-
-/**
- * Returns a random array element
- * @param array
- * @returns {*}
- */
-function getRandomElement(array) {
-  const randomKey = Math.floor((array.length - 1) * Math.random());
-  return array[randomKey];
-}
+const getRandomArrayElement = require('../utils/getRandomArrayElement');
 
 module.exports = {
   name: 'generate_challenges',
@@ -73,7 +64,7 @@ module.exports = {
       let randomCheat;
       const useRandomCheat = Math.random() > 0.35;
       if (useRandomCheat) {
-        randomCheat = getRandomElement(cheats);
+        randomCheat = getRandomArrayElement(cheats);
       } else {
         randomCheat = '-';
       }
@@ -81,19 +72,19 @@ module.exports = {
       let randomTrack;
       let mirrorMode = false;
       let difficulty = null;
-      const randomMode = getRandomElement(modes);
+      const randomMode = getRandomArrayElement(modes);
       if (raceModes.find((r) => r === randomMode)) {
-        randomTrack = getRandomElement(raceTracks);
+        randomTrack = getRandomArrayElement(raceTracks);
 
         if (Math.random() > 0.5) {
           mirrorMode = true;
         }
 
         if (['Relic Race', 'CTR Challenge'].includes(randomMode)) {
-          difficulty = getRandomElement(difficulties);
+          difficulty = getRandomArrayElement(difficulties);
         }
       } else {
-        randomTrack = getRandomElement(battleTracks);
+        randomTrack = getRandomArrayElement(battleTracks);
       }
 
       let randomCondition;
@@ -103,7 +94,7 @@ module.exports = {
           conditions.splice(0, 1);
         }
 
-        randomCondition = getRandomElement(conditions);
+        randomCondition = getRandomArrayElement(conditions);
       } else {
         randomCondition = '-';
       }

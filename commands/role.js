@@ -56,8 +56,8 @@ module.exports = {
           if (remove) {
             result = await removeRole(member);
           }
+
           result = await addRole(member);
-          console.log(result);
           out.push(result);
         }
 

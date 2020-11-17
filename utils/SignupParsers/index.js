@@ -206,8 +206,6 @@ function parse(message, fields) {
     data.errors.push('both vc are false');
   }
 
-  // console.log(data);
-
   return data;
 }
 
