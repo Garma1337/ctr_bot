@@ -1,5 +1,5 @@
 const moment = require('moment');
-const Clan = require('../db/models/clans');
+const Clan = require('../db/models/clans').default;
 const Player = require('../db/models/player');
 const Rank = require('../db/models/rank');
 const calculateSuperScore = require('../utils/calculateSuperScore');
@@ -259,9 +259,7 @@ module.exports = {
         let playerClans = [];
 
         clans.forEach((c) => {
-          const role = guildMember.roles.cache.find((r) => r.name.toLowerCase() === c.fullName.toLowerCase());
-
-          if (role) {
+          if (c.hasMember(user.id)) {
             playerClans.push(c.shortName);
           }
         });

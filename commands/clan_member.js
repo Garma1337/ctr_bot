@@ -1,40 +1,44 @@
 const Discord = require('discord.js');
-const Clan = require('../db/models/clans');
+const Clan = require('../db/models/clans').default;
+const sendMessageWithoutPing = require('../utils/sendMessageWithoutPing');
+const { ROLE_MEMBER } = require('../db/models/clans');
 
 const ADD = 'add';
 const REMOVE = 'remove';
 
-const sendWithoutPing = (channel, message) => channel.send('...').then((m) => m.edit(message));
-
-const executeAction = (message, action, clan, mention) => {
-  const role = message.guild.roles.cache.find((r) => r.name === clan.fullName);
+const executeAction = (message, action, clan) => {
   const { channel } = message;
-  if (!role) {
-    return channel.send(`There is no role with the clan name \`${clan.fullName}\``);
-  }
-
   const user = message.mentions.users.first();
+
   message.guild.members.fetch(user).then((member) => {
     if (!member) {
-      return sendWithoutPing(channel, `Couldn't find the user ${member}`);
+      return sendMessageWithoutPing(channel, `Couldn't find the user ${member}.`);
     }
 
     switch (action) {
       case ADD:
-        if (member.roles.cache.has(role.id)) {
-          return sendWithoutPing(channel, `${member} already has a ${role} role`);
+        if (clan.hasMember(user.id)) {
+          return sendMessageWithoutPing(channel, `${member} is already a member of the clan "${clan.shortName}".`);
         }
-        member.roles.add(role).then(() => {
-          sendWithoutPing(channel, `Role ${role} was added to the user ${member}`);
+
+        clan.members.push({
+          role: ROLE_MEMBER,
+          discordId: user.id,
+        });
+
+        clan.save().then(() => {
+          sendMessageWithoutPing(channel, `${member} was added to the clan "${clan.shortName}".`);
         });
 
         break;
       case REMOVE:
-        if (!member.roles.cache.has(role.id)) {
-          return sendWithoutPing(channel, `${member} doesn't have ${role} role`);
+        if (!clan.hasMember(user.id)) {
+          return sendMessageWithoutPing(channel, `${member} is not a member of the clan "${clan.shortName}".`);
         }
-        member.roles.remove(role).then(() => {
-          sendWithoutPing(channel, `Role ${role} was removed from the user ${member}`);
+
+        clan.removeMember(user.id);
+        clan.save().then(() => {
+          sendMessageWithoutPing(channel, `${member} was removed from the clan "${clan.shortName}".`);
         });
 
         break;
@@ -60,72 +64,32 @@ module.exports = {
     //  !clan_member add [CTR] @tag
     //  !clan_member remove [CTR] @tag
 
+    const isStaff = message.member.hasPermission(['MANAGE_CHANNELS', 'MANAGE_ROLES']);
     const action = args[0];
-
     const actions = [ADD, REMOVE];
+
     if (actions.includes(action)) {
-      const isCaptain = message.member.roles.cache.find((r) => r.name === 'Captain');
-      const isStaff = message.member.hasPermission(['MANAGE_CHANNELS', 'MANAGE_ROLES']);
+      const clanName = args[1];
+      const mention = args[2];
 
-      if (!isCaptain && !isStaff) {
-        return message.channel.send('You don\'t have permission to do that!');
-      }
-      let clanName; let
-        mention;
-
-      if (isStaff) {
+      if ((!clanName || !mention) || (mention && !mention.match(Discord.MessageMentions.USERS_PATTERN))) {
         const wrongArgumentsStaff = 'Wrong arguments. Example usage: `!clan_member add CTR @user`';
-        clanName = args[1];
-        mention = args[2];
-
-        if (!clanName || !mention) {
-          return message.channel.send(wrongArgumentsStaff);
-        }
-
-        if (!mention.match(Discord.MessageMentions.USERS_PATTERN)) {
-          return message.channel.send(wrongArgumentsStaff);
-        }
-      } else if (isCaptain) {
-        const wrongArgumentsCaptain = 'Wrong arguments. Example usage: `!clan_member add @user`';
-
-        if (args.length > 2) {
-          return message.channel.send(wrongArgumentsCaptain);
-        }
-        mention = args[1];
-
-        if (!mention.match(Discord.MessageMentions.USERS_PATTERN)) {
-          return message.channel.send(wrongArgumentsCaptain);
-        }
+        return message.channel.send(wrongArgumentsStaff);
       }
 
-      if (isCaptain && !isStaff) {
-        const staffRole = message.guild.roles.cache.find((r) => r.name === 'Staff');
+      Clan.findOne({ shortName: clanName }).then((clan) => {
+        if (!clan) {
+          return message.channel.send(`There is no clan with the short name "${clanName}".`);
+        }
 
-        const roleNames = message.member.roles.cache.map((r) => r.name);
-        Clan.find({ fullName: { $in: roleNames } }).then((docs) => {
-          if (!docs.length) {
-            return message.channel.send(`You are the captain with no team. ${staffRole}`);
-          }
+        if (!clan.hasCaptain(message.author.id) && !isStaff) {
+          return message.channel.send(`You are not a captain of "${clanName}".`);
+        }
 
-          if (docs.length > 1) {
-            return message.channel.send(`You are the captain of several teams. It is not allowed. ${staffRole}`);
-          }
-
-          const clan = docs[0];
-          // if (clanName && clanName.toLowerCase() !== clan.shortName && clanName.toLowerCase() !== clan.fullName) {
-          //   return message.channel.send('You are not the captain of this clan.');
-          // }
-
-          executeAction(message, action, clan, mention);
-        });
-      } else {
-        Clan.findOne({ shortName: clanName }).then((clan) => {
-          if (!clan) {
-            return message.channel.send('There is no clan with this short name.');
-          }
-          executeAction(message, action, clan, mention);
-        });
-      }
+        executeAction(message, action, clan);
+      });
+    } else {
+      return message.channel.send('Invalid action.');
     }
   },
 };

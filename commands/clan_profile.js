@@ -1,4 +1,4 @@
-const Clan = require('../db/models/clans');
+const Clan = require('../db/models/clans').default;
 
 /**
  * Checks if a string is a valid URL
@@ -34,13 +34,6 @@ module.exports = {
       return message.channel.send('Wrong command usage. Use `!clan_profile help` to get help with the command.');
     }
 
-    const isStaff = message.member.hasPermission(['MANAGE_CHANNELS', 'MANAGE_ROLES']);
-    const captainRole = message.member.roles.cache.find((r) => r.name.toLowerCase() === 'captain');
-
-    if (!captainRole && !isStaff) {
-      return message.channel.send('You need to be a captain to use this command.');
-    }
-
     const clan = args.shift();
     const action = args.shift().toLowerCase();
     const value = args.join(' ');
@@ -53,9 +46,7 @@ module.exports = {
         if (c.shortName.toLowerCase() === clan.toLowerCase()) {
           clanExists = true;
 
-          const clanRole = message.member.roles.cache.find((r) => r.name.toLowerCase() === c.fullName.toLowerCase());
-
-          if (clanRole) {
+          if (c.hasCaptain(message.author.id)) {
             playerClans.push(c.shortName);
           }
         }
@@ -65,8 +56,10 @@ module.exports = {
         return message.channel.send(`The clan "${clan}" does not exist.`);
       }
 
+      const isStaff = message.member.hasPermission(['MANAGE_CHANNELS', 'MANAGE_ROLES']);
+
       if (!playerClans.find((pc) => pc.toLowerCase() === clan.toLowerCase()) && !isStaff) {
-        return message.channel.send(`You are not a member of "${clan}".`);
+        return message.channel.send(`You are not a captain of "${clan}".`);
       }
 
       switch (action) {
