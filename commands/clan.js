@@ -3,6 +3,7 @@ const Player = require('../db/models/player');
 const Rank = require('../db/models/rank');
 const createPageableContent = require('../utils/createPageableContent');
 const calculateSuperScore = require('../utils/calculateSuperScore');
+const isStaffMember = require('../utils/isStaffMember');
 
 function escapeRegExp(string) {
   return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
@@ -75,7 +76,7 @@ function getProfileEmbed(data) {
 module.exports = {
   name: 'clans',
   description(message) {
-    if (message.member.hasPermission(['MANAGE_CHANNELS', 'MANAGE_ROLES'])) {
+    if (isStaffMember(message.member)) {
       return `Show clan members: \`!clan CTR\`
 Edit clans:
 \`!clan add CTR Crash Team Racing
@@ -179,7 +180,7 @@ Edit clans:
 
     const actions = [ADD, DELETE, REMOVE];
     if (actions.includes(action)) {
-      if (!message.member.hasPermission(['MANAGE_CHANNELS', 'MANAGE_ROLES'])) {
+      if (!isStaffMember(message.member)) {
         return message.channel.send('You don\'t have permission to do that!');
       }
 

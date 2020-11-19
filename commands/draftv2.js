@@ -1,5 +1,6 @@
 const axios = require('axios');
 const config = require('../config');
+const isStaffMember = require('../utils/isStaffMember');
 
 module.exports = {
   name: 'draft2',
@@ -25,8 +26,7 @@ module.exports = {
       return message.channel.send(wrongSyntax);
     }
 
-    if (!message.member.hasPermission(['MANAGE_CHANNELS', 'MANAGE_ROLES'])
-      && !mentionedUsers.map((m) => m.id).includes(message.author.id)) {
+    if (!isStaffMember(message.member) && !mentionedUsers.map((m) => m.id).includes(message.author.id)) {
       return message.channel.send('You should be one of the players doing the draft.');
     }
 
@@ -72,7 +72,7 @@ module.exports = {
         message.channel.send(`I've messaged both captains: ${mentionedUsers.join(', ')} with team links.
 Spectator link: <${spectatorUrl}>`);
       });
-    }).catch((error) => {
+    }).catch(() => {
       message.channel.send(`Could not connect to ${config.draft_tool_url} D:`);
     });
   },

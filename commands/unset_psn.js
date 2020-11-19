@@ -1,5 +1,6 @@
 const Player = require('../db/models/player');
 const sendLogMessage = require('../utils/sendLogMessage');
+const isStaffMember = require('../utils/isStaffMember');
 
 function getUserIdFromMention(message) {
   const { content } = message;
@@ -19,7 +20,7 @@ module.exports = {
   description: 'Unset your PSN.',
   permissions: ['MANAGE_CHANNELS', 'MANAGE_ROLES'],
   execute(message, args) {
-    const isStaff = message.member.hasPermission(['MANAGE_CHANNELS', 'MANAGE_ROLES']);
+    const isStaff = isStaffMember(message.member);
 
     let user;
 

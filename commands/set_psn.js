@@ -1,4 +1,5 @@
 const Player = require('../db/models/player');
+const isStaffMember = require('../utils/isStaffMember');
 const sendLogMessage = require('../utils/sendLogMessage');
 
 module.exports = {
@@ -6,7 +7,7 @@ module.exports = {
   description: 'Set your PSN.',
   guildOnly: true,
   execute(message, args) {
-    const isStaff = message.member.hasPermission(['MANAGE_CHANNELS', 'MANAGE_ROLES']);
+    const isStaff = isStaffMember(message.member);
 
     let PSN;
     let user;

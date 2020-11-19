@@ -5,18 +5,19 @@ const fs = require('fs');
 const Discord = require('discord.js');
 const moment = require('moment');
 const { CronJob } = require('cron');
+const Command = require('./db/models/command');
+const Config = require('./db/models/config');
 const Cooldown = require('./db/models/cooldowns');
 const config = require('./config.js');
+const Mute = require('./db/models/mutes');
+const SignupsChannel = require('./db/models/signups_channels');
 const alarms = require('./alarms');
 const getSignupsCount = require('./utils/getSignupsCount');
 const db = require('./db');
-const Command = require('./db/models/command');
-const Config = require('./db/models/config');
+const isStaffMember = require('./utils/isStaffMember');
 const sendLogMessage = require('./utils/sendLogMessage');
 const { parsers, parse, checkRepetitions } = require('./utils/SignupParsers');
 const { flags } = require('./utils/flags');
-const Mute = require('./db/models/mutes');
-const SignupsChannel = require('./db/models/signups_channels');
 
 const client = new Discord.Client({ partials: ['MESSAGE', 'CHANNEL', 'REACTION'] });
 module.exports.client = client;
@@ -264,7 +265,7 @@ function checkPings(message) {
 
   const { member } = message;
 
-  const isStaff = member.hasPermission(['MANAGE_CHANNELS', 'MANAGE_ROLES']);
+  const isStaff = isStaffMember(member);
   if (isStaff) return;
 
   const { roles } = message.mentions;
@@ -325,7 +326,7 @@ client.on('message', (message) => {
     return;
   }
 
-  const isStaff = message.member.hasPermission(['MANAGE_CHANNELS', 'MANAGE_ROLES']);
+  const isStaff = isStaffMember(message.member);
   const allowedChannels = message.channel.guild.channels.cache.filter((c) => {
     const channels = [
       'music-and-memes',
@@ -363,8 +364,7 @@ client.on('message', (message) => {
     return message.reply('I can\'t execute that command inside DMs!');
   }
 
-  if (command.permissions
-    && !(message.member && message.member.hasPermission(command.permissions))) {
+  if (command.permissions && !(message.member && isStaffMember(message.member))) {
     return message.reply('you don\'t have permission to use this command!');
   }
 

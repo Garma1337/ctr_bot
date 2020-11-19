@@ -1,5 +1,6 @@
 const Discord = require('discord.js');
 const createDraft = require('../utils/createDraft');
+const isStaffMember = require('../utils/isStaffMember');
 
 module.exports = {
   name: 'draft',
@@ -27,8 +28,7 @@ Team B: @CaptainB\``;
       return message.channel.send('You should mention two team captains');
     }
 
-    if (!message.member.hasPermission(['MANAGE_CHANNELS', 'MANAGE_ROLES'])
-      && !mentions.users.map((m) => m.id).includes(message.author.id)) {
+    if (!isStaffMember(message.member) && !mentions.users.map((m) => m.id).includes(message.author.id)) {
       return message.channel.send('You should be a captain of one of the teams');
     }
 

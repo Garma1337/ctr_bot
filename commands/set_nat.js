@@ -1,4 +1,5 @@
 const Player = require('../db/models/player');
+const isStaffMember = require('../utils/isStaffMember');
 
 module.exports = {
   name: 'set_nat',
@@ -12,7 +13,7 @@ module.exports = {
       'NAT 3',
     ];
 
-    const isStaff = message.member.hasPermission(['MANAGE_CHANNELS', 'MANAGE_ROLES']);
+    const isStaff = isStaffMember(message.member);
 
     let user;
 

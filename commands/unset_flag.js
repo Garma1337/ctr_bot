@@ -1,11 +1,12 @@
 const Player = require('../db/models/player');
+const isStaffMember = require('../utils/isStaffMember');
 
 module.exports = {
-  name: 'remove_flag',
+  name: 'unset_flag',
   description: 'Set your country flag.',
-  aliases: ['remove_country'],
+  aliases: ['remove_country', 'remove_flag', 'unset_country'],
   execute(message, args) {
-    const isStaff = message.member.hasPermission(['MANAGE_CHANNELS', 'MANAGE_ROLES']);
+    const isStaff = isStaffMember(message.member);
 
     let discordId;
 
@@ -19,7 +20,6 @@ module.exports = {
       return message.channel.send('Nope.');
     } else {
       return message.channel.send('Nope.');
-      // discordId = message.author.id;
     }
 
     Player.findOne({ discordId }).then((doc) => {

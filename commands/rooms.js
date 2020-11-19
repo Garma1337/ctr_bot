@@ -1,4 +1,5 @@
 const Room = require('../db/models/rooms');
+const isStaffMember = require('../utils/isStaffMember');
 
 module.exports = {
   name: 'rooms',
@@ -23,7 +24,7 @@ module.exports = {
           message.channel.send(rooms);
         });
     } else {
-      const isStaff = message.member.hasPermission(['MANAGE_CHANNELS', 'MANAGE_ROLES']);
+      const isStaff = isStaffMember(message.member);
 
       if (!isStaff) {
         return message.channel.send('You don\'t have permission to do that!');

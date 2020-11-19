@@ -5,25 +5,26 @@ const AsyncLock = require('async-lock');
 const {
   _4V4, BATTLE, DUOS, ITEMLESS, ITEMS,
 } = require('../db/models/ranked_lobbies');
-const RankedLobby = require('../db/models/ranked_lobbies').default;
+const config = require('../config.js');
+const Cooldown = require('../db/models/cooldowns');
+const Counter = require('../db/models/counters');
 const Duo = require('../db/models/duos');
-const Team = require('../db/models/teams');
 const Player = require('../db/models/player');
 const Rank = require('../db/models/rank');
+const RankedBan = require('../db/models/ranked_bans');
+const RankedLobby = require('../db/models/ranked_lobbies').default;
 const Room = require('../db/models/rooms');
 const Sequence = require('../db/models/sequences');
-const Counter = require('../db/models/counters');
-const Cooldown = require('../db/models/cooldowns');
-const RankedBan = require('../db/models/ranked_bans');
+const Team = require('../db/models/teams');
 const { client } = require('../bot');
+const { parseData } = require('../table');
+const createDraft = require('../utils/createDraft');
+const generateTemplate = require('../utils/generateTemplate');
+const getRandomArrayElement = require('../utils/getRandomArrayElement');
+const isStaffMember = require('../utils/isStaffMember');
 const rngPools = require('../utils/rngPools');
 const rngModeBattle = require('../utils/rngModeBattle');
-const generateTemplate = require('../utils/generateTemplate');
-const { parseData } = require('../table');
 const sendLogMessage = require('../utils/sendLogMessage');
-const createDraft = require('../utils/createDraft');
-const getRandomArrayElement = require('../utils/getRandomArrayElement');
-const config = require('../config.js');
 const { battleModes } = require('../utils/modes_battle');
 const { regions } = require('../utils/regions');
 
@@ -810,7 +811,7 @@ module.exports = {
       return message.reply('you need to set your PSN first by using `!set_psn`.');
     }
 
-    const isStaff = member.hasPermission(['MANAGE_CHANNELS', 'MANAGE_ROLES']);
+    const isStaff = isStaffMember(member);
 
     const hasRankedRole = member.roles.cache.find((r) => r.name.toLowerCase() === 'ranked verified');
 
@@ -1218,7 +1219,7 @@ async function tickCount(reaction, user) {
   const { guild } = reaction.message;
 
   const member = await guild.members.fetch(user.id);
-  const isStaff = member.hasPermission(['MANAGE_CHANNELS', 'MANAGE_ROLES']);
+  const isStaff = isStaffMember(member);
   if (isStaff) return;
 
   const now = new Date();
@@ -2112,7 +2113,7 @@ client.on('message', (message) => {
   if (message.channel.type !== 'text') return;
 
   const { member } = message;
-  const isStaff = member.hasPermission(['MANAGE_CHANNELS', 'MANAGE_ROLES']);
+  const isStaff = isStaffMember(member);
 
   // check submissions
   if (message.channel.name === 'results-submissions') {

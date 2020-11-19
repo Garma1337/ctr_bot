@@ -1,5 +1,6 @@
 const Discord = require('discord.js');
 const Clan = require('../db/models/clans').default;
+const isStaffMember = require('../utils/isStaffMember');
 const sendMessageWithoutPing = require('../utils/sendMessageWithoutPing');
 const { ROLE_MEMBER } = require('../db/models/clans');
 
@@ -49,7 +50,7 @@ const executeAction = (message, action, clan) => {
 module.exports = {
   name: 'clan_member',
   description(message) {
-    if (message.member.hasPermission(['MANAGE_CHANNELS', 'MANAGE_ROLES'])) {
+    if (isStaffMember(message.member)) {
       return `Edit clan members.
 \`!clan_member add CTR @user
 !clan_member remove CTR @user\``;
@@ -64,7 +65,7 @@ module.exports = {
     //  !clan_member add [CTR] @tag
     //  !clan_member remove [CTR] @tag
 
-    const isStaff = message.member.hasPermission(['MANAGE_CHANNELS', 'MANAGE_ROLES']);
+    const isStaff = isStaffMember(message.member);
     const action = args[0];
     const actions = [ADD, REMOVE];
 

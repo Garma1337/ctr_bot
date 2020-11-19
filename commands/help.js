@@ -1,4 +1,5 @@
 const { prefix } = require('../config.js');
+const isStaffMember = require('../utils/isStaffMember');
 
 module.exports = {
   name: 'help',
@@ -22,7 +23,7 @@ module.exports = {
 
       const { member } = message;
       if (command.permissions) {
-        if (member && member.hasPermission(command.permissions)) {
+        if (member && isStaffMember(member)) {
           staffFields.push({
             name: commandName,
             value: `*${description}*`,

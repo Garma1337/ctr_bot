@@ -1,4 +1,5 @@
 const Clan = require('../db/models/clans').default;
+const isStaffMember = require('../utils/isStaffMember');
 const { MEMBER_ROLES } = require('../db/models/clans');
 
 module.exports = {
@@ -27,7 +28,7 @@ module.exports = {
         return message.channel.send(`The clan "${clanName}" does not exist.`);
       }
 
-      const isStaff = message.member.hasPermission(['MANAGE_CHANNELS', 'MANAGE_ROLES']);
+      const isStaff = isStaffMember(message.member);
 
       if (!clan.hasCaptain(message.author.id) && !isStaff) {
         return message.channel.send(`You are not a captain of "${clan}".`);

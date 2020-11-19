@@ -1,4 +1,5 @@
 const Clan = require('../db/models/clans').default;
+const isStaffMember = require('../utils/isStaffMember');
 
 /**
  * Checks if a string is a valid URL
@@ -56,7 +57,7 @@ module.exports = {
         return message.channel.send(`The clan "${clan}" does not exist.`);
       }
 
-      const isStaff = message.member.hasPermission(['MANAGE_CHANNELS', 'MANAGE_ROLES']);
+      const isStaff = isStaffMember(message.member);
 
       if (!playerClans.find((pc) => pc.toLowerCase() === clan.toLowerCase()) && !isStaff) {
         return message.channel.send(`You are not a captain of "${clan}".`);

@@ -1,11 +1,12 @@
 const Player = require('../db/models/player');
+const isStaffMember = require('../utils/isStaffMember');
 
 module.exports = {
   name: 'set_flag',
   description: 'Set your country flag.',
   aliases: ['set_country'],
   execute(message, args) {
-    const isStaff = message.member.hasPermission(['MANAGE_CHANNELS', 'MANAGE_ROLES']);
+    const isStaff = isStaffMember(message.member);
 
     let countryFlag;
     let user;
