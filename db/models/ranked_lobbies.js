@@ -45,7 +45,7 @@ RankedLobby.methods = {
       [ITEMS]: 6,
       [ITEMLESS]: 4,
       [DUOS]: 6,
-      [BATTLE]: 2,
+      [BATTLE]: 4,
       [_4V4]: 8,
     };
 
