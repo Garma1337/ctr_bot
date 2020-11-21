@@ -30,13 +30,7 @@ module.exports = {
       return message.channel.send('There are currently no CTR livestreams.');
     }
 
-    const format = (l) => {
-      let out = `<@!${l.userId}> is streaming \`${l.title}\`.`;
-      out += '\n';
-      out += `Watch live at <${l.url}>!`;
-
-      return out;
-    };
+    const format = (l) => `<@!${l.userId}> is streaming \`${l.title}\`!\nWatch live at <${l.url}>.`;
 
     message.channel.send('Generating stream list ...').then((m) => {
       /* No pings */

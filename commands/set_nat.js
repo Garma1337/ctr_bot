@@ -42,8 +42,19 @@ module.exports = {
         if (['1', '2', '3', '4'].includes(content)) {
           const index = Number(content) - 1;
 
-          Player.updateOne({ discordId: user.id }, { nat: natTypes[index] }).exec();
-          message.channel.send(`NAT type has been set to \`${natTypes[index]}\`.`);
+          Player.findOne({ discordId: user.id }).then((player) => {
+            if (!player) {
+              player = new Player();
+              player.discordId = user.id;
+            }
+
+            player.nat = natTypes[index];
+            player.save().then(() => {
+              message.channel.send(`NAT type has been set to \`${natTypes[index]}\`.`);
+            }).catch((error) => {
+              message.channel.send(`Unable to update player. Error: ${error}`);
+            });
+          });
         } else {
           message.channel.send('Command canceled.');
         }

@@ -15,6 +15,7 @@
     "canvas": "^2.6.1",
     "cron": "^1.8.2",
     "discord.js": "^12.4.0",
+    "karmarkar-karp": "^0.1.0",
     "lodash.escaperegexp": "^4.1.2",
     "log-timestamp": "^0.3.0",
     "moment": "^2.29.1",

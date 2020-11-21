@@ -22,6 +22,7 @@ module.exports = {
       'STP',
       'Infinite Mask',
       'Infinite Turbo',
+      'Infinite Bombs',
     ];
 
     const raceModes = [
@@ -58,6 +59,7 @@ module.exports = {
       'Reverse Camera in Lap 3',
       'Full Reverse Camera',
       'Driving Backwards',
+      'Blue Fire = USF',
     ];
 
     for (let i = 1; i <= count; i += 1) {

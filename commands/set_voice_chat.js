@@ -5,6 +5,7 @@ module.exports = {
   name: 'set_voice_chat',
   description: 'Set your voice chat options.',
   guildOnly: true,
+  aliases: ['set_vc'],
   execute(message, args) {
     if (args.length > 0 && args[0] === 'unset') {
       Player.updateOne({ discordId: message.author.id }, { discordVc: null, ps4Vc: null }).exec();

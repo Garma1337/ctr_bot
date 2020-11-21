@@ -53,8 +53,19 @@ module.exports = {
         return message.channel.send(`The character "${input}" doesn't exist.`);
       }
 
-      Player.updateOne({ discordId: message.author.id }, { favCharacter: character }).exec();
-      return message.channel.send(`Your favorite character has been set to "${character}".`);
+      Player.findOne({ discordId: message.author.id }).then((player) => {
+        if (!player) {
+          player = new Player();
+          player.discordId = message.author.id;
+        }
+
+        player.favCharacter = character;
+        player.save().then(() => {
+          message.channel.send(`Your favorite character has been set to "${character}".`);
+        }).catch((error) => {
+          message.channel.send(`Unable to update player. Error: ${error}`);
+        });
+      });
     });
   },
 };

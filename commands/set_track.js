@@ -51,8 +51,19 @@ module.exports = {
         return message.channel.send(`The track "${input}" doesn't exist.`);
       }
 
-      Player.updateOne({ discordId: message.author.id }, { favTrack: track }).exec();
-      return message.channel.send(`Your favorite track has been set to "${track}".`);
+      Player.findOne({ discordId: message.author.id }).then((player) => {
+        if (!player) {
+          player = new Player();
+          player.discordId = message.author.id;
+        }
+
+        player.favTrack = track;
+        player.save().then(() => {
+          message.channel.send(`Your favorite track has been set to "${track}".`);
+        }).catch((error) => {
+          message.channel.send(`Unable to update player. Error: ${error}`);
+        });
+      });
     });
   },
 };

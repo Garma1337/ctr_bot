@@ -17,8 +17,19 @@ module.exports = {
   guildOnly: true,
   execute(message, args) {
     if (args.length > 0 && args[0] === 'unset') {
-      Player.updateOne({ discordId: message.author.id }, { birthday: null }).exec();
-      return message.channel.send('Your birthday has been unset.');
+      Player.findOne({ discordId: message.author.id }).then((player) => {
+        if (!player) {
+          player = new Player();
+          player.discordId = message.author.id;
+        }
+
+        player.birthday = null;
+        player.save().then(() => {
+          message.channel.send('Your birthday has been unset.');
+        }).catch((error) => {
+          message.channel.send(`Unable to update player. Error: ${error}`);
+        });
+      });
     }
 
     if (args.length > 0) {
@@ -30,8 +41,19 @@ module.exports = {
 
       birthdate = birthdate.format('YYYY-MM-DD');
 
-      Player.updateOne({ discordId: message.author.id }, { birthday: birthdate }).exec();
-      return message.channel.send(`Your birthday has been set to ${args[0]}.`);
+      Player.findOne({ discordId: message.author.id }).then((player) => {
+        if (!player) {
+          player = new Player();
+          player.discordId = message.author.id;
+        }
+
+        player.birthday = args[0];
+        player.save().then(() => {
+          message.channel.send(`Your birthday has been set to ${args[0]}.`);
+        }).catch((error) => {
+          message.channel.send(`Unable to update player. Error: ${error}`);
+        });
+      });
     }
 
     const currentDate = new Date();
@@ -107,8 +129,19 @@ ${months.map((m, i) => m = `${i + 1} - ${m}`).join('\n')}
                         return message.channel.send(`The date "${birthday}" is invalid.`);
                       }
 
-                      Player.updateOne({ discordId: message.author.id }, { birthday }).exec();
-                      message.channel.send(`Your birthday has been set to ${birthday}.`);
+                      Player.findOne({ discordId: message.author.id }).then((player) => {
+                        if (!player) {
+                          player = new Player();
+                          player.discordId = message.author.id;
+                        }
+
+                        player.birthday = birthday;
+                        player.save().then(() => {
+                          message.channel.send(`Your birthday has been set to ${birthday}.`);
+                        }).catch((error) => {
+                          message.channel.send(`Unable to update player. Error: ${error}`);
+                        });
+                      });
                     } else {
                       message.channel.send('Command canceled.');
                     }

@@ -79,7 +79,9 @@ const sendScheduledMessage = (client, scheduledMessage) => {
   }
 
   let { message } = scheduledMessage;
-  message = formatRolePings(message, scheduledMessage.guild.roles.cache);
+
+  const guild = client.guilds.cache.get(scheduledMessage.guild);
+  message = formatRolePings(message, guild.roles.cache);
 
   channel.send(message).then((sentMessage) => {});
 };

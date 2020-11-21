@@ -308,8 +308,10 @@ function checkPings(message) {
 client.on('message', (message) => {
   if (message.author.bot) return;
 
-  checkPings(message);
-  reactOnSignUp(message);
+  if (message.channel.type === 'text') {
+    checkPings(message);
+    reactOnSignUp(message);
+  }
 
   if (message.channel.name && message.channel.name.includes('streams')) {
     setTimeout(() => {
@@ -326,23 +328,24 @@ client.on('message', (message) => {
     return;
   }
 
-  const isStaff = isStaffMember(message.member);
-  const allowedChannels = message.channel.guild.channels.cache.filter((c) => {
-    const channels = [
-      'music-and-memes',
-      'bot-spam',
-      'war-search',
-      'private-lobby-chat',
-      'tournament-results',
-      'tournament-discussion',
-      'ranked-general',
-    ];
+  let isStaff = false;
+  let allowedChannels = [];
 
-    return channels.includes(c.name) || c.name.match(/^ranked-room-[0-9]{1,2}/i);
-  }).sort((a, b) => a.rawPosition - b.rawPosition);
+  if (message.channel.type === 'text') {
+    isStaff = isStaffMember(message.member);
+    allowedChannels = message.guild.channels.cache.filter((c) => {
+      const channels = [
+        'music-and-memes',
+        'bot-spam',
+        'war-search',
+        'private-lobby-chat',
+        'tournament-results',
+        'tournament-discussion',
+        'ranked-general',
+      ];
 
-  if (!isStaff && !allowedChannels.find((c) => c.name === message.channel.name)) {
-    return message.channel.send('You cannot use commands in this channel.');
+      return channels.includes(c.name) || c.name.match(/^ranked-room-[0-9]{1,2}/i);
+    }).sort((a, b) => a.rawPosition - b.rawPosition);
   }
 
   const firstRow = message.content.split('\n')[0];
@@ -354,14 +357,25 @@ client.on('message', (message) => {
 
   if (!command) {
     Command.findOne({ name: commandName }).then((cmd) => {
-      if (!cmd) return;
+      if (!cmd) {
+        return;
+      }
+
+      if (!isStaff && !allowedChannels.find((c) => c.name === message.channel.name)) {
+        return message.reply('you cannot use commands in this channel!');
+      }
+
       message.channel.send(cmd.message);
     });
     return;
   }
 
   if (command.guildOnly && message.channel.type !== 'text') {
-    return message.reply('I can\'t execute that command inside DMs!');
+    return message.reply('You cannot use commands inside DMs. Please head over to #bot-spam and use the command there.');
+  }
+
+  if (!isStaff && !allowedChannels.find((c) => c.name === message.channel.name)) {
+    return message.reply('you cannot use commands in this channel!');
   }
 
   if (command.permissions && !(message.member && isStaffMember(message.member))) {
@@ -485,9 +499,7 @@ client.on('presenceUpdate', (oldPresence, newPresence) => {
   if (livestreamsChannel) {
     newPresence.activities.forEach((a) => {
       if (a.type === 'STREAMING' && a.state.includes('crash team')) {
-        let out = `<@!${newPresence.userID}> is streaming \`${a.details}\`.`;
-        out += '\n';
-        out += `Watch live at <${a.url}>!`;
+        const out = `<@!${newPresence.userID}> is streaming \`${a.details}\`!\nWatch live at <${a.url}>.`;
 
         livestreamsChannel.send('...').then((m) => {
           m.edit(out);

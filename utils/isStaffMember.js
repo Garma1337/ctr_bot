@@ -4,8 +4,11 @@
  * @returns boolean
  */
 function isStaffMember(member) {
-  const hasStaffRole = member.roles.cache.find((r) => r.name.toLowerCase() === 'staff');
-  return hasStaffRole && member.hasPermission(['MANAGE_ROLES', 'MANAGE_CHANNELS']);
+  if (!member) {
+    return false;
+  }
+
+  return member.hasPermission(['MANAGE_ROLES', 'MANAGE_CHANNELS']);
 }
 
 module.exports = isStaffMember;

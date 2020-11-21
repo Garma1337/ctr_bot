@@ -19,6 +19,12 @@ module.exports = {
     }
 
     Player.findOne({ discordId: user.id }).then((player) => {
+      if (!player) {
+        player = new Player();
+        player.discordId = user.id;
+        player.region = null;
+      }
+
       if (player.region && !isStaff) {
         return message.channel.send('You cannot change your region. Please message a staff member.');
       }
@@ -45,13 +51,16 @@ ${regions.map((r, i) => `${i + 1} - ${r.description}`).join('\n')}
           if (indexes.includes(content)) {
             const region = regions[content - 1];
 
-            Player.updateOne({ discordId: user.id }, { region: region.uid }).exec();
-
-            if (user.id === message.author.id) {
-              return message.channel.send(`Your region has been set to ${region.description}.`);
-            }
-
-            return message.channel.send(`<@!${user.id}>'s region has been set to ${region.description}.`);
+            player.region = region.uid;
+            player.save().then(() => {
+              if (user.id === message.author.id) {
+                message.channel.send(`Your region has been set to ${region.description}.`);
+              } else {
+                message.channel.send(`<@!${user.id}>'s region has been set to ${region.description}.`);
+              }
+            }).catch((error) => {
+              message.channel.send(`Unable to update player. Error: ${error}`);
+            });
           }
         });
       });

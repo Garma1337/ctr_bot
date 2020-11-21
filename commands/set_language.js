@@ -5,6 +5,7 @@ module.exports = {
   name: 'set_languages',
   description: 'Set your languages.',
   guildOnly: true,
+  aliases: ['set_language', 'language_set'],
   cooldown: 60,
   execute(message, args) {
     if (args[0] === 'unset') {
@@ -34,6 +35,12 @@ module.exports = {
 
         if (language) {
           Player.findOne({ discordId: message.author.id }).then((player) => {
+            if (!player) {
+              player = new Player();
+              player.discordId = message.author.id;
+              player.languages = [];
+            }
+
             const { languages } = player;
 
             if (!languages.includes(language.emote)) {
@@ -41,9 +48,11 @@ module.exports = {
             }
 
             player.languages = languages;
-            player.save();
-
-            message.channel.send(`${language.name} has been added to your languages.`);
+            player.save().then(() => {
+              message.channel.send(`${language.name} has been added to your languages.`);
+            }).catch((error) => {
+              message.channel.send(`Unable to update player. Error: ${error}`);
+            });
           });
         }
       });

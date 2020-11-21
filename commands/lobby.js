@@ -1,5 +1,6 @@
 const axios = require('axios');
 const moment = require('moment');
+const KarmakarKarp = require('karmarkar-karp');
 const { CronJob } = require('cron');
 const AsyncLock = require('async-lock');
 const {
@@ -434,17 +435,18 @@ function startLobby(docId) {
           rngPools(doc, doc.pools).then((maps) => {
             findRoom(doc).then((room) => {
               findRoomChannel(doc.guild, room.number).then(async (roomChannel) => {
-                maps = maps.join('\n');
                 const mapCount = maps.length;
 
                 // Display track column but blank all tracks
                 if (doc.is4v4() && doc.draftTracks) {
                   maps = [];
+
                   for (let i = 1; i <= mapCount; i += 1) {
-                    maps.push('*N/A (drafted)*');
+                    maps.push('*N/A*');
                   }
                 }
 
+                maps = maps.join('\n');
                 const { players } = doc;
 
                 let playersText = '';
@@ -467,51 +469,53 @@ function startLobby(docId) {
                   if (doc.isDuos()) teamSize = 2;
                   if (doc.is4v4()) teamSize = 4;
 
-                  // for (let i = 0; i < shuffledPlayers.length; i += 1) {
-                  //   const last = randomTeams[randomTeams.length - 1];
-                  //   if (!last || last.length === teamSize) {
-                  //     randomTeams.push([shuffledPlayers[i]]);
-                  //   } else {
-                  //     last.push(shuffledPlayers[i]);
-                  //   }
-                  // }
-
                   // Balanced team making
                   const shuffledPlayerRanks = [];
+                  const playerModels = await Player.find({ discordId: { $in: shuffledPlayers } });
+                  const psns = playerModels.map((p) => p.psn);
+                  const rankModels = await Rank.find({ name: { $in: psns } });
 
-                  shuffledPlayers.forEach(async (s) => {
-                    const player = await Player.findOne({ discordId: s });
-                    const playerRank = await Rank.findOne({ name: player.psn });
-
-                    let rank = PLAYER_DEFAULT_RANK;
-                    if (playerRank && playerRank[doc.type]) {
-                      rank = playerRank[doc.type].rank;
+                  rankModels.forEach((r) => {
+                    let ranking = PLAYER_DEFAULT_RANK;
+                    if (r[doc.type]) {
+                      ranking = r[doc.type].rank;
                     }
 
+                    const player = playerModels.find((p) => p.psn === r.name);
+
                     shuffledPlayerRanks.push({
-                      discordId: s,
-                      rank,
+                      discordId: player.discordId,
+                      rank: ranking,
                     });
                   });
 
                   const sorted = shuffledPlayerRanks.sort((a, b) => a.rank - b.rank);
-                  const teamCount = shuffledPlayers / teamSize;
+                  const teamCount = shuffledPlayers.length / teamSize;
 
-                  for (let i = 1; i <= teamCount; i += 1) {
-                    if (teamSize === 2) {
+                  if (teamSize === 2) {
+                    for (let i = 1; i <= teamCount; i += 1) {
+                      const firstPlayer = sorted.shift();
+                      const lastPlayer = sorted.pop();
+
                       randomTeams.push([
-                        sorted.shift().discordId,
-                        sorted.pop().discordId,
+                        firstPlayer.discordId,
+                        lastPlayer.discordId,
                       ]);
                     }
+                  }
 
-                    if (teamSize === 4) {
-                      randomTeams.push([
-                        sorted.shift().discordId,
-                        sorted.shift().discordId,
-                        sorted.pop().discordId,
-                        sorted.pop().discordId,
-                      ]);
+                  if (teamSize === 4) {
+                    if (teamCount > 1) {
+                      const result = KarmakarKarp.LDM(sorted, 'rank');
+
+                      const playersA = result.A.map((a) => a.discordId);
+                      const playersB = result.B.map((b) => b.discordId);
+
+                      randomTeams.push([...playersA]);
+                      randomTeams.push([...playersB]);
+                    } else {
+                      const discordIds = sorted.map((s) => s.discordId);
+                      randomTeams.push([...discordIds]);
                     }
                   }
 
@@ -613,11 +617,14 @@ ${settings.join('\n\n')}\`\`\``);
                   }
 
                   if (doc.is4v4() && doc.draftTracks) {
-                    const captainA = client.guilds.cache.get(doc.guild).members.fetch(getRandomArrayElement(doc.teamList[0]));
-                    const captainB = client.guilds.cache.get(doc.guild).members.fetch(getRandomArrayElement(doc.teamList[1]));
                     const teams = ['A', 'B'];
 
-                    createDraft(roomChannel, 0, teams, [captainA, captainB]);
+                    const captainAPromise = client.guilds.cache.get(doc.guild).members.fetch(getRandomArrayElement(doc.teamList[0]));
+                    const captainBPromise = client.guilds.cache.get(doc.guild).members.fetch(getRandomArrayElement(doc.teamList[1]));
+
+                    Promise.all([captainAPromise, captainBPromise]).then((captains) => {
+                      createDraft(roomChannel, '0', teams, captains);
+                    });
                   }
                 });
               });
