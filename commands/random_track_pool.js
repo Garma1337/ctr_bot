@@ -1,29 +1,71 @@
 const rngPools = require('../utils/rngPools');
-const { ITEMLESS, ITEMS } = require('../db/models/ranked_lobbies');
+const {
+  _4V4, BATTLE, ITEMLESS, ITEMS,
+} = require('../db/models/ranked_lobbies');
 
 module.exports = {
   name: 'rng_ffa',
-  description: 'Picks 8 random tracks from 3 pools for FFA',
+  description: 'Picks random tracks existing track pools',
   guildOnly: true,
   aliases: ['rng_mogi'],
   cooldown: 10,
-  execute(message, args) {
+  execute(message) {
     return message.channel.send(`Select lobby mode. Waiting 1 minute.
-0 - Itemless (pools)
-1 - Items (pools)
-2 - Itemless (full rng)
-3 - Items (full rng)`).then((confirmMessage) => {
+\`\`\`1 - FFA / Duos (full rng)
+2 - FFA / Duos (pools)
+3 - Itemless (full rng)
+4 - Itemless (pools)
+5 - 4 vs. 4 (full rng)
+6 - 4 vs. 4 (pools)
+7 - Battle Mode\`\`\``).then((confirmMessage) => {
       message.channel.awaitMessages((m) => m.author.id === message.author.id, { max: 1, time: 60000, errors: ['time'] })
         .then((collected) => {
           const collectedMessage = collected.first();
           const { content } = collectedMessage;
           collectedMessage.delete();
-          if (['0', '1', '2', '3'].includes(content)) {
+
+          if (['1', '2', '3', '4', '5', '6', '7'].includes(content)) {
             confirmMessage.edit('Randomizing...').then((m) => {
-              const items = content === '1' || content === '3';
-              const fromPools = content === '0' || content === '1';
-              const title = `Tracks for ${(items ? 'item' : 'itemless')} lobby ${fromPools ? '(pools)' : '(full rng)'}`;
-              rngPools({ type: items ? ITEMS : ITEMLESS, pool: fromPools }).then((maps) => {
+              let type;
+              let pools;
+
+              switch (content) {
+                case '1':
+                  type = ITEMS;
+                  pools = false;
+                  break;
+                case '2':
+                  type = ITEMS;
+                  pools = true;
+                  break;
+                case '3':
+                  type = ITEMLESS;
+                  pools = false;
+                  break;
+                case '4':
+                  type = ITEMLESS;
+                  pools = true;
+                  break;
+                case '5':
+                  type = _4V4;
+                  pools = false;
+                  break;
+                case '6':
+                  type = _4V4;
+                  pools = true;
+                  break;
+                case '7':
+                  type = BATTLE;
+                  pools = false;
+                  break;
+                default:
+                  type = ITEMS;
+                  pools = false;
+                  break;
+              }
+
+              const title = `Tracks for ${type} lobby ${pools ? '(pools)' : '(full rng)'}`;
+              rngPools({ type, pools }).then((maps) => {
                 m.edit(`**${title}**\n\`${maps.join('\n')}\``);
               });
             });

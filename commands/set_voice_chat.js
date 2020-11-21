@@ -8,8 +8,20 @@ module.exports = {
   aliases: ['set_vc'],
   execute(message, args) {
     if (args.length > 0 && args[0] === 'unset') {
-      Player.updateOne({ discordId: message.author.id }, { discordVc: null, ps4Vc: null }).exec();
-      return message.channel.send('Your voice chat options have been unset.');
+      Player.findOne({ discordId: message.author.id }).then((player) => {
+        if (!player) {
+          player = new Player();
+          player.discordId = message.author.id;
+        }
+
+        player.discordVc = null;
+        player.ps4Vc = null;
+        player.save().then(() => {
+          message.channel.send('Your voice chat options have been unset.');
+        }).catch((error) => {
+          message.channel.send(`Unable to update player. Error: ${error}`);
+        });
+      });
     }
 
     const voiceChats = [
@@ -47,22 +59,33 @@ module.exports = {
         if (['1', '2', '3'].includes(content)) {
           const index = Number(content) - 1;
 
-          if (index === 0) {
-            Player.updateOne({ discordId: user.id }, { discordVc: true }).exec();
-            Player.updateOne({ discordId: user.id }, { ps4Vc: false }).exec();
-          }
+          Player.findOne({ discordId: user.id }).then((player) => {
+            if (!player) {
+              player = new Player();
+              player.discordId = user.id;
+            }
 
-          if (index === 1) {
-            Player.updateOne({ discordId: user.id }, { discordVc: false }).exec();
-            Player.updateOne({ discordId: user.id }, { ps4Vc: true }).exec();
-          }
+            if (index === 0) {
+              player.discordVc = true;
+              player.ps4Vc = null;
+            }
 
-          if (index === 2) {
-            Player.updateOne({ discordId: user.id }, { discordVc: true }).exec();
-            Player.updateOne({ discordId: user.id }, { ps4Vc: true }).exec();
-          }
+            if (index === 1) {
+              player.discordVc = null;
+              player.ps4Vc = true;
+            }
 
-          message.channel.send(`Your voice chat options have been set to "${voiceChats[index]}".`);
+            if (index === 2) {
+              player.discordVc = true;
+              player.ps4Vc = true;
+            }
+
+            player.save().then(() => {
+              message.channel.send(`Your voice chat options have been set to "${voiceChats[index]}".`);
+            }).catch((error) => {
+              message.channel.send(`Unable to update player. Error: ${error}`);
+            });
+          });
         } else {
           message.channel.send('Command canceled.');
         }

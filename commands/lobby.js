@@ -7,6 +7,7 @@ const {
   _4V4, BATTLE, DUOS, ITEMLESS, ITEMS,
 } = require('../db/models/ranked_lobbies');
 const config = require('../config.js');
+const Config = require('../db/models/config');
 const Cooldown = require('../db/models/cooldowns');
 const Counter = require('../db/models/counters');
 const Duo = require('../db/models/duos');
@@ -469,53 +470,56 @@ function startLobby(docId) {
                   if (doc.isDuos()) teamSize = 2;
                   if (doc.is4v4()) teamSize = 4;
 
-                  // Balanced team making
-                  const shuffledPlayerRanks = [];
-                  const playerModels = await Player.find({ discordId: { $in: shuffledPlayers } });
-                  const psns = playerModels.map((p) => p.psn);
-                  const rankModels = await Rank.find({ name: { $in: psns } });
-
-                  rankModels.forEach((r) => {
-                    let ranking = PLAYER_DEFAULT_RANK;
-                    if (r[doc.type]) {
-                      ranking = r[doc.type].rank;
-                    }
-
-                    const player = playerModels.find((p) => p.psn === r.name);
-
-                    shuffledPlayerRanks.push({
-                      discordId: player.discordId,
-                      rank: ranking,
-                    });
-                  });
-
-                  const sorted = shuffledPlayerRanks.sort((a, b) => a.rank - b.rank);
                   const teamCount = shuffledPlayers.length / teamSize;
 
-                  if (teamSize === 2) {
-                    for (let i = 1; i <= teamCount; i += 1) {
-                      const firstPlayer = sorted.shift();
-                      const lastPlayer = sorted.pop();
+                  // Balanced team making
+                  if (shuffledPlayers.length > 0) {
+                    const shuffledPlayerRanks = [];
+                    const playerModels = await Player.find({ discordId: { $in: shuffledPlayers } });
+                    const psns = playerModels.map((p) => p.psn);
+                    const rankModels = await Rank.find({ name: { $in: psns } });
 
-                      randomTeams.push([
-                        firstPlayer.discordId,
-                        lastPlayer.discordId,
-                      ]);
+                    rankModels.forEach((r) => {
+                      let ranking = PLAYER_DEFAULT_RANK;
+                      if (r[doc.type]) {
+                        ranking = r[doc.type].rank;
+                      }
+
+                      const player = playerModels.find((p) => p.psn === r.name);
+
+                      shuffledPlayerRanks.push({
+                        discordId: player.discordId,
+                        rank: ranking,
+                      });
+                    });
+
+                    const sorted = shuffledPlayerRanks.sort((a, b) => a.rank - b.rank);
+
+                    if (teamSize === 2) {
+                      for (let i = 1; i <= teamCount; i += 1) {
+                        const firstPlayer = sorted.shift();
+                        const lastPlayer = sorted.pop();
+
+                        randomTeams.push([
+                          firstPlayer.discordId,
+                          lastPlayer.discordId,
+                        ]);
+                      }
                     }
-                  }
 
-                  if (teamSize === 4) {
-                    if (teamCount > 1) {
-                      const result = KarmakarKarp.LDM(sorted, 'rank');
+                    if (teamSize === 4) {
+                      if (teamCount > 1) {
+                        const result = KarmakarKarp.LDM(sorted, 'rank');
 
-                      const playersA = result.A.map((a) => a.discordId);
-                      const playersB = result.B.map((b) => b.discordId);
+                        const playersA = result.A.map((a) => a.discordId);
+                        const playersB = result.B.map((b) => b.discordId);
 
-                      randomTeams.push([...playersA]);
-                      randomTeams.push([...playersB]);
-                    } else {
-                      const discordIds = sorted.map((s) => s.discordId);
-                      randomTeams.push([...discordIds]);
+                        randomTeams.push([...playersA]);
+                        randomTeams.push([...playersB]);
+                      } else {
+                        const discordIds = sorted.map((s) => s.discordId);
+                        randomTeams.push([...discordIds]);
+                      }
                     }
                   }
 
@@ -800,9 +804,26 @@ module.exports = {
 
     const { member } = message;
 
-    const now = moment();
-    if (moment('2020-10-01 00:00') >= now) {
-      return message.channel.send('Lobbies are temporarily closed.');
+    const dbConfigName = 'ranked_lobby_lock_date';
+    let dbConfig = await Config.findOne({ name: dbConfigName });
+    if (!dbConfig) {
+      dbConfig = new Config();
+      dbConfig.name = dbConfigName;
+      dbConfig.value = null;
+      dbConfig.editable = true;
+
+      dbConfig.save().then(() => {
+        console.log(`Created new config value: ${dbConfigName}`);
+      });
+    }
+
+    if (dbConfig.value) {
+      const now = moment();
+      const lockDate = moment(dbConfig.value);
+
+      if (lockDate.isValid() && lockDate >= now) {
+        return message.channel.send(`Ranked Lobbies are temporarily closed until midnight on ${lockDate.format('YYYY-MM-DD')}.`);
+      }
     }
 
     const { guild } = message;

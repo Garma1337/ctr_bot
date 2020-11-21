@@ -358,11 +358,11 @@ client.on('message', (message) => {
   if (!command) {
     Command.findOne({ name: commandName }).then((cmd) => {
       if (!cmd) {
-        return;
+        return message.reply(`the command !${commandName} does not exist.`);
       }
 
       if (!isStaff && !allowedChannels.find((c) => c.name === message.channel.name)) {
-        return message.reply('you cannot use commands in this channel!');
+        return message.reply('you cannot use commands in this channel.');
       }
 
       message.channel.send(cmd.message);
@@ -375,11 +375,11 @@ client.on('message', (message) => {
   }
 
   if (!isStaff && !allowedChannels.find((c) => c.name === message.channel.name)) {
-    return message.reply('you cannot use commands in this channel!');
+    return message.reply('you cannot use commands in this channel.');
   }
 
   if (command.permissions && !(message.member && isStaffMember(message.member))) {
-    return message.reply('you don\'t have permission to use this command!');
+    return message.reply('you don\'t have permission to use this command.');
   }
 
   if (command.args && !args.length) {
@@ -494,16 +494,51 @@ ${message.content}`;
 });
 
 client.on('presenceUpdate', (oldPresence, newPresence) => {
+  const isCTRStream = (a) => a.type === 'STREAMING' && a.state.toLowerCase().includes('crash team');
   const livestreamsChannel = newPresence.guild.channels.cache.find((c) => c.name.toLowerCase() === 'livestreams');
 
   if (livestreamsChannel) {
-    newPresence.activities.forEach((a) => {
-      if (a.type === 'STREAMING' && a.state.toLowerCase().includes('crash team')) {
-        const out = `<@!${newPresence.userID}> is streaming \`${a.details}\`!\nWatch live at <${a.url}>.`;
+    let isNewStream = true;
 
-        livestreamsChannel.send('...').then((m) => {
-          m.edit(out);
-        });
+    if (oldPresence) {
+      oldPresence.activities.forEach((a) => {
+        if (isCTRStream(a)) {
+          isNewStream = false;
+        }
+      });
+    }
+
+    newPresence.activities.forEach((a) => {
+      if (isCTRStream(a) && isNewStream) {
+        const fieldValue = [
+          `Streamer: <@!${newPresence.userID}>`,
+          `Title: ${a.details}`,
+          `Game: ${a.state}`,
+          `Started: ${moment.unix(a.createdTimestamp).fromNow()}`,
+          `Channel: ${a.url}`,
+        ];
+
+        const embed = {
+          url: a.url,
+          color: 5385620,
+          timestamp: new Date(),
+          thumbnail: {
+            url: 'https://i.imgur.com/arlgVeV.png',
+          },
+          author: {
+            name: `New Livestream on ${a.name}!`,
+            url: a.url,
+            icon_url: 'https://cdn0.iconfinder.com/data/icons/network-and-communications-1-3/128/live_stream-livestream-video-tv-streaming-512.png',
+          },
+          fields: [
+            {
+              name: 'Details',
+              value: fieldValue.join('\n'),
+            },
+          ],
+        };
+
+        livestreamsChannel.send({ embed });
       }
     });
   }

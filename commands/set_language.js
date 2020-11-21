@@ -9,8 +9,19 @@ module.exports = {
   cooldown: 60,
   execute(message, args) {
     if (args[0] === 'unset') {
-      Player.updateOne({ discordId: message.author.id }, { languages: [] }).exec();
-      return message.channel.send('Your languages have been unset.');
+      Player.findOne({ discordId: message.author.id }).then((player) => {
+        if (!player) {
+          player = new Player();
+          player.discordId = message.author.id;
+        }
+
+        player.languages = [];
+        player.save().then(() => {
+          message.channel.send('Your languages have been unset.');
+        }).catch((error) => {
+          message.channel.send(`Unable to update player. Error: ${error}`);
+        });
+      });
     }
 
     return message.channel.send('Select your languages. Waiting 1 minute.').then((confirmMessage) => {
