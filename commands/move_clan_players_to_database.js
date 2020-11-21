@@ -3,8 +3,15 @@ const { ROLE_CAPTAIN, ROLE_MEMBER } = require('../db/models/clans');
 
 module.exports = {
   name: 'move_clan_players_to_database',
+  description: 'Move all clan players to the database.',
+  permissions: ['MANAGE_CHANNELS', 'MANAGE_ROLES'],
   guildOnly: true,
-  execute(message) {
+  execute(message, args) {
+    let removeRoles = false;
+    if (args.length > 0) {
+      removeRoles = (args[0] === 'remove_roles');
+    }
+
     Clan.find().then((clans) => {
       message.guild.members.cache.forEach((m) => {
         const captainRole = m.roles.cache.find((r) => r.name.toLowerCase() === 'captain');
@@ -17,12 +24,16 @@ module.exports = {
           const clanRole = m.roles.cache.find((r) => r.name.toLowerCase() === c.fullName.toLowerCase());
 
           if (clanRole) {
-            clans[i].members.push({
-              role,
-              discordId: m.user.id,
-            });
+            if (!clans[i].hasMember(m.user.id)) {
+              clans[i].members.push({
+                role,
+                discordId: m.user.id,
+              });
+            }
 
-            m.roles.remove(clanRole).then(() => {});
+            if (removeRoles) {
+              m.roles.remove(clanRole).then(() => {});
+            }
           }
         });
       });
@@ -32,8 +43,6 @@ module.exports = {
           message.channel.send(`Updated clan "${c.shortName}" ...`);
         });
       });
-
-      message.channel.send('Done.');
     });
   },
 };
