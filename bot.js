@@ -498,7 +498,7 @@ client.on('presenceUpdate', (oldPresence, newPresence) => {
 
   if (livestreamsChannel) {
     newPresence.activities.forEach((a) => {
-      if (a.type === 'STREAMING' && a.state.includes('crash team')) {
+      if (a.type === 'STREAMING' && a.state.toLowerCase().includes('crash team')) {
         const out = `<@!${newPresence.userID}> is streaming \`${a.details}\`!\nWatch live at <${a.url}>.`;
 
         livestreamsChannel.send('...').then((m) => {
