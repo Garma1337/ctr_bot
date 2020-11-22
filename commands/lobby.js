@@ -817,8 +817,8 @@ module.exports = {
       });
     }
 
+    const now = moment();
     if (dbConfig.value) {
-      const now = moment();
       const lockDate = moment(dbConfig.value);
 
       if (lockDate.isValid() && lockDate >= now) {
