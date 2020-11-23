@@ -1,5 +1,5 @@
 const {
-  _4V4, BATTLE, DUOS, ITEMLESS, ITEMS,
+  BATTLE, _4V4, _3V3, DUOS, ITEMLESS, ITEMS,
 } = require('../db/models/ranked_lobbies');
 const Player = require('../db/models/player');
 
@@ -39,6 +39,10 @@ async function generateTemplate(players, doc) {
       numberOfMaps = 5;
       break;
     case DUOS:
+      title = '#title Match #\n';
+      numberOfMaps = 8;
+      break;
+    case _3V3:
       title = '#title Match #\n';
       numberOfMaps = 8;
       break;
