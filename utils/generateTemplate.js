@@ -70,7 +70,7 @@ async function generateTemplate(players, doc) {
       });
       rows.push('');
     });
-  } else if (doc.type === _4V4) {
+  } else if ([_3V3, _4V4].includes(doc.type)) {
     rows.push(title);
     doc.teamList.forEach((duo, i) => {
       rows.push(`Team ${teams[i]} ${colors[i]}`);
