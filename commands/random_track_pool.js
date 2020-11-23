@@ -11,8 +11,8 @@ module.exports = {
   cooldown: 10,
   execute(message) {
     return message.channel.send(`Select lobby mode. Waiting 1 minute.
-\`\`\`1 - FFA / Duos (full rng)
-2 - FFA / Duos (pools)
+\`\`\`1 - FFA / Duos / 3 vs. 3 (full rng)
+2 - FFA / Duos / 3 vs. 3 (pools)
 3 - Itemless (full rng)
 4 - Itemless (pools)
 5 - 4 vs. 4 (full rng)
