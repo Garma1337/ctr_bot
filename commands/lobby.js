@@ -897,7 +897,7 @@ module.exports = {
             collectedMessage.delete();
 
             const choice = parseInt(content, 10);
-            const modes = [1, 2, 3, 4, 5];
+            const modes = [1, 2, 3, 4, 5, 6];
             if (modes.includes(choice)) {
               let type;
               switch (choice) {
