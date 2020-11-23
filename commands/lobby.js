@@ -637,7 +637,11 @@ ${settings.join('\n\n')}\`\`\``);
                     const captainBPromise = client.guilds.cache.get(doc.guild).members.fetch(getRandomArrayElement(doc.teamList[1]));
 
                     Promise.all([captainAPromise, captainBPromise]).then((captains) => {
-                      createDraft(roomChannel, '0', teams, captains);
+                      if (doc.is3v3()) {
+                        createDraft(roomChannel, '1', teams, captains);
+                      } else {
+                        createDraft(roomChannel, '0', teams, captains);
+                      }
                     });
                   }
                 });
