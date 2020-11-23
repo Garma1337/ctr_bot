@@ -513,11 +513,11 @@ client.on('presenceUpdate', (oldPresence, newPresence) => {
 
       if (isCTRStream(a) && isNewStream) {
         const fieldValue = [
-          `Streamer: <@!${newPresence.userID}>`,
-          `Title: ${a.details}`,
-          `Game: ${a.state}`,
-          `Started: ${moment.unix(timestamp).fromNow()}`,
-          `Channel: ${a.url}`,
+          `**Streamer**: <@!${newPresence.userID}>`,
+          `**Title**: ${a.details}`,
+          `**Game**: ${a.state}`,
+          `**Started**: ${moment.unix(timestamp).fromNow()}`,
+          `**Channel**: ${a.url}`,
         ];
 
         const embed = {

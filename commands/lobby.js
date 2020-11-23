@@ -4,7 +4,7 @@ const KarmakarKarp = require('karmarkar-karp');
 const { CronJob } = require('cron');
 const AsyncLock = require('async-lock');
 const {
-  _4V4, BATTLE, DUOS, ITEMLESS, ITEMS,
+  BATTLE, _4V4, _3V3, DUOS, ITEMLESS, ITEMS,
 } = require('../db/models/ranked_lobbies');
 const config = require('../config.js');
 const Config = require('../db/models/config');
@@ -53,11 +53,14 @@ function getTitle(doc) {
     case DUOS:
       title += 'Duos';
       break;
-    case BATTLE:
-      title += 'Battle';
+    case _3V3:
+      title += '3 vs. 3';
       break;
     case _4V4:
       title += '4 vs. 4';
+      break;
+    case BATTLE:
+      title += 'Battle';
       break;
     default:
       break;
@@ -82,18 +85,20 @@ function getFooter(doc) {
 
 const icons = {
   [ITEMS]: 'https://vignette.wikia.nocookie.net/crashban/images/3/32/CTRNF-BowlingBomb.png',
-  [ITEMLESS]: 'https://vignette.wikia.nocookie.net/crashban/images/9/96/NF_Champion_Wheels.png',
+  [ITEMLESS]: 'https://static.wikia.nocookie.net/crashban/images/b/b5/CTRNF-SuperEngine.png',
   [DUOS]: 'https://vignette.wikia.nocookie.net/crashban/images/8/83/CTRNF-AkuUka.png',
-  [BATTLE]: 'https://vignette.wikia.nocookie.net/crashban/images/9/97/CTRNF-Invisibility.png',
+  [_3V3]: 'https://static.wikia.nocookie.net/crashban/images/f/fd/CTRNF-TripleMissile.png',
   [_4V4]: 'https://i.imgur.com/3dvcaur.png',
+  [BATTLE]: 'https://vignette.wikia.nocookie.net/crashban/images/9/97/CTRNF-Invisibility.png',
 };
 
 const roleNames = {
-  [ITEMS]: 'ranked items',
-  [ITEMLESS]: 'ranked itemless',
-  [DUOS]: 'ranked duos',
-  [BATTLE]: 'ranked battle',
-  [_4V4]: 'ranked 4v4',
+  [ITEMS]: 'Ranked Items',
+  [ITEMLESS]: 'Ranked Itemless',
+  [DUOS]: 'Ranked duos',
+  [_3V3]: 'Ranked 3v3',
+  [_4V4]: 'Ranked 4v4',
+  [BATTLE]: 'Ranked Battle',
 };
 
 const TRACK_OPTION_RNG = 'Full RNG';
@@ -103,6 +108,7 @@ const TRACK_OPTION_DRAFT = 'Draft';
 const PLAYER_DEFAULT_RANK = 1000;
 const DEFAULT_RANK = PLAYER_DEFAULT_RANK;
 const ITEMS_MAX = 8;
+const _3V3_MAX = 6;
 const ITEMLESS_MAX = 4;
 const NAT1 = 'NAT 1';
 const NAT2O = 'NAT 2 Open';
@@ -111,8 +117,9 @@ const LOBBY_END_COOLDOWNS = {
   [ITEMS]: 50,
   [ITEMLESS]: 30,
   [DUOS]: 50,
-  [BATTLE]: 30,
+  [_3V3]: 50,
   [_4V4]: 60,
+  [BATTLE]: 30,
 };
 
 function getIcon(doc) {
@@ -155,7 +162,7 @@ async function getPlayerInfo(playerId, doc) {
   return [tag, psn, rankValue];
 }
 
-async function getEmbed(doc, players, maps, roomChannel) {
+async function getEmbed(doc, players, tracks, roomChannel) {
   let playersText = 'No players.';
   let psnAndRanks = 'No players.';
   const ranks = [];
@@ -185,9 +192,9 @@ async function getEmbed(doc, players, maps, roomChannel) {
   if (doc.teamList && doc.teamList.length) {
     playersText = '';
     playersText += '**Teams:**\n';
-    doc.teamList.forEach((duo, i) => {
+    doc.teamList.forEach((team, i) => {
       playersText += `${i + 1}.`;
-      duo.forEach((player, k) => {
+      team.forEach((player, k) => {
         const info = playersInfo[player];
         const tag = info && info.tag;
         playersText += `${k ? '⠀' : ''} ${tag}\n`;
@@ -222,7 +229,7 @@ async function getEmbed(doc, players, maps, roomChannel) {
   const timestamp = doc.started ? doc.startedAt : doc.date;
   const region = regions.find((r) => r.uid === doc.region);
 
-  if (maps) {
+  if (tracks) {
     fields = [
       {
         name: 'Players',
@@ -235,8 +242,8 @@ async function getEmbed(doc, players, maps, roomChannel) {
         inline: true,
       },
       {
-        name: 'Maps',
-        value: maps,
+        name: 'Tracks',
+        value: tracks,
         inline: true,
       },
       {
@@ -408,6 +415,7 @@ async function findRoomChannel(guildId, n) {
     const roleRankedItemless = await findRole(guild, 'Ranked Itemless');
     const roleRankedBattle = await findRole(guild, 'Ranked Battle');
     const roleRanked4v4 = await findRole(guild, 'Ranked 4v4');
+    const roleRanked3v3 = await findRole(guild, 'Ranked 3v3');
 
     channel = await guild.channels.create(channelName, {
       type: 'text',
@@ -420,6 +428,7 @@ async function findRoomChannel(guildId, n) {
     channel.createOverwrite(roleRankedItemless, { VIEW_CHANNEL: true });
     channel.createOverwrite(roleRankedBattle, { VIEW_CHANNEL: true });
     channel.createOverwrite(roleRanked4v4, { VIEW_CHANNEL: true });
+    channel.createOverwrite(roleRanked3v3, { VIEW_CHANNEL: true });
     channel.createOverwrite(guild.roles.everyone, { VIEW_CHANNEL: false });
   }
 
@@ -433,21 +442,21 @@ function startLobby(docId) {
         .get(doc.guild).channels.cache
         .get(doc.channel).messages
         .fetch(doc.message).then((message) => {
-          rngPools(doc, doc.pools).then((maps) => {
+          rngPools(doc, doc.pools).then((tracks) => {
             findRoom(doc).then((room) => {
               findRoomChannel(doc.guild, room.number).then(async (roomChannel) => {
-                const mapCount = maps.length;
+                const trackCount = tracks.length;
 
                 // Display track column but blank all tracks
-                if (doc.is4v4() && doc.draftTracks) {
-                  maps = [];
+                if (doc.isWar() && doc.draftTracks) {
+                  tracks = [];
 
-                  for (let i = 1; i <= mapCount; i += 1) {
-                    maps.push('*N/A*');
+                  for (let i = 1; i <= trackCount; i += 1) {
+                    tracks.push('*N/A*');
                   }
                 }
 
-                maps = maps.join('\n');
+                tracks = tracks.join('\n');
                 const { players } = doc;
 
                 let playersText = '';
@@ -468,6 +477,7 @@ function startLobby(docId) {
                   const randomTeams = [];
                   let teamSize = 0;
                   if (doc.isDuos()) teamSize = 2;
+                  if (doc.is3v3()) teamSize = 3;
                   if (doc.is4v4()) teamSize = 4;
 
                   const teamCount = shuffledPlayers.length / teamSize;
@@ -507,7 +517,7 @@ function startLobby(docId) {
                       }
                     }
 
-                    if (teamSize === 4) {
+                    if ([3, 4].includes(teamSize)) {
                       if (teamCount > 1) {
                         const result = KarmakarKarp.LDM(sorted, 'rank');
 
@@ -540,7 +550,7 @@ function startLobby(docId) {
                 const [PSNs, templateUrl, template] = await generateTemplate(players, doc);
 
                 message.edit({
-                  embed: await getEmbed(doc, players, maps, roomChannel),
+                  embed: await getEmbed(doc, players, tracks, roomChannel),
                 });
 
                 // todo add ranks and tags?
@@ -551,13 +561,13 @@ function startLobby(docId) {
                     inline: true,
                   },
                   {
-                    name: 'Maps',
-                    value: maps,
+                    name: 'Tracks',
+                    value: tracks,
                     inline: true,
                   },
                 ];
 
-                const modes = await rngModeBattle(maps.split('\n'));
+                const modes = await rngModeBattle(tracks.split('\n'));
 
                 if (doc.isBattle()) {
                   fields.push({
@@ -591,7 +601,7 @@ ${playersText}`,
                     },
                   });
 
-                  if (maps.includes('Tiger Temple')) {
+                  if (tracks.includes('Tiger Temple')) {
                     roomChannel.send('Remember: Tiger Temple shortcut is banned! <:feelsbanman:649075198997561356>');
                   }
 
@@ -620,7 +630,7 @@ AI: DISABLEDbei äl
 ${settings.join('\n\n')}\`\`\``);
                   }
 
-                  if (doc.is4v4() && doc.draftTracks) {
+                  if (doc.isWar() && doc.draftTracks) {
                     const teams = ['A', 'B'];
 
                     const captainAPromise = client.guilds.cache.get(doc.guild).members.fetch(getRandomArrayElement(doc.teamList[0]));
@@ -680,7 +690,7 @@ function confirmLobbyStart(doc, message, override = false) {
             if (doc.started) {
               return message.channel.send('Lobby has already been started.');
             }
-            message.channel.send('Generating maps...').then((m) => m.delete({ timeout: 3000 }));
+            message.channel.send('Generating tracks...').then((m) => m.delete({ timeout: 3000 }));
             startLobby(doc.id);
           } else {
             throw Error('cancel');
@@ -710,7 +720,7 @@ function findLobby(lobbyID, isStaff, message, callback) {
         if (isStaff) {
           return message.channel.send('There is no lobby with this ID.');
         }
-        return message.channel.send('You don\'t have lobby with this ID.');
+        return message.channel.send('You don\'t have a lobby with this ID.');
       }
       return callback(doc, message);
     });
@@ -875,8 +885,9 @@ module.exports = {
 \`\`\`1 - FFA Items
 2 - Itemless
 3 - Duos
-4 - 4v4
-5 - Battle Mode\`\`\`
+4 - 3 vs. 3
+5 - 4 vs. 4
+6 - Battle Mode\`\`\`
 `).then((confirmMessage) => {
           message.channel.awaitMessages(filter, options).then(async (collected) => {
             confirmMessage.delete();
@@ -900,9 +911,12 @@ module.exports = {
                   type = DUOS;
                   break;
                 case 4:
-                  type = _4V4;
+                  type = _3V3;
                   break;
                 case 5:
+                  type = _4V4;
+                  break;
+                case 6:
                   type = BATTLE;
                   break;
                 default:
@@ -914,7 +928,7 @@ module.exports = {
                 TRACK_OPTION_POOLS,
               ];
 
-              if (type === _4V4) {
+              if ([_3V3, _4V4].includes(type)) {
                 trackOptions.push(TRACK_OPTION_DRAFT);
               }
 
@@ -1021,7 +1035,7 @@ The value should be in the range of \`${diffMin} to ${diffMax}\`. The value defa
                       }
 
                       let allowPremadeTeams = true;
-                      if ([DUOS, _4V4].includes(type)) {
+                      if ([DUOS, _3V3, _4V4].includes(type)) {
                         const sentMessage = await message.channel.send('Do you want to allow premade teams? (yes / no)');
                         allowPremadeTeams = await message.channel.awaitMessages(filter, options).then((collected2) => {
                           sentMessage.delete();
@@ -1562,7 +1576,7 @@ async function mogi(reaction, user, removed = false) {
 
           const playersCount = players.length;
           if (!removed) {
-            if ((doc.isItemless() || doc.isBattle()) && doc.hasMinimumRequiredPlayers()) {
+            if ((doc.isItemless() || doc.isBattle() || doc.is3v3()) && doc.hasMinimumRequiredPlayers()) {
               return;
             }
 
@@ -1698,12 +1712,26 @@ async function mogi(reaction, user, removed = false) {
               }
             }
             doc.teamList = teamList;
-          } else if (doc.is4v4()) {
+          } else if (doc.isWar()) {
             const team = await Team.findOne({
               guild: guild.id,
               players: user.id,
             });
             if (team) {
+              if (doc.is3v3() && team.players.length === 4) {
+                reaction.users.remove(user);
+                const errorMsg = `${user}, you cannot join a 3 vs. 3 lobby with a team of 4 players.`;
+                user.createDM().then((dmChannel) => dmChannel.send(errorMsg)).catch(() => { });
+                return rankedGeneral.send(errorMsg).then((m) => m.delete({ timeout: 60000 }));
+              }
+
+              if (doc.is4v4() && team.players.length === 3) {
+                reaction.users.remove(user);
+                const errorMsg = `${user}, you cannot join a 4 vs. 4 lobby with a team of 3 players.`;
+                user.createDM().then((dmChannel) => dmChannel.send(errorMsg)).catch(() => { });
+                return rankedGeneral.send(errorMsg).then((m) => m.delete({ timeout: 60000 }));
+              }
+
               if (!doc.allowPremadeTeams) {
                 reaction.users.remove(user);
                 const errorMsg = `${user}, this lobby does not allow premade teams.`;
@@ -1785,7 +1813,7 @@ async function mogi(reaction, user, removed = false) {
                 }
 
                 if (!doc.locked.$isEmpty()) {
-                  const averageRank = Math.ceil(rankSum / 4);
+                  const averageRank = Math.ceil(rankSum / team.players.length);
 
                   const minRank = doc.locked.rank - doc.locked.shift;
                   const maxRank = doc.locked.rank + doc.locked.shift;
@@ -1800,12 +1828,19 @@ async function mogi(reaction, user, removed = false) {
                   }
                 }
 
-                if (playersCount > 4) {
+                let cutoffPlayerCount;
+                if (doc.is4v4()) {
+                  cutoffPlayerCount = 4;
+                } else {
+                  cutoffPlayerCount = 3;
+                }
+
+                if (playersCount > cutoffPlayerCount) {
                   const soloQueue = players.filter((p) => !doc.teamList.flat().includes(p));
                   if (doc.teamList.length) {
                     players = players.filter((p) => !soloQueue.includes(p));
                   } else {
-                    const soloToKick = soloQueue.slice(4);
+                    const soloToKick = soloQueue.slice(cutoffPlayerCount);
                     players = players.filter((p) => !soloToKick.includes(p));
                   }
                 }
@@ -1851,7 +1886,7 @@ async function mogi(reaction, user, removed = false) {
           return doc.save().then(async (newDoc) => {
             const count = players.length;
             if (count) {
-              if (((doc.isItemless() || doc.isBattle()) && count === ITEMLESS_MAX) || (count === ITEMS_MAX)) {
+              if ((doc.is3v3() && count === _3V3_MAX) || ((doc.isItemless() || doc.isBattle()) && count === ITEMLESS_MAX) || (count === ITEMS_MAX)) {
                 startLobby(doc.id);
               } else {
                 message.edit({
@@ -1957,18 +1992,20 @@ const checkOldLobbies = () => {
 
       const remindMinutes = {
         [ITEMLESS]: [30, 45],
-        [BATTLE]: [30, 45],
         [ITEMS]: [45, 60],
         [DUOS]: [45, 60],
+        [_3V3]: [45, 60],
         [_4V4]: [60, 75],
+        [BATTLE]: [30, 45],
       };
 
       const pingMinutes = {
         [ITEMLESS]: [60, 75, 90, 105, 120],
-        [BATTLE]: [60, 75, 90, 105, 120],
         [ITEMS]: [75, 90, 105, 120],
         [DUOS]: [75, 90, 105, 120],
+        [_3V3]: [75, 90, 105, 120],
         [_4V4]: [90, 105, 120, 135],
+        [BATTLE]: [60, 75, 90, 105, 120],
       };
 
       if (remindMinutes[doc.type].includes(minutes)) {
@@ -2056,12 +2093,10 @@ const correctSumsByTeamsCount = {
     6: 192,
     5: 136,
     4: 55,
-    3: 35,
-    2: 20,
   },
   2: {
     8: 390,
-    4: 80,
+    6: 176,
   },
   3: {
     6: 168,
@@ -2213,8 +2248,9 @@ async function getRanks() {
     [ITEMS]: 'ay6wNS',
     [ITEMLESS]: 'pAfqYh',
     [DUOS]: 'c9iLJU',
-    [BATTLE]: 'oXNYH1',
+    [_3V3]: 'V8s-GJ',
     [_4V4]: '4fBRNF',
+    [BATTLE]: 'oXNYH1',
   };
 
   const ranks = {};
@@ -2303,7 +2339,7 @@ client.on('guildMemberUpdate', async (oldMember, newMember) => {
     Player.findOne({ discordId: newMember.id }).then((doc) => {
       if (!doc || !doc.psn) {
         channel.send(`${newMember}, welcome to the ranked lobbies.
-Make sure to read the ${rankedRules} and ${rankedGuide} and set your PSN by using \`!set_psn\` before you can join any lobbies.`);
+Make sure to read the ${rankedRules} and ${rankedGuide} and set your PSN by using \`!set_psn\` before you can join any lobby.`);
       }
     });
   }
@@ -2341,7 +2377,7 @@ function checkOldTeams() {
     .then((teams) => {
       teams.forEach((team) => {
         RankedLobby.findOne({
-          type: _4V4,
+          type: { $in: [_3V3, _4V4] },
           players: { $in: teams.players },
         }).then((activeLobby) => {
           if (!activeLobby) {

@@ -58,7 +58,7 @@ module.exports = {
 
       case 'languages':
         embedHeading = 'Languages';
-        const languages = {};
+        let languages = {};
 
         players.forEach((p) => {
           p.languages.forEach((l) => {
@@ -69,6 +69,8 @@ module.exports = {
             }
           });
         });
+
+        languages = sortObject(languages);
 
         for (const i in languages) {
           elements.push(`${i} - ${languages[i]} players`);

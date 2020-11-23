@@ -6,15 +6,16 @@ const calculateSuperScore = require('../utils/calculateSuperScore');
 const { regions } = require('../utils/regions');
 
 const {
-  _4V4, BATTLE, DUOS, ITEMLESS, ITEMS,
+  BATTLE, _4V4, _3V3, DUOS, ITEMLESS, ITEMS,
 } = require('../db/models/ranked_lobbies');
 
 const ranks = {
   [ITEMS]: 'Items',
   [ITEMLESS]: 'Itemless',
   [DUOS]: 'Duos',
-  [BATTLE]: 'Battle',
+  [_3V3]: '3v3',
   [_4V4]: '4v4',
+  [BATTLE]: 'Battle',
 };
 
 /**
@@ -291,23 +292,26 @@ module.exports = {
               '**FFA**: -',
               '**Itemless**: -',
               '**Duos**: -',
-              '**Battle**: -',
+              '**3 vs. 3**: -',
               '**4 vs. 4**: -',
+              '**Battle**: -',
               '**Super Score**: -',
             ];
           } else {
             const itemsRanking = getRankingPosition(rank, ranks[ITEMS]);
             const itemlessRanking = getRankingPosition(rank, ranks[ITEMLESS]);
             const duosRanking = getRankingPosition(rank, ranks[DUOS]);
-            const battleRanking = getRankingPosition(rank, ranks[BATTLE]);
+            const _3v3Ranking = getRankingPosition(rank, ranks[_3V3]);
             const _4v4Ranking = getRankingPosition(rank, ranks[_4V4]);
+            const battleRanking = getRankingPosition(rank, ranks[BATTLE]);
 
             playerRanks = [
               `**FFA**: ${itemsRanking !== '-' ? `#${itemsRanking} - ${getRankingRating(rank, ranks[ITEMS])}` : '-'}`,
               `**Itemless**: ${itemlessRanking !== '-' ? `#${itemlessRanking} - ${getRankingRating(rank, ranks[ITEMLESS])}` : '-'}`,
               `**Duos**: ${duosRanking !== '-' ? `#${duosRanking} - ${getRankingRating(rank, ranks[DUOS])}` : '-'}`,
-              `**Battle**: ${battleRanking !== '-' ? `#${battleRanking} - ${getRankingRating(rank, ranks[BATTLE])}` : '-'}`,
+              `**3 vs. 3**: ${_3v3Ranking !== '-' ? `#${_3v3Ranking} - ${getRankingRating(rank, ranks[_3V3])}` : '-'}`,
               `**4 vs. 4**: ${_4v4Ranking !== '-' ? `#${_4v4Ranking} - ${getRankingRating(rank, ranks[_4V4])}` : '-'}`,
+              `**Battle**: ${battleRanking !== '-' ? `#${battleRanking} - ${getRankingRating(rank, ranks[BATTLE])}` : '-'}`,
               `**Super Score**: ${calculateSuperScore(rank)}`,
             ];
           }

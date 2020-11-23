@@ -4,15 +4,16 @@ const calculateSuperScore = require('../utils/calculateSuperScore');
 const createPageableContent = require('../utils/createPageableContent');
 
 const {
-  _4V4, BATTLE, DUOS, ITEMLESS, ITEMS,
+  BATTLE, _4V4, _3V3, DUOS, ITEMLESS, ITEMS,
 } = require('../db/models/ranked_lobbies');
 
 const ranks = {
   [ITEMS]: 'Items',
   [ITEMLESS]: 'Itemless',
   [DUOS]: 'Duos',
+  [_3V3]: '3 vs. 3',
+  [_4V4]: '4 vs. 4',
   [BATTLE]: 'Battle',
-  [_4V4]: '4v4',
 };
 
 function sendMessage(message, rank) {

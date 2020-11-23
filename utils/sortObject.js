@@ -4,12 +4,7 @@
  * @returns {{}}
  */
 function sortObject(object) {
-  const ordered = {};
-  Object.keys(object).sort().forEach((key) => {
-    ordered[key] = object[key];
-  });
-
-  return ordered;
+  return Object.fromEntries(Object.entries(object).sort(([, a], [, b]) => b - a));
 }
 
 module.exports = sortObject;

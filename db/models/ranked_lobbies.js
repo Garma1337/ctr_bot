@@ -5,14 +5,16 @@ const { Schema, model } = mongoose;
 const ITEMS = 'items';
 const ITEMLESS = 'itemless';
 const DUOS = 'duos';
-const BATTLE = 'battle';
+const _3V3 = '3v3';
 const _4V4 = '4v4';
+const BATTLE = 'battle';
 
 module.exports.ITEMS = ITEMS;
 module.exports.ITEMLESS = ITEMLESS;
 module.exports.DUOS = DUOS;
-module.exports.BATTLE = BATTLE;
+module.exports._3V3 = _3V3;
 module.exports._4V4 = _4V4;
+module.exports.BATTLE = BATTLE;
 
 const RankedLobby = new Schema({
   date: { type: Date, default: Date.now },
@@ -28,7 +30,7 @@ const RankedLobby = new Schema({
   locked: { rank: Number, shift: Number },
   region: String,
   teamList: Array,
-  type: { type: String, enum: [ITEMS, ITEMLESS, DUOS, BATTLE, _4V4] },
+  type: { type: String, enum: [ITEMS, ITEMLESS, DUOS, _3V3, _4V4, BATTLE] },
   allowPremadeTeams: { type: Boolean, default: true },
   draftTracks: { type: Boolean, default: false },
 });
@@ -37,16 +39,19 @@ RankedLobby.methods = {
   isItems() { return this.type === ITEMS; },
   isItemless() { return this.type === ITEMLESS; },
   isDuos() { return this.type === DUOS; },
-  isBattle() { return this.type === BATTLE; },
+  is3v3() { return this.type === _3V3; },
   is4v4() { return this.type === _4V4; },
-  isTeams() { return [DUOS, _4V4].includes(this.type); },
+  isBattle() { return this.type === BATTLE; },
+  isTeams() { return [DUOS, _3V3, _4V4].includes(this.type); },
+  isWar() { return [_3V3, _4V4].includes(this.type); },
   getMinimumRequiredPlayers() {
     const requirements = {
       [ITEMS]: 6,
       [ITEMLESS]: 4,
       [DUOS]: 6,
-      [BATTLE]: 4,
+      [_3V3]: 6,
       [_4V4]: 8,
+      [BATTLE]: 4,
     };
 
     return requirements[this.type];

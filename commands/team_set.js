@@ -2,11 +2,11 @@ const Team = require('../db/models/teams');
 const RankedLobby = require('../db/models/ranked_lobbies').default;
 const Player = require('../db/models/player');
 const RankedBan = require('../db/models/ranked_bans');
-const { _4V4 } = require('../db/models/ranked_lobbies');
+const { _4V4, _3V3 } = require('../db/models/ranked_lobbies');
 
 module.exports = {
   name: 'team_set',
-  description: 'Set your team for Ranked 4v4.',
+  description: 'Set your team for Ranked 3 vs. 3 and ranked 4 vs. 4.',
   guildOnly: true,
   aliases: ['set_team', 'team_s'],
   async execute(message) {
@@ -15,8 +15,15 @@ module.exports = {
       return message.reply('you should tag your teammates.');
     }
 
-    if (tagsCount < 3 || tagsCount > 3) {
-      return message.reply('you should tag 3 people.');
+    if (![2, 3].includes(tagsCount)) {
+      return message.reply('you should tag 3 or 4 people.');
+    }
+
+    let mode;
+    if (tagsCount === 2) {
+      mode = '3 vs. 3';
+    } else if (tagsCount === 3) {
+      mode = '4 vs. 4';
     }
 
     const { author, guild } = message;
@@ -36,12 +43,12 @@ module.exports = {
 
     const authorBanned = await RankedBan.findOne({ discordId: author.id, guildId: guild.id });
     if (authorBanned) {
-      return message.reply('you are banned.');
+      return message.reply('you are banned from ranked lobbies.');
     }
 
     const authorPlayer = await Player.findOne({ discordId: author.id });
     if (!authorPlayer || !authorPlayer.psn) {
-      return message.reply('you didn\'t set PSN');
+      return message.reply('you didn\'t set your PSN ID.');
     }
 
     const authorSavedTeam = await Team.findOne({ guild: guild.id, players: author.id });
@@ -49,9 +56,9 @@ module.exports = {
       return message.channel.send('...').then((m) => m.edit(`${author}, you are already in a team.`));
     }
 
-    const lobby = await RankedLobby.findOne({ type: _4V4, players: { $in: [author.id, ...teammateIds] } });
+    const lobby = await RankedLobby.findOne({ type: { $in: [_4V4, _3V3] }, players: { $in: [author.id, ...teammateIds] } });
     if (lobby) {
-      return message.reply('you can\'t set a team while one of you are in a lobby.');
+      return message.reply('you can\'t set a team while one of you is playing a ranked match.');
     }
 
     for (const teammate of teammates.array()) {
@@ -67,7 +74,7 @@ module.exports = {
 
       const partnerPSN = await Player.findOne({ discordId: teammate.id });
       if (!partnerPSN || !partnerPSN.psn) {
-        return message.reply(`${teammate} didn't set PSN`);
+        return message.reply(`${teammate} didn't set their PSN ID.`);
       }
 
       const partnerSavedTeam = await Team.findOne({
@@ -81,22 +88,22 @@ module.exports = {
 
     const teammatesPing = teammates.map((t) => t.toString()).join(', ');
     message.channel.send('...')
-      .then((msg) => msg.edit(`${teammatesPing}, please confirm that you are teammates of ${author} for ranked 4 vs. 4.`))
+      .then((msg) => msg.edit(`${teammatesPing}, please confirm that you are teammates of ${author} for ranked ${mode}.`))
       .then((confirmMessage) => {
         confirmMessage.react('✅');
 
         const filter = (r, u) => r.emoji.name === '✅' && teammateIds.includes(u.id);
-        confirmMessage.awaitReactions(filter, { max: 3, time: 3 * 60000, errors: ['time'] })
+        confirmMessage.awaitReactions(filter, { max: tagsCount, time: tagsCount * 60000, errors: ['time'] })
           .then(async (collected) => {
             // eslint-disable-next-line no-shadow
-            const lobby = await RankedLobby.findOne({ guild: guild.id, type: _4V4, players: author.id });
+            const lobby = await RankedLobby.findOne({ guild: guild.id, type: { $in: [_4V4, _3V3] }, players: author.id });
             if (lobby) {
-              return confirmMessage.edit(`Command cancelled: ${author} joined a lobby.`);
+              return confirmMessage.edit(`Command cancelled: ${author} joined another ranked lobby.`);
             }
 
             const teamExists = await Team.findOne({ guild: guild.id, players: { $in: [author.id, ...teammateIds] } });
             if (teamExists) {
-              return confirmMessage.edit('Command cancelled: one of you have already set a team.');
+              return confirmMessage.edit('Command cancelled: One of you has already set a team.');
             }
 
             const teamPing = [author, ...teammates.array()].map((p) => p.toString()).join(', ');

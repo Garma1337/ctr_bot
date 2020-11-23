@@ -1,6 +1,7 @@
 const {
-  _4V4, BATTLE, DUOS, ITEMLESS, ITEMS,
+  BATTLE, _4V4, _3V3, DUOS, ITEMLESS, ITEMS,
 } = require('../db/models/ranked_lobbies');
+
 const {
   itemPools, battlePools, _4v4Pools,
 } = require('./pools');
@@ -13,6 +14,7 @@ async function rngPools(doc) {
   switch (doc.type) {
     case ITEMS:
     case DUOS:
+    case _3V3:
       N = 8;
       pools = itemPools;
       break;
