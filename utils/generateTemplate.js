@@ -60,21 +60,11 @@ async function generateTemplate(players, doc) {
 
   const rows = [];
   const points = `${Array(numberOfMaps).fill(0).join('|')}`;
-  if (doc.type === DUOS) {
+  if (doc.isTeams()) {
     rows.push(title);
-    doc.teamList.forEach((duo, i) => {
+    doc.teamList.forEach((team, i) => {
       rows.push(`Team ${teams[i]} ${colors[i]}`);
-      duo.forEach((playerId) => {
-        const p = playerDocs.find((d) => d.discordId === playerId);
-        rows.push(`${getPlayerData(p)} ${points}`);
-      });
-      rows.push('');
-    });
-  } else if ([_3V3, _4V4].includes(doc.type)) {
-    rows.push(title);
-    doc.teamList.forEach((duo, i) => {
-      rows.push(`Team ${teams[i]} ${colors[i]}`);
-      duo.forEach((playerId) => {
+      team.forEach((playerId) => {
         const p = playerDocs.find((d) => d.discordId === playerId);
         rows.push(`${getPlayerData(p)} ${points}`);
       });
@@ -86,6 +76,7 @@ async function generateTemplate(players, doc) {
       .sort((a, b) => a.psn.toLowerCase().localeCompare(b.psn.toLowerCase()));
     rows.push(...playersAlphabetic.map((p) => `${getPlayerData(p)} ${points}`));
   }
+
   const template = `${rows.join('\n')}`;
   let encodedData = encodeURI(template);
   encodedData = encodedData.replace(/#/g, '%23');

@@ -4,6 +4,7 @@ const Rank = require('../db/models/rank');
 const createPageableContent = require('../utils/createPageableContent');
 const calculateSuperScore = require('../utils/calculateSuperScore');
 const isStaffMember = require('../utils/isStaffMember');
+const getConfigValue = require('../utils/getConfigValue');
 
 function escapeRegExp(string) {
   return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
@@ -116,54 +117,57 @@ Edit clans:
           });
 
           Rank.find({ name: { $in: psns } }).then((ranks) => {
-            const superScores = [];
+            const promise = getConfigValue('super_score_base_rank');
+            Promise.resolve(promise).then((baseRank) => {
+              const superScores = [];
 
-            ranks.forEach((r) => {
-              superScores[r.name] = calculateSuperScore(r);
-            });
+              ranks.forEach((r) => {
+                superScores[r.name] = calculateSuperScore(r, baseRank);
+              });
 
-            for (const i in clanMembers) {
-              let superScoreSum = 0;
-              clanMembers[i].superScoreCount = 0;
+              for (const i in clanMembers) {
+                let superScoreSum = 0;
+                clanMembers[i].superScoreCount = 0;
 
-              clanMembers[i].members.forEach((m) => {
-                const psn = psnMapping[m];
-                const superScore = superScores[psn] || 0;
-                superScoreSum += superScore;
+                clanMembers[i].members.forEach((m) => {
+                  const psn = psnMapping[m];
+                  const superScore = superScores[psn] || 0;
+                  superScoreSum += superScore;
 
-                if (superScore > 0) {
-                  clanMembers[i].superScoreCount += 1;
+                  if (superScore > 0) {
+                    clanMembers[i].superScoreCount += 1;
+                  }
+                });
+
+                if (clanMembers[i].members.length > 1) {
+                  clanMembers[i].score = Math.floor(superScoreSum / clanMembers[i].superScoreCount);
+                } else {
+                  clanMembers[i].score = superScoreSum;
                 }
-              });
-
-              if (clanMembers[i].members.length > 1) {
-                clanMembers[i].score = Math.floor(superScoreSum / clanMembers[i].superScoreCount);
-              } else {
-                clanMembers[i].score = superScoreSum;
               }
-            }
 
-            const transformed = [];
+              const transformed = [];
 
-            for (const x in clanMembers) {
-              transformed.push({
-                shortName: clanMembers[x].shortName,
-                fullName: clanMembers[x].fullName,
-                members: clanMembers[x].members,
-                score: clanMembers[x].score,
+              for (const x in clanMembers) {
+                transformed.push({
+                  shortName: clanMembers[x].shortName,
+                  fullName: clanMembers[x].fullName,
+                  members: clanMembers[x].members,
+                  score: clanMembers[x].score,
+                });
+              }
+
+              const clanList = transformed
+                .sort((a, b) => b.score - a.score)
+                .map((c, i) => `${i + 1}. **${c.fullName}** [${c.shortName}] - Score: ${c.score} - Members: ${c.members.length}`);
+
+              createPageableContent(message.channel, message.author.id, {
+                outputType: 'embed',
+                elements: clanList,
+                elementsPerPage: 20,
+                embedOptions: { heading: `CTR Clan Ranking (${clanList.length} Clans)` },
+                reactionCollectorOptions: { time: 3600000 },
               });
-            }
-
-            const clanList = transformed
-              .sort((a, b) => b.score - a.score)
-              .map((c, i) => `${i + 1}. **${c.fullName}** [${c.shortName}] - Score: ${c.score} - Members: ${c.members.length}`);
-
-            createPageableContent(message.channel, message.author.id, {
-              outputType: 'embed',
-              elements: clanList,
-              elementsPerPage: 20,
-              embedOptions: { heading: `CTR Clan Ranking (${clanList.length} Clans)` },
-              reactionCollectorOptions: { time: 3600000 },
             });
           });
         });
@@ -251,77 +255,80 @@ Edit clans:
             });
 
             Rank.find({ name: { $in: psns } }).then((ranks) => {
-              const superScores = {};
-              let superScoreSum = 0;
-              let superScoreCount = 0;
+              const promise = getConfigValue('super_score_base_rank');
+              Promise.resolve(promise).then((baseRank) => {
+                const superScores = {};
+                let superScoreSum = 0;
+                let superScoreCount = 0;
 
-              clan.getMemberIds().forEach((m) => {
-                const psn = psnMapping[m] || null;
-                if (psn) {
-                  const rank = ranks.find((r) => r.name === psn);
+                clan.getMemberIds().forEach((m) => {
+                  const psn = psnMapping[m] || null;
+                  if (psn) {
+                    const rank = ranks.find((r) => r.name === psn);
 
-                  if (rank) {
-                    const superScore = calculateSuperScore(rank);
-                    superScores[psn] = superScore;
-                    superScoreSum += superScore;
+                    if (rank) {
+                      const superScore = calculateSuperScore(rank, baseRank);
+                      superScores[psn] = superScore;
+                      superScoreSum += superScore;
 
-                    superScoreCount += 1;
+                      superScoreCount += 1;
+                    }
                   }
-                }
-              });
+                });
 
-              const averageSuperScore = Math.floor(superScoreSum / superScoreCount);
+                const averageSuperScore = Math.floor(superScoreSum / superScoreCount);
 
-              const formatMembers = (m) => {
-                let out = '';
-                const player = docs.find((p) => p.discordId === m);
-                const isCaptain = clan.hasCaptain(m);
+                const formatMembers = (m) => {
+                  let out = '';
+                  const player = docs.find((p) => p.discordId === m);
+                  const isCaptain = clan.hasCaptain(m);
 
-                if (player && player.flag) {
-                  out += `${player.flag}`;
-                } else {
-                  out += ':united_nations:';
-                }
-
-                out += ` <@!${m}>`;
-
-                if (isCaptain) {
-                  out += ' :crown:';
-                }
-
-                return out;
-              };
-
-              const formatPsns = (m) => {
-                let out;
-                const player = docs.find((p) => p.discordId === m);
-
-                if (player && player.psn) {
-                  out = `${player.psn.replace(/_/g, '\\_')}`;
-
-                  if (superScores[player.psn]) {
-                    out += ` (Score: ${superScores[player.psn]})`;
+                  if (player && player.flag) {
+                    out += `${player.flag}`;
+                  } else {
+                    out += ':united_nations:';
                   }
-                } else {
-                  out = '-';
-                }
 
-                return out;
-              };
+                  out += ` <@!${m}>`;
 
-              const embed = getProfileEmbed({
-                name: clan.fullName,
-                tag: clan.shortName,
-                color: clan.color,
-                description: clan.description,
-                logo: clan.logo,
-                score: averageSuperScore,
-                discord: clan.discord,
-                members: clan.getMemberIds().map(formatMembers),
-                psns: clan.getMemberIds().map(formatPsns),
+                  if (isCaptain) {
+                    out += ' :crown:';
+                  }
+
+                  return out;
+                };
+
+                const formatPsns = (m) => {
+                  let out;
+                  const player = docs.find((p) => p.discordId === m);
+
+                  if (player && player.psn) {
+                    out = `${player.psn.replace(/_/g, '\\_')}`;
+
+                    if (superScores[player.psn]) {
+                      out += ` (Score: ${superScores[player.psn]})`;
+                    }
+                  } else {
+                    out = '-';
+                  }
+
+                  return out;
+                };
+
+                const embed = getProfileEmbed({
+                  name: clan.fullName,
+                  tag: clan.shortName,
+                  color: clan.color,
+                  description: clan.description,
+                  logo: clan.logo,
+                  score: averageSuperScore,
+                  discord: clan.discord,
+                  members: clan.getMemberIds().map(formatMembers),
+                  psns: clan.getMemberIds().map(formatPsns),
+                });
+
+                return message.channel.send({ embed });
               });
-
-              return message.channel.send({ embed });
             });
           });
         } else {

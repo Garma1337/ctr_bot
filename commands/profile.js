@@ -3,6 +3,7 @@ const Clan = require('../db/models/clans').default;
 const Player = require('../db/models/player');
 const Rank = require('../db/models/rank');
 const calculateSuperScore = require('../utils/calculateSuperScore');
+const getConfigValue = require('../utils/getConfigValue');
 const { regions } = require('../utils/regions');
 
 const {
@@ -285,114 +286,117 @@ module.exports = {
 
         /* Ranks */
         Rank.findOne({ name: psn }).then((rank) => {
-          let playerRanks;
+          const promise = getConfigValue('super_score_base_rank');
+          Promise.resolve(promise).then((baseRank) => {
+            let playerRanks;
 
-          if (!rank) {
-            playerRanks = [
-              '**FFA**: -',
-              '**Itemless**: -',
-              '**Duos**: -',
-              '**3 vs. 3**: -',
-              '**4 vs. 4**: -',
-              '**Battle**: -',
-              '**Super Score**: -',
-            ];
-          } else {
-            const itemsRanking = getRankingPosition(rank, ranks[ITEMS]);
-            const itemlessRanking = getRankingPosition(rank, ranks[ITEMLESS]);
-            const duosRanking = getRankingPosition(rank, ranks[DUOS]);
-            const _3v3Ranking = getRankingPosition(rank, ranks[_3V3]);
-            const _4v4Ranking = getRankingPosition(rank, ranks[_4V4]);
-            const battleRanking = getRankingPosition(rank, ranks[BATTLE]);
+            if (!rank) {
+              playerRanks = [
+                '**FFA**: -',
+                '**Itemless**: -',
+                '**Duos**: -',
+                '**3 vs. 3**: -',
+                '**4 vs. 4**: -',
+                '**Battle**: -',
+                '**Super Score**: -',
+              ];
+            } else {
+              const itemsRanking = getRankingPosition(rank, ranks[ITEMS]);
+              const itemlessRanking = getRankingPosition(rank, ranks[ITEMLESS]);
+              const duosRanking = getRankingPosition(rank, ranks[DUOS]);
+              const _3v3Ranking = getRankingPosition(rank, ranks[_3V3]);
+              const _4v4Ranking = getRankingPosition(rank, ranks[_4V4]);
+              const battleRanking = getRankingPosition(rank, ranks[BATTLE]);
 
-            playerRanks = [
-              `**FFA**: ${itemsRanking !== '-' ? `#${itemsRanking} - ${getRankingRating(rank, ranks[ITEMS])}` : '-'}`,
-              `**Itemless**: ${itemlessRanking !== '-' ? `#${itemlessRanking} - ${getRankingRating(rank, ranks[ITEMLESS])}` : '-'}`,
-              `**Duos**: ${duosRanking !== '-' ? `#${duosRanking} - ${getRankingRating(rank, ranks[DUOS])}` : '-'}`,
-              `**3 vs. 3**: ${_3v3Ranking !== '-' ? `#${_3v3Ranking} - ${getRankingRating(rank, ranks[_3V3])}` : '-'}`,
-              `**4 vs. 4**: ${_4v4Ranking !== '-' ? `#${_4v4Ranking} - ${getRankingRating(rank, ranks[_4V4])}` : '-'}`,
-              `**Battle**: ${battleRanking !== '-' ? `#${battleRanking} - ${getRankingRating(rank, ranks[BATTLE])}` : '-'}`,
-              `**Super Score**: ${calculateSuperScore(rank)}`,
-            ];
-          }
+              playerRanks = [
+                `**FFA**: ${itemsRanking !== '-' ? `#${itemsRanking} - ${getRankingRating(rank, ranks[ITEMS])}` : '-'}`,
+                `**Itemless**: ${itemlessRanking !== '-' ? `#${itemlessRanking} - ${getRankingRating(rank, ranks[ITEMLESS])}` : '-'}`,
+                `**Duos**: ${duosRanking !== '-' ? `#${duosRanking} - ${getRankingRating(rank, ranks[DUOS])}` : '-'}`,
+                `**3 vs. 3**: ${_3v3Ranking !== '-' ? `#${_3v3Ranking} - ${getRankingRating(rank, ranks[_3V3])}` : '-'}`,
+                `**4 vs. 4**: ${_4v4Ranking !== '-' ? `#${_4v4Ranking} - ${getRankingRating(rank, ranks[_4V4])}` : '-'}`,
+                `**Battle**: ${battleRanking !== '-' ? `#${battleRanking} - ${getRankingRating(rank, ranks[BATTLE])}` : '-'}`,
+                `**Super Score**: ${calculateSuperScore(rank, baseRank)}`,
+              ];
+            }
 
-          embedFields.push({
-            name: ':checkered_flag: Rankings',
-            value: playerRanks.join('\n'),
-            inline: true,
+            embedFields.push({
+              name: ':checkered_flag: Rankings',
+              value: playerRanks.join('\n'),
+              inline: true,
+            });
+
+            /* Achievements */
+            const achievements = [];
+
+            if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === 'admin')) {
+              achievements.push('Administrator');
+            }
+
+            if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === 'staff')) {
+              achievements.push('Staff Member');
+            }
+
+            if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === 'bot developer')) {
+              achievements.push('Bot Developer');
+            }
+
+            if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === 'crashteamranking staff')) {
+              achievements.push('CTRanking Staff');
+            }
+
+            if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === 'donator')) {
+              achievements.push('Donator');
+            }
+
+            if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === 'world cup champion')) {
+              achievements.push('World Cup Champion');
+            }
+
+            if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === 'tournament champion')) {
+              achievements.push('Tournament Champion');
+            }
+
+            if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === 'ranked champion')) {
+              achievements.push('Ranked Champion');
+            }
+
+            if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === 'challenge master')) {
+              achievements.push('Challenge Master');
+            }
+
+            if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === 'captain')) {
+              achievements.push('Captain');
+            }
+
+            if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === 'server booster')) {
+              achievements.push('Server Booster');
+            }
+
+            const currentDate = moment(new Date());
+            const joinDate = moment(guildMember.joinedAt);
+
+            if (currentDate.diff(joinDate, 'years', true) > 1) {
+              achievements.push('Member for over 1 year');
+            }
+
+            if (player.psn && player.flag && player.nat && player.timeZone && player.birthday && (player.discordVc || player.ps4Vc) && player.favCharacter && player.favCharacter) {
+              achievements.push('Complete Profile');
+            }
+
+            const achievementCount = achievements.length;
+            if (achievementCount < 1) {
+              achievements.push('None');
+            }
+
+            embedFields.push({
+              name: `:trophy: Achievements (${achievementCount})`,
+              value: achievements.join('\n'),
+              inline: true,
+            });
+
+            const embed = getEmbed(guildMember, embedFields);
+            return message.channel.send({ embed });
           });
-
-          /* Achievements */
-          const achievements = [];
-
-          if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === 'admin')) {
-            achievements.push('Administrator');
-          }
-
-          if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === 'staff')) {
-            achievements.push('Staff Member');
-          }
-
-          if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === 'bot developer')) {
-            achievements.push('Bot Developer');
-          }
-
-          if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === 'crashteamranking staff')) {
-            achievements.push('CTRanking Staff');
-          }
-
-          if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === 'donator')) {
-            achievements.push('Donator');
-          }
-
-          if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === 'world cup champion')) {
-            achievements.push('World Cup Champion');
-          }
-
-          if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === 'tournament champion')) {
-            achievements.push('Tournament Champion');
-          }
-
-          if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === 'ranked champion')) {
-            achievements.push('Ranked Champion');
-          }
-
-          if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === 'challenge master')) {
-            achievements.push('Challenge Master');
-          }
-
-          if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === 'captain')) {
-            achievements.push('Captain');
-          }
-
-          if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === 'server booster')) {
-            achievements.push('Server Booster');
-          }
-
-          const currentDate = moment(new Date());
-          const joinDate = moment(guildMember.joinedAt);
-
-          if (currentDate.diff(joinDate, 'years', true) > 1) {
-            achievements.push('Member for over 1 year');
-          }
-
-          if (player.psn && player.flag && player.nat && player.timeZone && player.birthday && (player.discordVc || player.ps4Vc) && player.favCharacter && player.favCharacter) {
-            achievements.push('Complete Profile');
-          }
-
-          const achievementCount = achievements.length;
-          if (achievementCount < 1) {
-            achievements.push('None');
-          }
-
-          embedFields.push({
-            name: `:trophy: Achievements (${achievementCount})`,
-            value: achievements.join('\n'),
-            inline: true,
-          });
-
-          const embed = getEmbed(guildMember, embedFields);
-          return message.channel.send({ embed });
         });
       });
     });

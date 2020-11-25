@@ -514,7 +514,7 @@ client.on('presenceUpdate', (oldPresence, newPresence) => {
       if (isCTRStream(a) && isNewStream) {
         const fieldValue = [
           `**Streamer**: <@!${newPresence.userID}>`,
-          `**Title**: ${a.details}`,
+          `**Title**: ${a.details.trim()}`,
           `**Game**: ${a.state}`,
           `**Started**: ${moment.unix(timestamp).fromNow()}`,
           `**Channel**: ${a.url}`,

@@ -2,6 +2,7 @@ const Player = require('../db/models/player');
 const Rank = require('../db/models/rank');
 const calculateSuperScore = require('../utils/calculateSuperScore');
 const createPageableContent = require('../utils/createPageableContent');
+const getConfigValue = require('../utils/getConfigValue');
 
 const {
   BATTLE, _4V4, _3V3, DUOS, ITEMLESS, ITEMS,
@@ -31,17 +32,20 @@ function sendMessage(message, rank) {
     });
   });
 
-  fields.push({
-    name: 'Super Score',
-    value: calculateSuperScore(rank),
-    inline: true,
-  });
+  const promise = getConfigValue('super_score_base_rank');
+  Promise.resolve(promise).then((baseRank) => {
+    fields.push({
+      name: 'Super Score',
+      value: calculateSuperScore(rank, baseRank),
+      inline: true,
+    });
 
-  message.channel.send({
-    embed: {
-      title: `${rank.name}'s ranks`,
-      fields,
-    },
+    message.channel.send({
+      embed: {
+        title: `${rank.name}'s ranks`,
+        fields,
+      },
+    });
   });
 }
 
@@ -51,6 +55,8 @@ module.exports = {
   guildOnly: true,
   cooldown: 10,
   async execute(message, args) {
+    const baseRank = await getConfigValue('super_score_base_rank');
+
     if (args.length) {
       if (args[0] === 'list') {
         Player.find().then((players) => {
@@ -67,7 +73,7 @@ module.exports = {
 
           Rank.find({ name: { $in: psns } }).then((playerRanks) => {
             playerRanks.forEach((r) => {
-              const superScore = calculateSuperScore(r);
+              const superScore = calculateSuperScore(r, baseRank);
               const discordId = psnMapping[r.name];
 
               rankedPlayers.push({

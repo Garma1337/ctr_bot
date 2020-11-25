@@ -22,6 +22,7 @@ const { client } = require('../bot');
 const { parseData } = require('../table');
 const createDraft = require('../utils/createDraft');
 const generateTemplate = require('../utils/generateTemplate');
+const getConfigValue = require('../utils/getConfigValue');
 const getRandomArrayElement = require('../utils/getRandomArrayElement');
 const isStaffMember = require('../utils/isStaffMember');
 const rngPools = require('../utils/rngPools');
@@ -99,6 +100,15 @@ const roleNames = {
   [_3V3]: 'Ranked 3v3',
   [_4V4]: 'Ranked 4v4',
   [BATTLE]: 'Ranked Battle',
+};
+
+const embedColors = {
+  [ITEMS]: 6335231,
+  [ITEMLESS]: 16740932,
+  [DUOS]: 12156415,
+  [_3V3]: 9170141,
+  [_4V4]: 12053396,
+  [BATTLE]: 13750737,
 };
 
 const TRACK_OPTION_RNG = 'Full RNG';
@@ -276,6 +286,7 @@ async function getEmbed(doc, players, tracks, roomChannel) {
     }
 
     return {
+      color: embedColors[doc.type],
       author: {
         name: `${getTitle(doc)} has started`,
         icon_url: iconUrl,
@@ -323,6 +334,7 @@ async function getEmbed(doc, players, tracks, roomChannel) {
     }
 
     return {
+      color: embedColors[doc.type],
       author: {
         name: `Gathering ${getTitle(doc)}`,
         icon_url: iconUrl,
@@ -354,6 +366,7 @@ async function getEmbed(doc, players, tracks, roomChannel) {
   }
 
   return {
+    color: embedColors[doc.type],
     author: {
       name: `${getTitle(doc)}`,
       icon_url: iconUrl,
@@ -815,25 +828,12 @@ module.exports = {
     }
 
     const lobbyID = args[1];
-
     const { member } = message;
 
-    const dbConfigName = 'ranked_lobby_lock_date';
-    let dbConfig = await Config.findOne({ name: dbConfigName });
-    if (!dbConfig) {
-      dbConfig = new Config();
-      dbConfig.name = dbConfigName;
-      dbConfig.value = null;
-      dbConfig.editable = true;
-
-      dbConfig.save().then(() => {
-        console.log(`Created new config value: ${dbConfigName}`);
-      });
-    }
-
+    const configValue = await getConfigValue('ranked_lobby_lock_date', new Date());
     const now = moment();
-    if (dbConfig.value) {
-      const lockDate = moment(dbConfig.value);
+    if (configValue) {
+      const lockDate = moment(configValue);
 
       if (lockDate.isValid() && lockDate >= now) {
         return message.channel.send(`Ranked Lobbies are temporarily closed until midnight on ${lockDate.format('YYYY-MM-DD')}.`);
@@ -1027,7 +1027,7 @@ The value should be in the range of \`${diffMin} to ${diffMax}\`. The value defa
                           return diff;
                         }).catch(() => {
                           sentMessage.delete();
-                          return false;
+                          return diffDefault;
                         });
 
                         const rank = await Rank.findOne({ name: player.psn });
@@ -1051,7 +1051,7 @@ The value should be in the range of \`${diffMin} to ${diffMax}\`. The value defa
                           return content.toLowerCase() !== 'no';
                         }).catch(() => {
                           sentMessage.delete();
-                          return false;
+                          return true;
                         });
                       }
 

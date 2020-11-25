@@ -5,11 +5,10 @@ const {
 /**
  * Returns a player's superscore
  * @param rank
+ * @param baseRank
  * @returns {number}
  */
-function calculateSuperScore(rank) {
-  const baseRank = 500;
-
+function calculateSuperScore(rank, baseRank = 500) {
   const itemsRank = rank[ITEMS].rank || baseRank;
   const itemlessRank = rank[ITEMLESS].rank || baseRank;
   const duosRank = rank[DUOS].rank || baseRank;
