@@ -66,14 +66,13 @@ module.exports = {
 
               const title = `Tracks for ${type} lobby ${pools ? '(pools)' : '(full rng)'}`;
               rngPools({ type, pools }).then((maps) => {
-                m.edit(`**${title}**\n\`${maps.join('\n')}\``);
+                m.edit(`**${title}**\n\`\`\`${maps.map((map, i) => `${i + 1}. ${map}`).join('\n')}\`\`\``);
               });
             });
           } else {
             throw new Error('cancel');
           }
-        })
-        .catch(() => confirmMessage.edit('Command cancelled.'));
+        }).catch(() => confirmMessage.edit('Command cancelled.'));
     });
   },
 };

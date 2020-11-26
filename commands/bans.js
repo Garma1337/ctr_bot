@@ -27,12 +27,16 @@ module.exports = {
           list.push(item.join(' | '));
         }
 
-        createPageableContent(message.channel, message.author.id, {
-          outputType: 'embed',
-          elements: list,
-          elementsPerPage: 10,
-          embedOptions: { heading: `${banned.size} users are banned` },
-        });
+        if (banned.size > 0) {
+          createPageableContent(message.channel, message.author.id, {
+            outputType: 'embed',
+            elements: list,
+            elementsPerPage: 10,
+            embedOptions: { heading: `${banned.size} users are banned` },
+          });
+        } else {
+          return message.channel.send('There are no bans ... yet.');
+        }
       })
       .catch(console.error);
   },

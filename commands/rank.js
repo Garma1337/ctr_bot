@@ -42,6 +42,7 @@ function sendMessage(message, rank) {
 
     message.channel.send({
       embed: {
+        color: 7036306,
         title: `${rank.name}'s ranks`,
         fields,
       },
@@ -78,7 +79,7 @@ module.exports = {
 
               rankedPlayers.push({
                 discordId,
-                psn: r.name,
+                psn: r.name.replace(/_/g, '\\_'),
                 superScore,
               });
             });
@@ -99,7 +100,10 @@ module.exports = {
               outputType: 'embed',
               elements: sortedRanking,
               elementsPerPage: 20,
-              embedOptions: { heading: 'Super Score Ranking' },
+              embedOptions: {
+                heading: 'Super Score Ranking',
+                image: 'https://static.wikia.nocookie.net/crashban/images/5/5a/CTRNF-Master_Wheels.png',
+              },
               reactionCollectorOptions: { time: 3600000 },
             });
           });

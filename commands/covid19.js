@@ -20,13 +20,16 @@ const requestArcGis = async (type) => {
   });
   return confirmed.data.features.shift().attributes.value;
 };
+
 const execute = async (message) => {
   const embed = {
+    color: 7036306,
     title: 'COVID-19 Statistics',
     url: 'https://www.arcgis.com/apps/opsdashboard/index.html#/85320e2ea5424dfaaa75ae62e5c06e61',
     fields: [{ name: 'Loading data', value: '...' }],
     description: 'Source: [Johns Hopkins CSSE](https://www.arcgis.com/apps/opsdashboard/index.html#/85320e2ea5424dfaaa75ae62e5c06e61)',
   };
+
   message.channel.send({ embed }).then(async (msg) => {
     const confirmed = await requestArcGis('Confirmed');
     const deaths = await requestArcGis('Deaths');

@@ -7,6 +7,7 @@
  */
 function getEmbed(userName, question, options) {
   return {
+    color: 7036306,
     author: {
       name: `${userName} has created a poll!`,
     },
@@ -32,7 +33,7 @@ module.exports = {
 ...
 \``,
   guildOnly: true,
-  execute(message, args) {
+  execute(message) {
     const wrongSyntax = `Wrong usage of command. Try 
 \`!poll [question]
 [option 1]

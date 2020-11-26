@@ -33,14 +33,28 @@ function getEmbed(options) {
   options.elements = options.elements || ['No data'];
   options.currentPage = options.currentPage || 1;
   options.numPages = options.numPages || 1;
+  options.image = options.image || null;
 
-  return {
-    title: options.heading,
+  const embed = {
+    color: 7036306,
+    author: {
+      name: options.heading,
+    },
     description: options.elements.join('\n'),
+    timestamp: new Date(),
     footer: {
       text: `Page ${options.currentPage} of ${options.numPages}`,
     },
   };
+
+  if (options.image) {
+    embed.author.icon_url = options.image;
+    embed.thumbnail = {
+      url: options.image,
+    };
+  }
+
+  return embed;
 }
 
 /**
@@ -55,6 +69,7 @@ function getMessageContent(options, pagination) {
   if (options.outputType === 'embed') {
     const output = getEmbed({
       heading: options.embedOptions.heading,
+      image: options.embedOptions.image,
       elements: pagination.elements,
       currentPage: pagination.currentPage,
       numPages: pagination.numPages,
@@ -106,7 +121,7 @@ function createPageableContent(channel, userId, options) {
   options.elementsPerPage = options.elementsPerPage || 10;
   options.emojiPrevious = options.emojiPrevious || '⬅️';
   options.emojiNext = options.emojiNext || '➡️';
-  options.embedOptions = options.embedOptions || { heading: 'Heading' };
+  options.embedOptions = options.embedOptions || { heading: 'Heading', image: null };
   options.textOptions = options.textOptions || { heading: 'Heading' };
   options.reactionCollectorOptions = options.reactionCollectorOptions || { time: 3600000 };
 

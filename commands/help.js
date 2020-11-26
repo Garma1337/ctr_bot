@@ -43,6 +43,7 @@ module.exports = {
 
     const output = {
       embed: {
+        color: 7036306,
         title: 'Help',
         fields: [
           ...fields,
@@ -52,6 +53,7 @@ module.exports = {
 
     const staffOutput = {
       embed: {
+        color: 7036306,
         title: 'Staff Help',
         fields: staffFields,
       },

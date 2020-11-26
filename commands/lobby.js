@@ -20,6 +20,7 @@ const Team = require('../db/models/teams');
 const { client } = require('../bot');
 const { parseData } = require('../table');
 const createDraft = require('../utils/createDraft');
+const createAndFindRole = require('../utils/createAndFindRole');
 const generateTemplate = require('../utils/generateTemplate');
 const getConfigValue = require('../utils/getConfigValue');
 const getRandomArrayElement = require('../utils/getRandomArrayElement');
@@ -79,10 +80,6 @@ function getTitle(doc) {
   return title;
 }
 
-function getFooter(doc) {
-  return { text: `id: ${doc._id}` };
-}
-
 const icons = {
   [ITEMS]: 'https://vignette.wikia.nocookie.net/crashban/images/3/32/CTRNF-BowlingBomb.png',
   [ITEMLESS]: 'https://static.wikia.nocookie.net/crashban/images/b/b5/CTRNF-SuperEngine.png',
@@ -102,12 +99,12 @@ const roleNames = {
 };
 
 const embedColors = {
-  [ITEMS]: 6335231,
-  [ITEMLESS]: 16740932,
-  [DUOS]: 12156415,
-  [_3V3]: 9170141,
-  [_4V4]: 12053396,
-  [BATTLE]: 13750737,
+  [ITEMS]: 3707391,
+  [ITEMLESS]: 16747320,
+  [DUOS]: 16732141,
+  [_3V3]: 16724019,
+  [_4V4]: 9568066,
+  [BATTLE]: 15856113,
 };
 
 const TRACK_OPTION_RNG = 'Full RNG';
@@ -137,6 +134,13 @@ function getIcon(doc) {
 
 function getRoleName(type) {
   return roleNames[type];
+}
+
+function getFooter(doc) {
+  return {
+    icon_url: getIcon(doc),
+    text: `id: ${doc._id}`,
+  };
 }
 
 async function getPlayerInfo(playerId, doc) {
@@ -399,18 +403,6 @@ function findRoom(lobby) {
   });
 }
 
-async function findRole(guild, roleName) {
-  const roles = await guild.roles.fetch();
-  let role = roles.cache.find((r) => r.name.toLowerCase() === roleName.toLowerCase());
-  if (!role) {
-    role = await guild.roles.create({
-      data: { name: roleName, mentionable: true },
-      reason: `imagine not having ${roleName} role smh`,
-    });
-  }
-  return role;
-}
-
 async function findRoomChannel(guildId, n) {
   const guild = client.guilds.cache.get(guildId);
   const channelName = `ranked-room-${n}`;
@@ -421,8 +413,8 @@ async function findRoomChannel(guildId, n) {
 
   let channel = guild.channels.cache.find((c) => c.name === channelName);
   if (!channel) {
-    const roleStaff = await findRole(guild, 'Staff');
-    const roleRanked = await findRole(guild, 'Ranked Verified');
+    const roleStaff = await createAndFindRole(guild, 'Staff');
+    const roleRanked = await createAndFindRole(guild, 'Ranked Verified');
 
     channel = await guild.channels.create(channelName, {
       type: 'text',
@@ -1091,7 +1083,7 @@ The value should be in the range of \`${diffMin} to ${diffMax}\`. The value defa
               }
 
               lobby.save().then(async (doc) => {
-                const role = await findRole(guild, getRoleName(type));
+                const role = await createAndFindRole(guild, getRoleName(type));
 
                 guild.channels.cache.find((c) => c.name === 'ranked-lobbies')
                   .send({
@@ -1203,7 +1195,7 @@ The value should be in the range of \`${diffMin} to ${diffMax}\`. The value defa
                       deleteLobby(doc, msg);
 
                       relobby.save().then(async (savedRelobby) => {
-                        const role = await findRole(guild, getRoleName(relobby.type));
+                        const role = await createAndFindRole(guild, getRoleName(relobby.type));
                         const channel = guild.channels.cache.find((c) => c.name === 'ranked-lobbies');
                         channel.send({ content: role, embed: await getEmbed(savedRelobby) }).then((m) => {
                           savedRelobby.channel = m.channel.id;

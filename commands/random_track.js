@@ -1,48 +1,44 @@
 const fs = require('fs');
-
-function getRandomInt(min, max) {
-  min = Math.ceil(min);
-  max = Math.floor(max);
-  return Math.floor(Math.random() * (max - min)) + min;
-  // The maximum is exclusive and the minimum is inclusive
-}
+const getRandomArrayElement = require('../utils/getRandomArrayElement');
 
 module.exports = {
   name: 'rng',
-  description: 'Picks random track from the list of all tracks (`!list_tracks`).',
+  description: 'Picks random tracks from the list of all tracks.',
   guildOnly: true,
   aliases: ['random_track'],
   cooldown: 10,
   execute(message, args) {
-    let number;
+    let number = 1;
+
     if (args.length) {
       number = Number(args[0]);
-      // eslint-disable-next-line no-restricted-globals
-      if (isNaN(number)) {
-        return message.channel.send('Not a number.');
-      }
 
-      if (number <= 0) {
-        return message.channel.send('Nice try.');
-      }
-
-      if (number > 39) {
-        return message.channel.send('Last time I checked, we had only 39 tracks.');
-      }
-
-      if (number === 1) {
-        number = null;
+      if (isNaN(number) || number < 1 || number > 40) {
+        return message.channel.send('Please enter a number between 1 and 40');
       }
     }
 
     fs.readFile('tracks.txt', 'utf8', (err, data) => {
-      if (err) throw err;
-      const tracks = data.trim().split('\n');
-      const tracksCount = tracks.length;
+      if (err) {
+        throw err;
+      }
 
-      const indexes = Array(number).fill(0).map(() => getRandomInt(0, tracksCount));
-      const maps = indexes.map((index) => `${+index + 1}: ${tracks[index]}`).join('\n');
-      message.channel.send(`\`\`\`${maps}\`\`\``);
+      const tracks = data.trim().split('\n');
+      tracks.push('Retro Stadium');
+
+      const randomTracks = [];
+
+      for (let i = 0; i < number; i++) {
+        const randomTrack = getRandomArrayElement(tracks);
+        const index = tracks.findIndex((t) => t === randomTrack);
+
+        // Prevent track from appearing twice
+        tracks.splice(index, 1);
+
+        randomTracks.push(randomTrack);
+      }
+
+      message.channel.send(`\`\`\`${randomTracks.map((r, i) => `${i + 1}. ${r}`).join('\n')}\`\`\``);
     });
   },
 };

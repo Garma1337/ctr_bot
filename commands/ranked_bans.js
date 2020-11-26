@@ -125,7 +125,7 @@ module.exports = {
       message.channel.send('...').then((m) => {
         RankedBan.find({ guildId: message.guild.id }).then(async (docs) => {
           if (!docs.length) {
-            return m.edit('There are no bans yet.');
+            return m.edit('There are no bans ... yet.');
           }
 
           const bannedMembers = [];

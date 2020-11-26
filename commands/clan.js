@@ -17,7 +17,7 @@ function createCaseInsensitiveRegEx(s) {
 function getProfileEmbed(data) {
   const { name } = data;
   const { tag } = data;
-  const color = Number(data.color) || 0;
+  const color = Number(data.color) || 7036306;
   const { description } = data;
   const logo = data.logo || 'https://www.crashbandicoot.com/content/dam/atvi/Crash/crash-touchui/ctr/home/ctr-full-logo.png';
   const score = data.score || 0;
@@ -165,7 +165,10 @@ Edit clans:
                 outputType: 'embed',
                 elements: clanList,
                 elementsPerPage: 20,
-                embedOptions: { heading: `CTR Clan Ranking (${clanList.length} Clans)` },
+                embedOptions: {
+                  heading: `CTR Clan Ranking - ${clanList.length} Clans`,
+                  image: 'https://static.wikia.nocookie.net/crashban/images/8/8f/CTRNF-Turbo.png',
+                },
                 reactionCollectorOptions: { time: 3600000 },
               });
             });

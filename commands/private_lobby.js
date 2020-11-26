@@ -1,6 +1,7 @@
 const Moment = require('moment');
 const Player = require('../db/models/player');
 const PrivateLobby = require('../db/models/private_lobbies');
+const createAndFindRole = require('../utils/createAndFindRole');
 const deletePrivateLobbyByUser = require('../utils/deletePrivateLobbyByUser');
 
 /**
@@ -26,11 +27,13 @@ function getEmbed(info, players, psns, description, created) {
   psns = psns.map((psn) => psn.replace(/_/g, '\\_'));
 
   return {
+    color: 16775424,
     author: {
       name: 'A private lobby is gathering!',
       icon_url: icon,
     },
     description,
+    timestamp: new Date(),
     fields: [
       {
         name: 'Info',
@@ -48,10 +51,6 @@ function getEmbed(info, players, psns, description, created) {
         inline: true,
       },
     ],
-    footer: {
-      text: `Created at ${created}`,
-      icon_url: icon,
-    },
   };
 }
 
@@ -120,7 +119,7 @@ ${allowedChannels.join('\n')}`);
 Example usage: !private_lobby FFA 8.\`\`\``);
     }
 
-    if (mode === 'end') {
+    if (['end', 'remove', 'delete'].includes(mode)) {
       const privateLobbyPromise = PrivateLobby.findOne({ creator: message.member.user.id });
 
       privateLobbyPromise.then((privateLobby) => {
@@ -160,72 +159,75 @@ Example usage: !private_lobby FFA 8.\`\`\``);
           `Players: **${maxPlayers}**`,
         ];
 
-        let embed = getEmbed(info, players, psns, defaultDescription, created);
+        const promise = createAndFindRole(message.guild, 'Private Lobby');
+        Promise.resolve(promise).then((role) => {
+          let embed = getEmbed(info, players, psns, defaultDescription, created);
 
-        postChannel.send({ embed }).then((m) => {
-          m.react('✅');
+          postChannel.send({ content: role, embed }).then((m) => {
+            m.react('✅');
 
-          privateLobby = new PrivateLobby({
-            guild: m.guild.id,
-            channel: message.channel.id,
-            message: m.id,
-            creator: message.member.user.id,
-            mode,
-            maxPlayers,
-            players,
-            date: created,
-          });
+            privateLobby = new PrivateLobby({
+              guild: m.guild.id,
+              channel: message.channel.id,
+              message: m.id,
+              creator: message.member.user.id,
+              mode,
+              maxPlayers,
+              players,
+              date: created,
+            });
 
-          privateLobby.save();
+            privateLobby.save();
 
-          const filter = (r, u) => (['✅'].includes(r.emoji.name) && u.id !== m.author.id);
-          const options = {
-            max: maxPlayers + 1,
-            time: 3600000,
-            errors: ['time'],
-            dispose: true,
-          };
+            const filter = (r, u) => (['✅'].includes(r.emoji.name) && u.id !== m.author.id);
+            const options = {
+              max: maxPlayers + 1,
+              time: 3600000,
+              errors: ['time'],
+              dispose: true,
+            };
 
-          const collector = m.createReactionCollector(filter, options);
-          collector.on('collect', (reaction, user) => {
-            if (user.id !== m.author.id && players.length < maxPlayers) {
-              players.push(`<@${user.id}>`);
+            const collector = m.createReactionCollector(filter, options);
+            collector.on('collect', (reaction, user) => {
+              if (user.id !== m.author.id && players.length < maxPlayers) {
+                players.push(`<@${user.id}>`);
 
-              Player.findOne({ discordId: user.id }).then((p) => {
-                if (!p.psn) {
-                  psns.push('---');
-                } else {
-                  const psn = p.psn.replace(/_/g, '\\_');
-                  psns.push(psn);
-                }
+                Player.findOne({ discordId: user.id }).then((p) => {
+                  if (!p.psn) {
+                    psns.push('---');
+                  } else {
+                    const psn = p.psn.replace(/_/g, '\\_');
+                    psns.push(psn);
+                  }
 
-                if (players.length >= maxPlayers) {
-                  embed = getEmbed(info, players, psns, closedDescription, created);
-                } else {
-                  embed = getEmbed(info, players, psns, defaultDescription, created);
-                }
+                  if (players.length >= maxPlayers) {
+                    embed = getEmbed(info, players, psns, closedDescription, created);
+                  } else {
+                    embed = getEmbed(info, players, psns, defaultDescription, created);
+                  }
 
-                m.edit({ embed });
-                updatePrivateLobby(privateLobby, players, psns, message.member.user.id);
-              });
-            }
-          });
-
-          collector.on('remove', ((reaction, user) => {
-            players.forEach((v, i) => {
-              if (v === `<@${user.id}>`) {
-                players.splice(i, 1);
-                psns.splice(i, 1);
+                  m.edit({ embed });
+                  updatePrivateLobby(privateLobby, players, psns, message.member.user.id);
+                });
               }
             });
 
-            embed = getEmbed(info, players, psns, defaultDescription, created);
-            m.edit({ embed });
-            updatePrivateLobby(privateLobby, players, psns, message.member.user.id);
-          }));
-        });
+            collector.on('remove', ((reaction, user) => {
+              players.forEach((v, i) => {
+                if (v === `<@${user.id}>`) {
+                  players.splice(i, 1);
+                  psns.splice(i, 1);
+                }
+              });
 
-        message.channel.send('Your private lobby was created.');
+              embed = getEmbed(info, players, psns, defaultDescription, created);
+              m.edit({ embed });
+              updatePrivateLobby(privateLobby, players, psns, message.member.user.id);
+            }));
+          });
+
+          message.channel.send('Your private lobby was created.');
+        });
       });
     }
   },

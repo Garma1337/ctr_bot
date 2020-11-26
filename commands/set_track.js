@@ -8,9 +8,12 @@ module.exports = {
   guildOnly: true,
   execute(message, args) {
     fs.readFile('tracks.txt', 'utf8', (err, data) => {
-      if (err) throw err;
+      if (err) {
+        throw err;
+      }
+
       const tracks = data.trim().split('\n');
-      tracks.push('Retro Stadium'); // Missing in the file
+      tracks.push('Retro Stadium');
 
       if (args.length < 1) {
         const column1 = tracks.slice(0, 15);
