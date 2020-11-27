@@ -57,7 +57,7 @@ module.exports = {
         break;
 
       case 'languages':
-        embedHeading = 'Languages';
+        embedHeading = 'Most spoken languages';
         let languages = {};
 
         players.forEach((p) => {
@@ -79,7 +79,7 @@ module.exports = {
         break;
 
       case 'birthdays':
-        embedHeading = 'Birthdays';
+        embedHeading = 'Most common birthdays';
         let birthdays = {};
 
         players.forEach((p) => {
@@ -106,7 +106,7 @@ module.exports = {
         break;
 
       case 'voice_chat':
-        embedHeading = 'Voice Chats';
+        embedHeading = 'Most used voice chats';
         let discordVc = 0;
         let ps4Vc = 0;
 
@@ -125,7 +125,7 @@ module.exports = {
         break;
 
       case 'nat_types':
-        embedHeading = 'NAT Types';
+        embedHeading = 'Most common NAT types';
         let natTypes = {};
 
         players.forEach((p) => {
@@ -146,7 +146,7 @@ module.exports = {
         break;
 
       case 'time_zones':
-        embedHeading = 'Time Zones';
+        embedHeading = 'Most common time zones';
         let timeZones = {};
 
         players.forEach((p) => {
@@ -167,7 +167,7 @@ module.exports = {
         break;
 
       case 'characters':
-        embedHeading = 'Favorite Characters';
+        embedHeading = 'Most favorited Characters';
         let characters = {};
 
         players.forEach((p) => {
@@ -188,7 +188,7 @@ module.exports = {
         break;
 
       case 'tracks':
-        embedHeading = 'Favorite Tracks';
+        embedHeading = 'Most favorited tracks';
         let tracks = {};
 
         players.forEach((p) => {

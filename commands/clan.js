@@ -17,7 +17,7 @@ function createCaseInsensitiveRegEx(s) {
 function getProfileEmbed(data) {
   const { name } = data;
   const { tag } = data;
-  const color = Number(data.color) || 7036306;
+  const color = Number(data.color) || 0;
   const { description } = data;
   const logo = data.logo || 'https://www.crashbandicoot.com/content/dam/atvi/Crash/crash-touchui/ctr/home/ctr-full-logo.png';
   const score = data.score || 0;

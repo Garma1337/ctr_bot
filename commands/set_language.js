@@ -22,16 +22,46 @@ module.exports = {
           message.channel.send(`Unable to update player. Error: ${error}`);
         });
       });
+
+      return;
     }
 
-    return message.channel.send('Select your languages. Waiting 1 minute.').then((confirmMessage) => {
-      const emoteChars = [];
+    const emoteChars = [];
+    const languageList = [];
 
-      serverLanguages.forEach((l) => {
-        emoteChars.push(l.char);
-        confirmMessage.react(l.char);
-      });
+    serverLanguages.forEach((l) => {
+      emoteChars.push(l.char);
+      languageList.push(`${l.emote} - ${l.name}`);
+    });
 
+    const column1 = languageList.slice(0, 10);
+    const column2 = languageList.slice(10, 20);
+    const column3 = languageList.slice(20, 30);
+
+    const embed = {
+      author: {
+        name: 'React with the appropriate language flag!',
+      },
+      fields: [
+        {
+          name: 'Languages',
+          value: column1.join('\n'),
+          inline: true,
+        },
+        {
+          name: '\u200B',
+          value: column2.join('\n'),
+          inline: true,
+        },
+        {
+          name: '\u200B',
+          value: column3.join('\n'),
+          inline: true,
+        },
+      ],
+    };
+
+    return message.channel.send({ embed }).then((confirmMessage) => {
       const filter = (r, u) => emoteChars.includes(r.emoji.name) && u.id === message.author.id;
       const options = {
         max: serverLanguages.length,

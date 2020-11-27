@@ -42,7 +42,6 @@ function sendMessage(message, rank) {
 
     message.channel.send({
       embed: {
-        color: 7036306,
         title: `${rank.name}'s ranks`,
         fields,
       },

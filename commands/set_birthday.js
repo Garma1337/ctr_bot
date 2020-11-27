@@ -30,6 +30,8 @@ module.exports = {
           message.channel.send(`Unable to update player. Error: ${error}`);
         });
       });
+
+      return;
     }
 
     if (args.length > 0) {

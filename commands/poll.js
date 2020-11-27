@@ -7,7 +7,6 @@
  */
 function getEmbed(userName, question, options) {
   return {
-    color: 7036306,
     author: {
       name: `${userName} has created a poll!`,
     },

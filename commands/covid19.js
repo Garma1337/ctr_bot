@@ -23,7 +23,6 @@ const requestArcGis = async (type) => {
 
 const execute = async (message) => {
   const embed = {
-    color: 7036306,
     title: 'COVID-19 Statistics',
     url: 'https://www.arcgis.com/apps/opsdashboard/index.html#/85320e2ea5424dfaaa75ae62e5c06e61',
     fields: [{ name: 'Loading data', value: '...' }],

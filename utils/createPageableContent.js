@@ -36,7 +36,6 @@ function getEmbed(options) {
   options.image = options.image || null;
 
   const embed = {
-    color: 7036306,
     author: {
       name: options.heading,
     },

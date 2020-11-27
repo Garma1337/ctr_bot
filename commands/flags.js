@@ -11,7 +11,7 @@ module.exports = {
     ];
 
     chunks.map((chunk) => {
-      message.channel.send({ embed: { color: 7036306, description: chunk.join(' ') } });
+      message.channel.send({ embed: { description: chunk.join(' ') } });
     });
   },
 };

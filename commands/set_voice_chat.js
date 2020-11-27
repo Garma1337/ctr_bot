@@ -22,6 +22,8 @@ module.exports = {
           message.channel.send(`Unable to update player. Error: ${error}`);
         });
       });
+
+      return;
     }
 
     const voiceChats = [

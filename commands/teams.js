@@ -35,7 +35,6 @@ function getEmbed(duos, teams) {
   }
 
   return {
-    color: 7036306,
     timestamp: new Date(),
     author: {
       name: 'Ranked Teams List',
