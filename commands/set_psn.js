@@ -1,6 +1,7 @@
 const Player = require('../db/models/player');
 const isStaffMember = require('../utils/isStaffMember');
 const sendLogMessage = require('../utils/sendLogMessage');
+const sendAlertMessage = require('../utils/sendAlertMessage');
 
 module.exports = {
   name: 'set_psn',
@@ -18,17 +19,17 @@ module.exports = {
         // eslint-disable-next-line prefer-destructuring
         user = message.mentions.users.first();
       } else {
-        return message.channel.send('Nope.');
+        return sendAlertMessage(message.channel, 'Nope.', 'warning');
       }
     } else if (args.length > 1) {
-      return message.channel.send('Nope.');
+      return sendAlertMessage(message.channel, 'Nope.', 'warning');
     } else {
       PSN = args.shift();
       user = message.author;
     }
 
     if (PSN === 'ctr_tourney_bot' || PSN === 'YourPSN') {
-      return message.channel.send('You okay, bro?');
+      return sendAlertMessage(message.channel, 'You okay, bro?', 'warning');
     }
 
     message.guild.members.fetch(user).then((member) => {
@@ -36,15 +37,15 @@ module.exports = {
 
       const e = 'You should specify PSN.';
       if (!PSN) {
-        return message.channel.send(e);
+        return sendAlertMessage(message.channel, e, 'warning');
       }
 
       Player.findOne({ psn: PSN }).then((repeatPSN) => {
         if (repeatPSN) {
           if (repeatPSN.discordId === message.author.id) {
-            return message.channel.send('You\'ve already set this PSN name.');
+            return sendAlertMessage(message.channel, 'You\'ve already set this PSN name.', 'warning');
           }
-          return message.channel.send('This PSN is already used by another player.');
+          return sendAlertMessage(message.channel, 'This PSN is already used by another player.', 'warning');
         }
         Player.findOne({ discordId }).then((doc) => {
           let promise;
@@ -55,8 +56,9 @@ module.exports = {
             promise = player.save();
           } else {
             if (!isStaff && doc.psn) {
-              return message.channel.send(`You've already set your PSN to \`${doc.psn}\`. It cannot be changed.`);
+              return sendAlertMessage(message.channel, `You've already set your PSN to \`${doc.psn}\`. It cannot be changed.`, 'warning');
             }
+
             const oldPSN = doc.psn;
             // eslint-disable-next-line no-param-reassign
             doc.psn = PSN;
@@ -74,7 +76,7 @@ New: \`${PSN}\``);
           }
 
           promise.then(() => {
-            message.channel.send(`PSN has been set \`${PSN}\``);
+            sendAlertMessage(message.channel, `PSN has been set \`${PSN}\`.`, 'warning');
           });
         });
       });

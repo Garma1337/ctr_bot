@@ -1,4 +1,5 @@
 const drawTable = require('../utils/drawTable');
+const sendAlertMessage = require('../utils/sendAlertMessage');
 
 module.exports = {
   name: 'table',
@@ -11,10 +12,10 @@ module.exports = {
     rows.shift();
 
     if (!rows.length) {
-      return message.channel.send('Empty table.');
+      return sendAlertMessage(message.channel, 'Empty table.', 'warning');
     }
 
-    message.channel.send('Generating the table...').then((m) => {
+    sendAlertMessage(message.channel, 'Generating the table...', 'info').then((m) => {
       drawTable(rows.join('\n')).then((attachment) => {
         message.channel.send(message.author, { files: [attachment] }).then((m2) => {
           message.delete();

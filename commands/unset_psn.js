@@ -1,6 +1,7 @@
 const Player = require('../db/models/player');
-const sendLogMessage = require('../utils/sendLogMessage');
 const isStaffMember = require('../utils/isStaffMember');
+const sendAlertMessage = require('../utils/sendAlertMessage');
+const sendLogMessage = require('../utils/sendLogMessage');
 
 function getUserIdFromMention(message) {
   const { content } = message;
@@ -27,7 +28,7 @@ module.exports = {
     if (isStaff && args.length === 1) {
       user = message.mentions.users.first();
     } else if (args.length > 0) {
-      return message.channel.send('Nope.');
+      return sendAlertMessage(message.channel, 'Nope.', 'warning');
     } else {
       user = message.author;
     }
@@ -40,12 +41,8 @@ module.exports = {
     }
 
     Player.findOne({ discordId }).then((doc) => {
-      if (!doc) {
-        return message.channel.send('You didn\'t set your PSN yet.');
-      }
-
-      if (!doc.psn) {
-        return message.channel.send('You didn\'t set your PSN yet.');
+      if (!doc || !doc.psn) {
+        return sendAlertMessage(message.channel, 'You have not set your PSN yet.', 'warning');
       }
 
       const oldPSN = doc.psn;
@@ -54,7 +51,7 @@ module.exports = {
       const promise = doc.save();
 
       promise.then(() => {
-        message.channel.send('PSN has been unset.');
+        sendAlertMessage(message.channel, 'PSN has been unset.', 'success');
 
         sendLogMessage(message.guild, `${message.author} unset their PSN.
 Old: \`${oldPSN}\``);

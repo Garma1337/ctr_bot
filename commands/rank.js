@@ -3,6 +3,7 @@ const Rank = require('../db/models/rank');
 const calculateSuperScore = require('../utils/calculateSuperScore');
 const createPageableContent = require('../utils/createPageableContent');
 const getConfigValue = require('../utils/getConfigValue');
+const sendAlertMessage = require('../utils/sendAlertMessage');
 
 const {
   BATTLE, _4V4, _3V3, DUOS, ITEMLESS, ITEMS,
@@ -120,7 +121,7 @@ module.exports = {
 
         Rank.findOne({ name: psn }).then((rank) => {
           if (!rank) {
-            return message.channel.send(`${psn} has not played any ranked matches yet.`);
+            return sendAlertMessage(message.channel, `${psn} has not played any ranked matches yet.`, 'warning');
           }
 
           sendMessage(message, rank);
@@ -129,12 +130,12 @@ module.exports = {
     } else {
       Player.findOne({ discordId: message.author.id }).then((player) => {
         if (!player || !player.psn) {
-          return message.reply('You have not played any ranked matches yet.');
+          return sendAlertMessage(message.channel, 'You have not played any ranked matches yet.', 'warning');
         }
 
         Rank.findOne({ name: player.psn }).then((rank) => {
           if (!rank) {
-            return message.reply('You have not played any ranked matches yet.');
+            return sendAlertMessage(message.channel, 'You have not played any ranked matches yet.', 'warning');
           }
 
           sendMessage(message, rank);

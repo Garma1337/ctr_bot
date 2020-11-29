@@ -1,5 +1,6 @@
 const Player = require('../db/models/player');
 const isStaffMember = require('../utils/isStaffMember');
+const sendAlertMessage = require('../utils/sendAlertMessage');
 
 module.exports = {
   name: 'unset_flag',
@@ -14,24 +15,27 @@ module.exports = {
       if (args.length === 1) {
         discordId = message.mentions.members.first().id;
       } else {
-        return message.channel.send('Nope.');
+        return sendAlertMessage(message.channel, 'Nope.', 'warning');
       }
     } else if (args.length > 0) {
-      return message.channel.send('Nope.');
+      return sendAlertMessage(message.channel, 'Nope.', 'warning');
     } else {
-      return message.channel.send('Nope.');
+      return sendAlertMessage(message.channel, 'Nope.', 'warning');
     }
 
     Player.findOne({ discordId }).then((doc) => {
       if (doc) {
-        doc.delete().then(() => {
-          message.channel.send('Flag has been removed.');
+        doc.flag = null;
+
+        doc.save().then(() => {
+          sendAlertMessage(message.channel, 'Flag has been removed.', 'success');
         });
       } else {
         if (isStaff) {
-          return message.channel.send('The user has no flag.');
+          return sendAlertMessage(message.channel, 'The user has no flag.', 'warning');
         }
-        return message.channel.send('You have no flag.');
+
+        return sendAlertMessage(message.channel, 'You have no flag.', 'warning');
       }
     });
   },

@@ -1,4 +1,5 @@
 const fetchMessages = require('../utils/fetchMessages');
+const sendAlertMessage = require('../utils/sendAlertMessage');
 const sendLogMessage = require('../utils/sendLogMessage');
 const SignupsChannel = require('../db/models/signups_channels');
 const { parse } = require('../utils/SignupParsers');
@@ -11,7 +12,7 @@ module.exports = {
   permissions: ['MANAGE_CHANNELS', 'MANAGE_ROLES'],
   async execute(message, args) {
     if (!args.length) {
-      return message.channel.send('You should specify the channel.');
+      return sendAlertMessage(message.channel, 'You should specify the channel.', 'warning');
     }
 
     let channel;
@@ -27,40 +28,41 @@ module.exports = {
     if (doc) {
       parser = parsers[doc.parser];
     } else {
-      return message.channel.send('This channel is not defined as signups channel. Use `!signups_channels` command.');
+      return sendAlertMessage(message.channel, 'This channel is not defined as signups channel. Use `!signups_channels` command.', 'warning');
     }
 
-    message.channel.send('Processing...');
-    fetchMessages(channel, 500).then((messages) => {
-      const promises = messages.map((m) => {
-        if (m.type === 'PINS_ADD') {
-          return;
-        }
+    sendAlertMessage(message.channel, 'Processing...', 'info').then((alert) => {
+      alert.delete();
 
-        if (m.author.bot) {
-          return;
-        }
-
-        m.reactions.cache.forEach((reaction) => {
-          if (reaction.me) {
-            reaction.remove();
+      fetchMessages(channel, 500).then((messages) => {
+        const promises = messages.map((m) => {
+          if (m.type === 'PINS_ADD' || m.author.bot) {
+            return;
           }
+
+          m.reactions.cache.forEach((reaction) => {
+            if (reaction.me) {
+              reaction.remove();
+            }
+          });
+
+          const data = parse(m, parser.fields);
+
+          const reactionCatchCallback = () => {
+            sendLogMessage(`Couldn't react to the message by ${m.author}.`);
+          };
+
+          if (!data.errors.length) {
+            return m.react('✅').then().catch(reactionCatchCallback);
+          }
+
+          return m.react('❌').then().catch(reactionCatchCallback);
         });
 
-        const data = parse(m, parser.fields);
-
-        const reactionCatchCallback = () => {
-          sendLogMessage(`Couldn't react to the message by ${m.author}.`);
-        };
-
-        if (!data.errors.length) {
-          return m.react('✅').then().catch(reactionCatchCallback);
-        }
-        return m.react('❌').then().catch(reactionCatchCallback);
-      });
-
-      Promise.all(promises).then(() => {
-        message.channel.send('Done.');
+        Promise.all(promises).then(() => {
+          alert.delete();
+          sendAlertMessage(message.channel, 'Done.', 'success');
+        });
       });
     });
   },

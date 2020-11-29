@@ -1,5 +1,6 @@
 const Player = require('../db/models/player');
 const isStaffMember = require('../utils/isStaffMember');
+const sendAlertMessage = require('../utils/sendAlertMessage');
 
 module.exports = {
   name: 'set_voice_chat',
@@ -17,9 +18,9 @@ module.exports = {
         player.discordVc = null;
         player.ps4Vc = null;
         player.save().then(() => {
-          message.channel.send('Your voice chat options have been unset.');
+          sendAlertMessage(message.channel, 'Your voice chat options have been unset.', 'success');
         }).catch((error) => {
-          message.channel.send(`Unable to update player. Error: ${error}`);
+          sendAlertMessage(message.channel, `Unable to update player. Error: ${error}`, 'error');
         });
       });
 
@@ -42,12 +43,10 @@ module.exports = {
       user = message.author;
     }
 
-    return message.channel.send(`Select voice chat option. Waiting 1 minute.
-\`\`\`
+    return sendAlertMessage(message.channel, `Select voice chat option. Waiting 1 minute.\n
 1 - Discord
 2 - PS4
-3 - Discord & PS4
-\`\`\``).then((confirmMessage) => {
+3 - Discord & PS4`, 'info').then((confirmMessage) => {
       const filter = (m) => m.author.id === message.author.id;
       const options = { max: 1, time: 60000, errors: ['time'] };
 
@@ -83,15 +82,15 @@ module.exports = {
             }
 
             player.save().then(() => {
-              message.channel.send(`Your voice chat options have been set to "${voiceChats[index]}".`);
+              sendAlertMessage(message.channel, `Your voice chat options have been set to \`${voiceChats[index]}\`.`, 'success');
             }).catch((error) => {
-              message.channel.send(`Unable to update player. Error: ${error}`);
+              sendAlertMessage(message.channel, `Unable to update player. Error: ${error}`, 'error');
             });
           });
         } else {
-          message.channel.send('Command canceled.');
+          sendAlertMessage(message.channel, 'Command cancelled.', 'error');
         }
-      }).catch(() => message.channel.send('Command canceled.'));
+      }).catch(() => sendAlertMessage(message.channel, 'Command cancelled.', 'error'));
     });
   },
 };

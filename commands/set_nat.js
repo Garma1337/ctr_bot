@@ -1,5 +1,6 @@
 const Player = require('../db/models/player');
 const isStaffMember = require('../utils/isStaffMember');
+const sendAlertMessage = require('../utils/sendAlertMessage');
 
 module.exports = {
   name: 'set_nat',
@@ -23,13 +24,11 @@ module.exports = {
       user = message.author;
     }
 
-    return message.channel.send(`Select NAT type. Waiting 1 minute.
-\`\`\`
+    return sendAlertMessage(message.channel, `Select NAT type. Waiting 1 minute.\n
 1 - NAT 1
 2 - NAT 2 Open
 3 - NAT 2 Closed
-4 - NAT 3
-\`\`\``).then((confirmMessage) => {
+4 - NAT 3`, 'info').then((confirmMessage) => {
       const filter = (m) => m.author.id === message.author.id;
       const options = { max: 1, time: 60000, errors: ['time'] };
       message.channel.awaitMessages(filter, options).then((collectedMessages) => {
@@ -50,15 +49,15 @@ module.exports = {
 
             player.nat = natTypes[index];
             player.save().then(() => {
-              message.channel.send(`NAT type has been set to \`${natTypes[index]}\`.`);
+              sendAlertMessage(message.channel, `NAT type has been set to \`${natTypes[index]}\`.`, 'success');
             }).catch((error) => {
-              message.channel.send(`Unable to update player. Error: ${error}`);
+              sendAlertMessage(message.channel, `Unable to update player. Error: ${error}`, 'error');
             });
           });
         } else {
-          message.channel.send('Command canceled.');
+          sendAlertMessage(message.channel, 'Command cancelled.', 'error');
         }
-      }).catch(() => message.channel.send('Command canceled.'));
+      }).catch(() => sendAlertMessage(message.channel, 'Command cancelled.', 'error'));
     });
   },
 };

@@ -1,5 +1,6 @@
 const Discord = require('discord.js');
 const formatRolePings = require('../utils/formatRolePings');
+const sendAlertMessage = require('../utils/sendAlertMessage');
 
 module.exports = {
   name: 'post',
@@ -36,13 +37,14 @@ module.exports = {
             return;
           }
         }
-        return message.channel.send(`Couldn't find channel ${channelName}`);
+        return sendAlertMessage(message.channel, `Couldn't find channel ${channelName}.`, 'warning');
       }
+
       return channel.send(post, { files: attachments });
     });
 
     Promise.all(promises).then(() => {
-      message.channel.send('Done');
+      sendAlertMessage(message.channel, 'Done.', 'success');
     });
   },
 };

@@ -1,4 +1,5 @@
 const findBotsMessages = require('../utils/findBotsMessages');
+const sendAlertMessage = require('../utils/sendAlertMessage');
 
 module.exports = {
   name: 'post_edit',
@@ -19,12 +20,12 @@ module.exports = {
     } else {
       channelNames = args.slice(1);
     }
-    const newMessage = rows.join('\n');
 
+    const newMessage = rows.join('\n');
     const promises = findBotsMessages(message, numberOfPost, channelNames, (msg) => msg.edit(newMessage));
 
     Promise.all(promises).then(() => {
-      message.channel.send('Done');
+      sendAlertMessage(message.channel, 'Done.', 'success');
     });
   },
 };

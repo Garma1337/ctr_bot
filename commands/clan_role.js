@@ -1,5 +1,6 @@
 const Clan = require('../db/models/clans').default;
 const isStaffMember = require('../utils/isStaffMember');
+const sendAlertMessage = require('../utils/sendAlertMessage');
 const { MEMBER_ROLES } = require('../db/models/clans');
 
 module.exports = {
@@ -10,13 +11,13 @@ module.exports = {
   aliases: ['cr'],
   execute(message, args) {
     if (args.length < 3) {
-      return message.channel.send('Wrong command usage. Example: `!clan_role @Garma GSC captain`.');
+      return sendAlertMessage(message.channel, 'Wrong command usage. Example: `!clan_role @Garma GSC captain`.', 'warning');
     }
 
     const user = message.mentions.users.first();
 
     if (!user) {
-      return message.channel.send('You need to mention a user.');
+      return sendAlertMessage(message.channel, 'You need to mention a user.', 'warning');
     }
 
     const clanName = args[1];
@@ -25,25 +26,25 @@ module.exports = {
     Clan.find().then((clans) => {
       const clan = clans.find((c) => c.shortName.toLowerCase() === clanName.toLowerCase());
       if (!clan) {
-        return message.channel.send(`The clan "${clanName}" does not exist.`);
+        return sendAlertMessage(message.channel, `The clan "${clanName}" does not exist.`, 'warning');
       }
 
       const isStaff = isStaffMember(message.member);
 
       if (!clan.hasCaptain(message.author.id) && !isStaff) {
-        return message.channel.send(`You are not a captain of "${clan}".`);
+        return sendAlertMessage(message.channel, `You are not a captain of "${clan}".`, 'warning');
       }
 
       if (!clan.hasMember(user.id)) {
-        return message.channel.send(`<@!${user.id}> is not a member of "${clanName}".`);
+        return sendAlertMessage(message.channel, `<@!${user.id}> is not a member of "${clanName}".`, 'warning');
       }
 
       if (!MEMBER_ROLES.includes(role)) {
-        return message.channel.send(`Invalid role "${role}". Available roles are ${MEMBER_ROLES.join(', ')}.`);
+        return sendAlertMessage(message.channel, `Invalid role "${role}". Available roles are ${MEMBER_ROLES.join(', ')}.`, 'warning');
       }
 
       clan.setMemberRole(user.id, role);
-      clan.save().then(() => message.channel.send(`Member role has been switched to ${role}.`));
+      clan.save().then(() => sendAlertMessage(message.channel, `Member role has been switched to ${role}.`, 'success'));
     });
   },
 };

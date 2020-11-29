@@ -1,4 +1,5 @@
 const Clan = require('../db/models/clans').default;
+const sendAlertMessage = require('../utils/sendAlertMessage');
 
 const executeAction = (message, clan) => {
   message.channel.send(`Are you sure you want to leave "${clan.shortName}"? (yes / no)`).then(() => {
@@ -8,12 +9,12 @@ const executeAction = (message, clan) => {
       if (content.toLowerCase() === 'yes') {
         clan.removeMember(message.author.id);
         clan.save().then(() => {
-          message.channel.send(`You left the clan "${clan.shortName}".`);
+          sendAlertMessage(message.channel, `You left the clan "${clan.shortName}".`, 'success');
         });
       } else {
         throw new Error('cancel');
       }
-    }).catch(() => { message.channel.send('Command cancelled.'); });
+    }).catch(() => { sendAlertMessage(message.channel, 'Command cancelled.', 'error'); });
   });
 };
 
@@ -28,12 +29,12 @@ module.exports = {
     if (!clanName) {
       Clan.find({ 'members.discordId': message.author.id }).then((docs) => {
         if (!docs.length) {
-          return message.channel.send('You are not in any clan.');
+          return sendAlertMessage(message.channel, 'You are not in any clan.', 'warning');
         }
 
         if (docs.length > 1) {
           const clanNames = docs.map((d) => d.shortName).join(', ');
-          return message.channel.send(`You in several teams (${clanNames}), you should specify which one you want to leave.`);
+          return sendAlertMessage(message.channel, `You in several teams (${clanNames}), you should specify which one you want to leave.`, 'warning');
         }
 
         const clan = docs.shift();
@@ -43,11 +44,11 @@ module.exports = {
     } else {
       Clan.findOne({ shortName: clanName }).then((clan) => {
         if (!clan) {
-          return message.channel.send(`There is no clan with the short name "${clanName}".`);
+          return sendAlertMessage(message.channel, `There is no clan with the short name "${clanName}".`, 'warning');
         }
 
         if (!clan.hasMember(message.author.id)) {
-          return message.channel.send(`You are not a member of "${clanName}".`);
+          return sendAlertMessage(message.channel, `You are not a member of "${clanName}".`, 'warning');
         }
 
         executeAction(message, clan);

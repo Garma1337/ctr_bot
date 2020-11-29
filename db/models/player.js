@@ -1,6 +1,8 @@
 const mongoose = require('mongoose');
+const { consoles } = require('../../utils/consoles');
 
 const { Schema, model } = mongoose;
+const consoleTags = consoles.map((c) => c.tag);
 
 const Player = new Schema({
   discordId: String,
@@ -15,6 +17,7 @@ const Player = new Schema({
   timeZone: String,
   favCharacter: String,
   favTrack: String,
+  consoles: { type: [String], enum: consoleTags },
 });
 
 module.exports = model('players', Player);

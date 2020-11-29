@@ -1,5 +1,6 @@
 const RankedBan = require('../db/models/ranked_bans');
 const findMember = require('../utils/findMember');
+const sendAlertMessage = require('../utils/sendAlertMessage');
 
 module.exports = {
   name: 'ranked_unban',
@@ -14,13 +15,13 @@ module.exports = {
         try {
           member = await findMember(message.guild, argument);
         } catch (error) {
-          return message.channel.send(error.message);
+          return sendAlertMessage(message.channel, error.message, 'error');
         }
       }
 
       RankedBan.findOne({ guildId: message.guild.id, discordId: member.id }).then((doc) => {
         if (!doc) {
-          return message.channel.send('Banned user not found.');
+          return sendAlertMessage(message.channel, 'Banned user not found.', 'warning');
         }
 
         const promises = [];
@@ -34,10 +35,12 @@ module.exports = {
           const permissionDeletePromise = permissionOverwrites.delete();
           promises.push(permissionDeletePromise);
         }
-        const msg = message.channel.send('...');
+
+        const msg = sendAlertMessage(message.channel, '...', 'info');
 
         Promise.all([msg, ...promises]).then(([m]) => {
-          m.edit(`${member} was unbanned from ranked lobbies.`);
+          m.delete();
+          sendAlertMessage(message.channel, `${member} was unbanned from ranked lobbies.`, 'success');
         });
       });
     }

@@ -1,5 +1,6 @@
 const Clan = require('../db/models/clans').default;
 const isStaffMember = require('../utils/isStaffMember');
+const sendAlertMessage = require('../utils/sendAlertMessage');
 
 /**
  * Checks if a string is a valid URL
@@ -32,7 +33,7 @@ module.exports = {
     }
 
     if (args.length < 3) {
-      return message.channel.send('Wrong command usage. Use `!clan_profile help` to get help with the command.');
+      return sendAlertMessage(message.channel, 'Wrong command usage. Use `!clan_profile help` to get help with the command.', 'warning');
     }
 
     const clan = args.shift();
@@ -54,38 +55,38 @@ module.exports = {
       });
 
       if (!clanExists) {
-        return message.channel.send(`The clan "${clan}" does not exist.`);
+        return sendAlertMessage(message.channel, `The clan "${clan}" does not exist.`, 'warning');
       }
 
       const isStaff = isStaffMember(message.member);
 
       if (!playerClans.find((pc) => pc.toLowerCase() === clan.toLowerCase()) && !isStaff) {
-        return message.channel.send(`You are not a captain of "${clan}".`);
+        return sendAlertMessage(message.channel, `You are not a captain of "${clan}".`, 'warning');
       }
 
       switch (action) {
         case 'set_color':
           Clan.updateOne({ shortName: clan }, { color: parseInt(value, 16) }).exec();
-          message.channel.send('The embed color has been updated.');
+          sendAlertMessage(message.channel, 'The embed color has been updated.', 'success');
           break;
         case 'set_description':
           Clan.updateOne({ shortName: clan }, { description: value }).exec();
-          message.channel.send('The clan description has been updated.');
+          sendAlertMessage(message.channel, 'The clan description has been updated.', 'success');
           break;
         case 'set_logo':
           if (!isValidUrl(value)) {
-            return message.channel.send(`The url "${value}" is invalid.`);
+            return sendAlertMessage(message.channel, `The url "${value}" is invalid.`, 'warning');
           }
 
           Clan.updateOne({ shortName: clan }, { logo: value }).exec();
-          message.channel.send('The clan logo has been updated.');
+          sendAlertMessage(message.channel, 'The clan logo has been updated.', 'success');
           break;
         case 'set_discord':
           Clan.updateOne({ shortName: clan }, { discord: value }).exec();
-          message.channel.send('The clan discord invite has been updated.');
+          sendAlertMessage(message.channel, 'The clan discord invite has been updated.', 'success');
           break;
         default:
-          return message.channel.send(`The action "${action}" does not exist.`);
+          return sendAlertMessage(message.channel, `The action "${action}" does not exist.`, 'warning');
       }
 
       return true;

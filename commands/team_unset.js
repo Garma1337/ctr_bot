@@ -1,5 +1,6 @@
 const Team = require('../db/models/teams');
 const RankedLobby = require('../db/models/ranked_lobbies').default;
+const sendAlertMessage = require('../utils/sendAlertMessage');
 const { _4V4 } = require('../db/models/ranked_lobbies');
 
 module.exports = {
@@ -17,11 +18,12 @@ module.exports = {
         players: { $in: team.players },
       });
       if (lobby) {
-        return message.reply('you can\'t unset team while being in the lobby with them.');
+        return sendAlertMessage(message.channel, 'You can\'t unset your team while being in the lobby with it.', 'warning');
       }
-      team.delete().then(() => message.reply('your team has been unset.'));
+
+      team.delete().then(() => sendAlertMessage(message.channel, 'Your team has been unset.', 'success'));
     } else {
-      message.reply('your don\'t have a team.');
+      sendAlertMessage(message.channel, 'You don\'t have a team set.', 'warning');
     }
   },
 };

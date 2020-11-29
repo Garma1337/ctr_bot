@@ -1,5 +1,6 @@
 const fs = require('fs');
 const getRandomArrayElement = require('../utils/getRandomArrayElement');
+const sendAlertMessage = require('../utils/sendAlertMessage');
 
 module.exports = {
   name: 'generate_challenges',
@@ -13,7 +14,7 @@ module.exports = {
       count = parseInt(args[0], 10);
 
       if (count > 10) {
-        return message.channel.send('You cannot generate more than 10 challenges at once.');
+        return sendAlertMessage(message.channel, 'You cannot generate more than 10 challenges at once.', 'warning');
       }
     }
 
@@ -109,7 +110,7 @@ Track: ${randomTrack}${mirrorMode ? ' (Mirror Mode)' : ''}
 Condition: ${randomCondition}
 \`\`\``;
 
-      message.channel.send(output);
+      sendAlertMessage(message.channel, output, 'success');
     }
 
     return true;

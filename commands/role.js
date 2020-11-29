@@ -1,3 +1,5 @@
+const sendAlertMessage = require('../utils/sendAlertMessage');
+
 module.exports = {
   name: 'role',
   description: 'Add role to members.',
@@ -20,6 +22,7 @@ module.exports = {
         await member.roles.add(role);
         return `Added role ${role} to \`${userTag}\``;
       }
+
       return `\`${userTag}\` already has a role ${role}`;
     }
 
@@ -28,18 +31,19 @@ module.exports = {
       if (!member.roles.cache.some((r) => r.name === roleName)) {
         return `\`${userTag}\` doesn't have a role ${role}`;
       }
+
       await member.roles.remove(role);
       return `Removed role ${role} fom \`${userTag}\``;
     }
 
     if (!role) {
-      return message.reply(`role ${roleName} not found!`);
+      return sendAlertMessage(message.channel, `Role ${roleName} not found!`, 'warning');
     }
 
     let rows = message.content.split('\n');
     rows = rows.slice(1);
 
-    message.channel.send('...').then((m) => {
+    sendAlertMessage(message.channel, '...', 'info').then((m) => {
       message.guild.members.fetch().then(async (members) => {
         const out = [];
         // noinspection LoopStatementThatDoesntLoopJS
@@ -61,11 +65,13 @@ module.exports = {
           out.push(result);
         }
 
+        m.delete();
+
         const outMessage = out.join('\n');
         if (outMessage.length <= 2000) {
-          return m.edit(outMessage);
+          return sendAlertMessage(message.channel, outMessage, 'success');
         }
-        m.delete();
+
         return message.channel.send({
           files: [{
             attachment: Buffer.from(outMessage, 'utf-8'),

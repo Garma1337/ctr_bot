@@ -1,5 +1,6 @@
 const Room = require('../db/models/rooms');
 const isStaffMember = require('../utils/isStaffMember');
+const sendAlertMessage = require('../utils/sendAlertMessage');
 
 module.exports = {
   name: 'rooms',
@@ -12,22 +13,25 @@ module.exports = {
       Room.find({ guild: message.guild.id }).sort({ number: 1 })
         .then((docs) => {
           if (!docs.length) {
-            return message.channel.send('No rooms.');
+            return sendAlertMessage(message.channel, 'There are no rooms.', 'info');
           }
+
           const rooms = docs.map((doc) => {
             const channel = message.guild.channels.cache.find((c) => c.name === `ranked-room-${doc.number}`);
             if (channel) {
               return `${channel} ${doc.lobby}`;
             }
+
             return `DELETED_CHANNEL ${doc.lobby}`;
           });
-          message.channel.send(rooms);
+
+          sendAlertMessage(message.channel, rooms.join('\n'), 'success');
         });
     } else {
       const isStaff = isStaffMember(message.member);
 
       if (!isStaff) {
-        return message.channel.send('You don\'t have permission to do that!');
+        return sendAlertMessage(message.channel, 'You don\'t have permission to do that!', 'warning');
       }
 
       const action = args.shift();
@@ -43,18 +47,18 @@ module.exports = {
               });
 
               Promise.all(promises).then(() => {
-                message.channel.send('All rooms were freed.');
+                sendAlertMessage(message.channel, 'All rooms were freed.', 'success');
               });
             });
         } else {
-          Room.findOne({ guild: message.guild.id, number })
-            .then((doc) => {
-              if (!doc) {
-                return message.channel.send('There is no room with this number.');
-              }
-              doc.lobby = null;
-              doc.save().then(() => { message.channel.send('Room was freed.'); });
-            });
+          Room.findOne({ guild: message.guild.id, number }).then((doc) => {
+            if (!doc) {
+              return sendAlertMessage(message.channel, 'There is no room with this number.', 'warning');
+            }
+
+            doc.lobby = null;
+            doc.save().then(() => { sendAlertMessage(message.channel, 'Room was freed.', 'success'); });
+          });
         }
       }
     }

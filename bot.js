@@ -5,6 +5,7 @@ const fs = require('fs');
 const Discord = require('discord.js');
 const moment = require('moment');
 const { CronJob } = require('cron');
+const sendAlertMessage = require('./utils/sendAlertMessage');
 const Command = require('./db/models/command');
 const Config = require('./db/models/config');
 const Cooldown = require('./db/models/cooldowns');
@@ -104,11 +105,7 @@ client.on('guildCreate', (guild) => {
 
 async function reactOnSignUp(message, oldMessage = null) {
   try {
-    if (message.type === 'PINS_ADD') {
-      return;
-    }
-
-    if (message.author.id === client.user.id) {
+    if (message.type === 'PINS_ADD' || message.author.id === client.user.id) {
       return;
     }
 
@@ -244,7 +241,7 @@ async function mute(member, message, duration = moment.duration(1, 'h')) {
   member.roles.add(mutedRole);
 
   if (message) {
-    message.reply(`you've been muted for ${duration.humanize()}.`);
+    sendAlertMessage(message.channel, `<@!${member.id}>, you've been muted for ${duration.humanize()}.`, 'info');
   }
 
   const muteObj = new Mute();
@@ -273,7 +270,7 @@ function checkPings(message) {
   const { guild } = message;
 
   // ranked pings
-  if (roles.find((r) => ['ranked items', 'ranked itemless', 'ranked duos', 'ranked battle', 'ranked 4v4'].includes(r.name.toLowerCase()))) {
+  if (roles.find((r) => ['ranked items', 'ranked itemless', 'ranked duos', 'ranked 3v3', 'ranked 4v4', 'ranked battle'].includes(r.name.toLowerCase()))) {
     Cooldown.findOneAndUpdate(
       { guildId: guild.id, discordId: message.author.id, name: 'ranked pings' },
       { $inc: { count: 1 }, $set: { updatedAt: now } },
@@ -283,7 +280,7 @@ function checkPings(message) {
         if (doc.count >= 2) { // mute
           mute(member, message);
         } else if (doc.count >= 1) {
-          message.reply(`please don't ping this role, or I will have to mute you for ${muteDuration.humanize()}.`);
+          sendAlertMessage(message.channel, `<@!${member.id}>, please don't ping this role, or I will have to mute you for ${muteDuration.humanize()}.`, 'warning');
         }
       });
   }
@@ -299,7 +296,7 @@ function checkPings(message) {
         if (doc.count >= 3) { // mute
           mute(member, message);
         } else if (doc.count >= 2) {
-          message.reply(`please don't ping people so often, or I will have to mute you for ${muteDuration.humanize()}.`);
+          sendAlertMessage(message.channel, `<@!${member.id}>, please don't ping people so often, or I will have to mute you for ${muteDuration.humanize()}.`, 'warning');
         }
       });
   }
@@ -321,11 +318,12 @@ client.on('message', (message) => {
 
   const { prefix } = client;
 
-  if (!message.content.startsWith(prefix)) return;
+  if (!message.content.startsWith(prefix)) {
+    return;
+  }
 
   if (client.stop) {
-    message.reply('I\'m turned off :slight_frown:');
-    return;
+    return sendAlertMessage(message.channel, 'I\'m turned off :slight_frown:', 'warning');
   }
 
   let isStaff = false;
@@ -358,28 +356,29 @@ client.on('message', (message) => {
   if (!command) {
     Command.findOne({ name: commandName }).then((cmd) => {
       if (!cmd) {
-        return message.reply(`the command !${commandName} does not exist.`);
+        return sendAlertMessage(message.channel, `<@!${message.author.id}>, the command !${commandName} does not exist.`, 'warning');
       }
 
       if (!isStaff && !allowedChannels.find((c) => c.name === message.channel.name)) {
-        return message.reply('you cannot use commands in this channel.');
+        return sendAlertMessage(message.channel, `<@!${message.author.id}>, you cannot use commands in this channel.`, 'warning');
       }
 
       message.channel.send(cmd.message);
     });
+
     return;
   }
 
   if (command.guildOnly && message.channel.type !== 'text') {
-    return message.reply('You cannot use commands inside DMs. Please head over to #bot-spam and use the command there.');
+    return sendAlertMessage(message.channel, `<@!${message.author.id}>, you cannot use commands inside DMs. Please head over to #bot-spam and use the command there.`, 'warning');
   }
 
   if (!isStaff && !allowedChannels.find((c) => c.name === message.channel.name)) {
-    return message.reply('you cannot use commands in this channel.');
+    return sendAlertMessage(message.channel, `<@!${message.author.id}>, you cannot use commands in this channel.`, 'warning');
   }
 
   if (command.permissions && !(message.member && isStaffMember(message.member))) {
-    return message.reply('you don\'t have permission to use this command.');
+    return sendAlertMessage(message.channel, `<@!${message.author.id}>, you don't have permission to use this command.`, 'warning');
   }
 
   if (command.args && !args.length) {
@@ -389,7 +388,7 @@ client.on('message', (message) => {
       reply += `\nThe proper usage would be:\n\`${prefix}${command.name} ${command.usage}\``;
     }
 
-    return message.channel.send(reply);
+    return sendAlertMessage(message.channel, reply, 'warning');
   }
 
   if (!cooldowns.has(command.name)) {
@@ -405,7 +404,7 @@ client.on('message', (message) => {
 
     if (now < expirationTime) {
       const timeLeft = (expirationTime - now) / 1000;
-      return message.reply(`please wait ${timeLeft.toFixed(1)} more second(s) before reusing the \`${command.name}\` command.`);
+      return sendAlertMessage(message.channel, `<@!${message.author.id}>, please wait ${timeLeft.toFixed(1)} more second(s) before reusing the \`${command.name}\` command.`, 'warning');
     }
   }
 
@@ -421,7 +420,7 @@ client.on('message', (message) => {
   function catchExecutionError(error) {
     // eslint-disable-next-line no-console
     console.error(error);
-    message.reply('there was an error trying to execute that command!');
+    sendAlertMessage(message.channel, `There was an error trying to execute that command!\n\n${error}`, 'error');
   }
 
   try {
@@ -448,7 +447,7 @@ client.on('guildMemberAdd', (member) => {
     member.createDM()
       .then((dm) => dm.send(config.welcome_message)).then(DMCallback)
       .catch(() => {
-        sendLogMessage(guild, `Couldn't send welcome message to ${member}`);
+        sendLogMessage(guild, `Couldn't send welcome message to ${member}.`);
       });
   }
 
@@ -472,7 +471,7 @@ function checkDeletedPings(message) {
   if (message) {
     const { roles } = message.mentions;
     if (roles.find((r) => ['war', 'private lobby', 'instateam'].includes(r.name.toLowerCase()))) {
-      message.reply('don\'t ghost ping this role, please.');
+      sendAlertMessage(message.channel, `<@!${message.author.id}>, don't ghost ping this role, please.`, 'warning');
     }
   }
 }

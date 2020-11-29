@@ -1,6 +1,7 @@
 const moment = require('moment');
 const Player = require('../db/models/player');
 const createPageableContent = require('../utils/createPageableContent');
+const sendAlertMessage = require('../utils/sendAlertMessage');
 const sortObject = require('../utils/sortObject');
 const { regions } = require('../utils/regions');
 
@@ -20,12 +21,13 @@ module.exports = {
       'time_zones',
       'characters',
       'tracks',
+      'consoles',
     ];
 
     const type = args[0];
     if (!types.includes(type)) {
-      return message.channel.send(`Invalid type. Here is a list of all available statistics types:
-\`\`\`${types.join('\n')}\`\`\``);
+      return sendAlertMessage(message.channel, `Invalid type. Here is a list of all available statistics types:\n
+${types.join('\n')}`, 'warning');
     }
 
     const players = await Player.find();

@@ -1,3 +1,5 @@
+const sendAlertMessage = require('../utils/sendAlertMessage');
+
 module.exports = {
   name: 'create_tournament_channels',
   description: 'Creating tournament channels with roles.',
@@ -27,13 +29,13 @@ module.exports = {
             });
             await role.edit({ mentionable: true });
           }).catch((e) => {
-            message.channel.send(`\`${e.name}: ${e.message}\``);
+            sendAlertMessage(message.channel, `\`${e.name}: ${e.message}\``, 'error');
           });
         }).catch((e) => {
-          message.channel.send(`\`${e.name}: ${e.message}\``);
+          sendAlertMessage(message.channel, `\`${e.name}: ${e.message}\``, 'error');
         });
     });
 
-    message.channel.send(outMessageRows.join('\n'));
+    sendAlertMessage(message.channel, outMessageRows.join('\n'), 'success');
   },
 };

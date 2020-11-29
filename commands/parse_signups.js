@@ -1,5 +1,6 @@
 const SignupsChannel = require('../db/models/signups_channels');
 const getSignupsData = require('../utils/getSignupsData');
+const sendAlertMessage = require('../utils/sendAlertMessage');
 
 module.exports = {
   name: 'parse_signups',
@@ -10,7 +11,7 @@ module.exports = {
     const { guild } = message;
 
     if (!args.length) {
-      return message.channel.send('You should specify the channel.');
+      return sendAlertMessage(message.channel, 'You should specify the channel.', 'warning');
     }
 
     let channel;
@@ -22,7 +23,9 @@ module.exports = {
     }
 
     const doc = await SignupsChannel.findOne({ guild: message.guild.id, channel: channel.id });
-    if (!doc) return message.channel.send('This channel is not defined as signups channel. Use `!signups_channels` command.');
+    if (!doc) {
+      return sendAlertMessage(message.channel, 'This channel is not defined as signups channel. Use `!signups_channels` command.', 'warning');
+    }
 
     const data = await getSignupsData(channel, doc);
 

@@ -1,5 +1,6 @@
 const moment = require('moment');
 const Player = require('../db/models/player');
+const sendAlertMessage = require('../utils/sendAlertMessage');
 
 /**
  * Creates an array with a range of numbers
@@ -25,9 +26,9 @@ module.exports = {
 
         player.birthday = null;
         player.save().then(() => {
-          message.channel.send('Your birthday has been unset.');
+          sendAlertMessage(message.channel, 'Your birthday has been unset.', 'success');
         }).catch((error) => {
-          message.channel.send(`Unable to update player. Error: ${error}`);
+          sendAlertMessage(message.channel, `Unable to update player. Error: ${error}`, 'error');
         });
       });
 
@@ -38,7 +39,7 @@ module.exports = {
       let birthdate = moment(args[0].trim());
 
       if (!birthdate.isValid()) {
-        return message.channel.send(`The date "${args[0]}" is invalid.`);
+        return sendAlertMessage(message.channel, `The date "${args[0]}" is invalid.`, 'warning');
       }
 
       birthdate = birthdate.format('YYYY-MM-DD');
@@ -51,9 +52,9 @@ module.exports = {
 
         player.birthday = args[0];
         player.save().then(() => {
-          message.channel.send(`Your birthday has been set to ${args[0]}.`);
+          sendAlertMessage(message.channel, `Your birthday has been set to ${args[0]}.`, 'success');
         }).catch((error) => {
-          message.channel.send(`Unable to update player. Error: ${error}`);
+          sendAlertMessage(message.channel, `Unable to update player. Error: ${error}`, 'error');
         });
       });
     }
@@ -77,7 +78,7 @@ module.exports = {
     ];
     const days = range(31, 1);
 
-    return message.channel.send('Please enter the year. The value must be between 1970 and 2010. Waiting 1 minute.').then((confirmMessage) => {
+    return sendAlertMessage(message.channel, 'Please enter the year. The value must be between 1970 and 2010. Waiting 1 minute.', 'info').then((confirmMessage) => {
       const filter = (m) => m.author.id === message.author.id;
       const options = { max: 1, time: 60000, errors: ['time'] };
 
@@ -91,10 +92,8 @@ module.exports = {
         if (years.includes(Number(content))) {
           const year = content;
 
-          return message.channel.send(`Select month. Waiting 1 minute.
-\`\`\`
-${months.map((m, i) => m = `${i + 1} - ${m}`).join('\n')}
-\`\`\``).then((confirmMessage) => {
+          return sendAlertMessage(message.channel, `Select month. Waiting 1 minute.\n
+${months.map((m, i) => m = `${i + 1} - ${m}`).join('\n')}`, 'info').then((confirmMessage) => {
             message.channel.awaitMessages(filter, options).then((collectedMessages) => {
               const collectedMessage = collectedMessages.first();
               const { content } = collectedMessage;
@@ -109,7 +108,7 @@ ${months.map((m, i) => m = `${i + 1} - ${m}`).join('\n')}
                   month = `0${month}`;
                 }
 
-                return message.channel.send('Please enter the day. The value must be between 1 and 31. Waiting 1 minute.').then((confirmMessage) => {
+                return sendAlertMessage(message.channel, 'Please enter the day. The value must be between 1 and 31. Waiting 1 minute.', 'info').then((confirmMessage) => {
                   message.channel.awaitMessages(filter, options).then((collectedMessages) => {
                     const collectedMessage = collectedMessages.first();
                     const { content } = collectedMessage;
@@ -128,7 +127,7 @@ ${months.map((m, i) => m = `${i + 1} - ${m}`).join('\n')}
                       const birthDate = moment(birthday);
 
                       if (!birthDate.isValid()) {
-                        return message.channel.send(`The date "${birthday}" is invalid.`);
+                        return sendAlertMessage(message.channel, `The date "${birthday}" is invalid.`, 'warning');
                       }
 
                       Player.findOne({ discordId: message.author.id }).then((player) => {
@@ -139,23 +138,23 @@ ${months.map((m, i) => m = `${i + 1} - ${m}`).join('\n')}
 
                         player.birthday = birthday;
                         player.save().then(() => {
-                          message.channel.send(`Your birthday has been set to ${birthday}.`);
+                          sendAlertMessage(message.channel, `Your birthday has been set to ${birthday}.`, 'success');
                         }).catch((error) => {
-                          message.channel.send(`Unable to update player. Error: ${error}`);
+                          sendAlertMessage(message.channel, `Unable to update player. Error: ${error}`, 'error');
                         });
                       });
                     } else {
-                      message.channel.send('Command canceled.');
+                      sendAlertMessage(message.channel, 'Command cancelled.', 'error');
                     }
                   });
-                }).catch(() => message.channel.send('Command canceled.'));
+                }).catch(() => sendAlertMessage(message.channel, 'Command cancelled.', 'error'));
               }
-              message.channel.send('Command canceled.');
+              sendAlertMessage(message.channel, 'Command cancelled.', 'error');
             });
-          }).catch(() => message.channel.send('Command canceled.'));
+          }).catch(() => sendAlertMessage(message.channel, 'Command cancelled.', 'error'));
         }
-        message.channel.send('Command canceled.');
-      }).catch(() => message.channel.send('Command canceled.'));
+        sendAlertMessage(message.channel, 'Command cancelled.');
+      }).catch(() => sendAlertMessage(message.channel, 'Command cancelled.', 'error'));
     });
   },
 };

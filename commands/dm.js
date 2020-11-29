@@ -1,4 +1,5 @@
 const findMember = require('../utils/findMember');
+const sendAlertMessage = require('../utils/sendAlertMessage');
 const sendLogMessage = require('../utils/sendLogMessage');
 
 module.exports = {
@@ -14,7 +15,7 @@ module.exports = {
       try {
         member = await findMember(message.guild, args[0]);
       } catch (error) {
-        return message.channel.send(error.message);
+        return sendAlertMessage(message.channel, error.message, 'error');
       }
     }
 
@@ -34,10 +35,9 @@ module.exports = {
       dm.send(post, { files: attachments })
         .then((m) => {
           DMCallback(m);
-          message.channel.send(`Message has been sent to ${member.toString()}`);
-        })
-        .catch((error) => {
-          message.channel.send(error.message);
+          sendAlertMessage(message.channel, `Message has been sent to ${member.toString()}.`, 'success');
+        }).catch((error) => {
+          sendAlertMessage(message.channel, error.message, 'error');
         });
     });
   },

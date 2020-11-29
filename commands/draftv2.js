@@ -1,6 +1,7 @@
 const axios = require('axios');
 const config = require('../config');
 const isStaffMember = require('../utils/isStaffMember');
+const sendAlertMessage = require('../utils/sendAlertMessage');
 
 module.exports = {
   name: 'draft2',
@@ -23,11 +24,11 @@ module.exports = {
     const timeout = params[5];
 
     if (params.length < 3 || mentionedUsers.length < 2) {
-      return message.channel.send(wrongSyntax);
+      return sendAlertMessage(message.channel, wrongSyntax, 'warning');
     }
 
     if (!isStaffMember(message.member) && !mentionedUsers.map((m) => m.id).includes(message.author.id)) {
-      return message.channel.send('You should be one of the players doing the draft.');
+      return sendAlertMessage(message.channel, 'You should be one of the players doing the draft.', 'warning');
     }
 
     const post = {
@@ -39,7 +40,7 @@ module.exports = {
       timeout,
     };
 
-    message.channel.send(`Connecting to ${config.draft_tool_url} ...`);
+    sendAlertMessage(message.channel, `Connecting to ${config.draft_tool_url} ...`, 'info');
 
     axios({
       url: `${config.draft_tool_url}index.php?action=createDraft`,
@@ -62,18 +63,18 @@ module.exports = {
 
       const promise1 = mentionedUsers[0].createDM()
         .then((dm) => dm.send(`Here is your draft link for the war with ${post.teamB}:\n${teamALink}`))
-        .catch(() => message.channel.send(`Couldn't send a DM to ${mentions[0]}.\n${post.teamA} link:\n${teamALink}`));
+        .catch(() => sendAlertMessage(message.channel, `Couldn't send a DM to ${mentions[0]}.\n${post.teamA} link:\n${teamALink}`, 'error'));
 
       const promise2 = mentionedUsers[1].createDM()
         .then((dm) => dm.send(`Here is your draft link for the war with ${post.teamA}:\n${teamBLink}`))
-        .catch(() => message.channel.send(`Couldn't send a DM to ${mentions[1]}.\n${post.teamB} link:\n${teamBLink}`));
+        .catch(() => sendAlertMessage(message.channel, `Couldn't send a DM to ${mentions[1]}.\n${post.teamB} link:\n${teamBLink}`, 'error'));
 
       Promise.all([promise1, promise2]).then(() => {
-        message.channel.send(`I've messaged both captains: ${mentionedUsers.join(', ')} with team links.
-Spectator link: <${spectatorUrl}>`);
+        sendAlertMessage(message.channel, `I've messaged both captains: ${mentionedUsers.join(', ')} with team links.
+Spectator link: <${spectatorUrl}>`, 'success');
       });
     }).catch(() => {
-      message.channel.send(`Could not connect to ${config.draft_tool_url} D:`);
+      sendAlertMessage(message.channel, `Could not connect to ${config.draft_tool_url} D:`, 'error');
     });
   },
 };

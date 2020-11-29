@@ -1,4 +1,5 @@
 const Player = require('../db/models/player');
+const sendAlertMessage = require('../utils/sendAlertMessage');
 const { serverLanguages } = require('../utils/serverLanguages');
 
 module.exports = {
@@ -6,7 +7,6 @@ module.exports = {
   description: 'Set your languages.',
   guildOnly: true,
   aliases: ['set_language', 'language_set'],
-  cooldown: 60,
   execute(message, args) {
     if (args[0] === 'unset') {
       Player.findOne({ discordId: message.author.id }).then((player) => {
@@ -17,9 +17,9 @@ module.exports = {
 
         player.languages = [];
         player.save().then(() => {
-          message.channel.send('Your languages have been unset.');
+          sendAlertMessage(message.channel, 'Your languages have been unset.', 'success');
         }).catch((error) => {
-          message.channel.send(`Unable to update player. Error: ${error}`);
+          sendAlertMessage(message.channel, `Unable to update player. Error: ${error}`, 'error');
         });
       });
 
@@ -90,9 +90,9 @@ module.exports = {
 
             player.languages = languages;
             player.save().then(() => {
-              message.channel.send(`${language.name} has been added to your languages.`);
+              sendAlertMessage(message.channel, `${language.name} has been added to your languages.`, 'success');
             }).catch((error) => {
-              message.channel.send(`Unable to update player. Error: ${error}`);
+              sendAlertMessage(message.channel, `Unable to update player. Error: ${error}`, 'error');
             });
           });
         }
@@ -113,10 +113,10 @@ module.exports = {
             player.languages = languages;
             player.save();
 
-            message.channel.send(`${language.name} has been removed from your languages.`);
+            sendAlertMessage(message.channel, `${language.name} has been removed from your languages.`, 'success');
           });
         }
       }));
-    }).catch(() => message.channel.send('Command canceled.'));
+    }).catch(() => sendAlertMessage(message.channel, 'Command cancelled.', 'error'));
   },
 };

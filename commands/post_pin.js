@@ -1,4 +1,5 @@
 const findBotsMessages = require('../utils/findBotsMessages');
+const sendAlertMessage = require('../utils/sendAlertMessage');
 
 module.exports = {
   name: 'post_pin',
@@ -27,14 +28,14 @@ module.exports = {
       if (channels.size) {
         channelNames = channels.map((c) => c.name);
       } else {
-        return message.channel.send('Error');
+        return sendAlertMessage(message.channel, 'Error', 'error');
       }
     }
 
     const promises = findBotsMessages(message, numberOfPost, channelNames, (msg) => msg.pin());
 
     Promise.all(promises).then(() => {
-      message.channel.send('Done');
+      sendAlertMessage(message.channel, 'Done.', 'success');
     });
   },
 };

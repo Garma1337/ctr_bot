@@ -3,8 +3,9 @@ const Player = require('../db/models/player');
 const Rank = require('../db/models/rank');
 const createPageableContent = require('../utils/createPageableContent');
 const calculateSuperScore = require('../utils/calculateSuperScore');
-const isStaffMember = require('../utils/isStaffMember');
 const getConfigValue = require('../utils/getConfigValue');
+const isStaffMember = require('../utils/isStaffMember');
+const sendAlertMessage = require('../utils/sendAlertMessage');
 
 function escapeRegExp(string) {
   return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
@@ -188,7 +189,7 @@ Edit clans:
     const actions = [ADD, DELETE, REMOVE];
     if (actions.includes(action)) {
       if (!isStaffMember(message.member)) {
-        return message.channel.send('You don\'t have permission to do that!');
+        return sendAlertMessage(message.channel, 'You don\'t have permission to do that!', 'warning');
       }
 
       const shortName = args[1];
@@ -207,15 +208,14 @@ Edit clans:
 
           Clan.findOne({ shortName: { $regex: regexShortName } }).then((doc) => {
             if (doc) {
-              message.channel.send(`There is already a clan with the short name "${shortName}".`);
-              return;
+              return sendAlertMessage(message.channel, `There is already a clan with the short name "${shortName}".`, 'warning');
             }
 
             clan = new Clan();
             clan.shortName = shortName;
             clan.fullName = fullName;
             clan.save().then(() => {
-              message.channel.send(`The clan "${shortName}" was created.`);
+              sendAlertMessage(message.channel, `The clan "${shortName}" was created.`, 'success');
             });
           });
 
@@ -227,10 +227,10 @@ Edit clans:
           clan = Clan.findOne({ shortName }).then((doc) => {
             if (doc) {
               doc.delete().then(() => {
-                message.channel.send(`The clan "${shortName}" was deleted.`);
+                sendAlertMessage(message.channel, `The clan "${shortName}" was deleted.`, 'success');
               });
             } else {
-              message.channel.send(`The clan "${shortName}" does not exist.`);
+              sendAlertMessage(message.channel, `The clan "${shortName}" does not exist.`, 'warning');
             }
           });
           break;
@@ -335,7 +335,7 @@ Edit clans:
             });
           });
         } else {
-          return message.channel.send(`The clan "${clanName}" does not exist.`);
+          return sendAlertMessage(message.channel, `The clan "${clanName}" does not exist.`, 'warning');
         }
       });
     }

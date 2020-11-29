@@ -1,5 +1,6 @@
 const Duo = require('../db/models/duos');
 const RankedLobby = require('../db/models/ranked_lobbies').default;
+const sendAlertMessage = require('../utils/sendAlertMessage');
 const { DUOS } = require('../db/models/ranked_lobbies');
 
 module.exports = {
@@ -17,11 +18,12 @@ module.exports = {
         players: { $in: [authorSavedDuo.discord1, authorSavedDuo.discord2] },
       });
       if (lobby) {
-        return message.reply('you can\'t unset partner while being in the lobby with them.');
+        return sendAlertMessage(message.channel, 'You can\'t unset your partner while being in the lobby with them.', 'warning');
       }
-      authorSavedDuo.delete().then(() => message.reply('your partner has been unset.'));
+
+      authorSavedDuo.delete().then(() => sendAlertMessage(message.channel, 'Your partner has been unset.', 'success'));
     } else {
-      message.reply('your don\'t have a partner.');
+      sendAlertMessage(message.channel, 'Your don\'t have a partner set.', 'warning');
     }
   },
 };

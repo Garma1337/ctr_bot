@@ -1,4 +1,6 @@
 const rngPools = require('../utils/rngPools');
+const sendAlertMessage = require('../utils/sendAlertMessage');
+
 const {
   _4V4, BATTLE, ITEMLESS, ITEMS,
 } = require('../db/models/ranked_lobbies');
@@ -10,14 +12,15 @@ module.exports = {
   aliases: ['rng_mogi'],
   cooldown: 10,
   execute(message) {
-    return message.channel.send(`Select lobby mode. Waiting 1 minute.
-\`\`\`1 - FFA / Duos / 3 vs. 3 (full rng)
-2 - FFA / Duos / 3 vs. 3 (pools)
-3 - Itemless (full rng)
-4 - Itemless (pools)
-5 - 4 vs. 4 (full rng)
-6 - 4 vs. 4 (pools)
-7 - Battle Mode\`\`\``).then((confirmMessage) => {
+    return sendAlertMessage(message.channel, `Select lobby mode. Waiting 1 minute.
+
+1 - FFA / Duos / 3 vs. 3 (Full RNG Tracks)
+2 - FFA / Duos / 3 vs. 3 (Track Pools)
+3 - Itemless (Full RNG Tracks)
+4 - Itemless (Track Pools)
+5 - 4 vs. 4 (Full RNG Tracks)
+6 - 4 vs. 4 (Track Pools)
+7 - Battle Mode`, 'info').then((confirmMessage) => {
       message.channel.awaitMessages((m) => m.author.id === message.author.id, { max: 1, time: 60000, errors: ['time'] })
         .then((collected) => {
           const collectedMessage = collected.first();
@@ -25,7 +28,8 @@ module.exports = {
           collectedMessage.delete();
 
           if (['1', '2', '3', '4', '5', '6', '7'].includes(content)) {
-            confirmMessage.edit('Randomizing...').then((m) => {
+            confirmMessage.delete();
+            sendAlertMessage(message.channel, 'Randomizing...', 'info').then((m) => {
               let type;
               let pools;
 
@@ -66,13 +70,17 @@ module.exports = {
 
               const title = `Tracks for ${type} lobby ${pools ? '(pools)' : '(full rng)'}`;
               rngPools({ type, pools }).then((maps) => {
-                m.edit(`**${title}**\n\`\`\`${maps.map((map, i) => `${i + 1}. ${map}`).join('\n')}\`\`\``);
+                m.delete();
+                sendAlertMessage(message.channel, `**${title}**\n\n${maps.map((map, i) => `${i + 1}. ${map}`).join('\n')}`, 'success');
               });
             });
           } else {
             throw new Error('cancel');
           }
-        }).catch(() => confirmMessage.edit('Command cancelled.'));
+        }).catch(() => {
+          confirmMessage.delete();
+          sendAlertMessage(message.channel, 'Command cancelled.', 'error');
+        });
     });
   },
 };

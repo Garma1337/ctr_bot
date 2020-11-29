@@ -1,5 +1,6 @@
 const Player = require('../db/models/player');
 const isStaffMember = require('../utils/isStaffMember');
+const sendAlertMessage = require('../utils/sendAlertMessage');
 const { regions } = require('../utils/regions');
 
 module.exports = {
@@ -26,13 +27,11 @@ module.exports = {
       }
 
       if (player.region && !isStaff) {
-        return message.channel.send('You cannot change your region. Please message a staff member.');
+        return sendAlertMessage(message.channel, 'You cannot change your region. Please message a staff member.', 'warning');
       }
 
-      return message.channel.send(`Please select your region. Waiting 1 minute.
-\`\`\`
-${regions.map((r, i) => `${i + 1} - ${r.description}`).join('\n')}
-\`\`\``).then((confirmMessage) => {
+      return sendAlertMessage(message.channel, `Please select your region. Waiting 1 minute.\n
+${regions.map((r, i) => `${i + 1} - ${r.description}`).join('\n')}`, 'info').then((confirmMessage) => {
         const filter = (m) => m.author.id === message.author.id;
         const options = { max: 1, time: 60000, errors: ['time'] };
 
@@ -54,15 +53,15 @@ ${regions.map((r, i) => `${i + 1} - ${r.description}`).join('\n')}
             player.region = region.uid;
             player.save().then(() => {
               if (user.id === message.author.id) {
-                message.channel.send(`Your region has been set to ${region.description}.`);
+                sendAlertMessage(message.channel, `Your region has been set to \`${region.description}\`.`, 'success');
               } else {
-                message.channel.send(`<@!${user.id}>'s region has been set to ${region.description}.`);
+                sendAlertMessage(message.channel, `<@!${user.id}>'s region has been set to \`${region.description}\`.`, 'success');
               }
             }).catch((error) => {
-              message.channel.send(`Unable to update player. Error: ${error}`);
+              sendAlertMessage(message.channel, `Unable to update player. Error: ${error}`, 'error');
             });
           }
-        });
+        }).catch(() => sendAlertMessage(message.channel, 'Command cancelled.', 'error'));
       });
     });
   },

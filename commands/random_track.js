@@ -1,5 +1,6 @@
 const fs = require('fs');
 const getRandomArrayElement = require('../utils/getRandomArrayElement');
+const sendAlertMessage = require('../utils/sendAlertMessage');
 
 module.exports = {
   name: 'rng',
@@ -14,7 +15,7 @@ module.exports = {
       number = Number(args[0]);
 
       if (isNaN(number) || number < 1 || number > 40) {
-        return message.channel.send('Please enter a number between 1 and 40');
+        return sendAlertMessage(message.channel, 'Please enter a number between 1 and 40', 'warning');
       }
     }
 
@@ -38,7 +39,7 @@ module.exports = {
         randomTracks.push(randomTrack);
       }
 
-      message.channel.send(`\`\`\`${randomTracks.map((r, i) => `${i + 1}. ${r}`).join('\n')}\`\`\``);
+      sendAlertMessage(message.channel, `${randomTracks.map((r, i) => `${i + 1}. ${r}`).join('\n')}`, 'success');
     });
   },
 };

@@ -1,4 +1,5 @@
 const Discord = require('discord.js');
+const sendAlertMessage = require('../utils/sendAlertMessage');
 
 module.exports = {
   name: 'post_delete',
@@ -31,7 +32,7 @@ module.exports = {
         channelName = channelName.replace(/^#/, '');
         channel = message.guild.channels.cache.find((c) => c.name === channelName);
       } if (!channel) {
-        return message.channel.send(`Couldn't find channel ${channelName}`);
+        return sendAlertMessage(message.channel, `Couldn't find channel ${channelName}.`, 'warning');
       }
       channel.messages.fetch({ limit: 100 }).then((messages) => {
         let count = 0;
@@ -46,14 +47,15 @@ module.exports = {
         });
 
         if (!result) {
-          return message.channel.send(`I didn't find my message in ${channelName} channel`);
+          return sendAlertMessage(messages.channel, `I didn't find my message in ${channelName}.`, 'warning');
         }
+
         return result;
       });
     });
 
     Promise.all(promises).then(() => {
-      message.channel.send('Done');
+      sendAlertMessage(message.channel, 'Done.', 'success');
     });
   },
 };

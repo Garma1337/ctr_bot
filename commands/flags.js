@@ -1,7 +1,7 @@
 module.exports = {
   name: 'flags',
   description: 'Show country flags.',
-  execute(message, args) {
+  execute(message) {
     const { flags } = message.client;
 
     const halfLength = Math.floor(flags.length / 2);

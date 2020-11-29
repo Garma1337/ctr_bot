@@ -1,5 +1,6 @@
 const fs = require('fs');
 const Player = require('../db/models/player');
+const sendAlertMessage = require('../utils/sendAlertMessage');
 
 module.exports = {
   name: 'set_character',
@@ -19,7 +20,7 @@ module.exports = {
         const column2 = characters.slice(20, 40);
         const column3 = characters.slice(40);
 
-        message.channel.send('You need to specify a character. Here is the list of available characters:');
+        sendAlertMessage(message.channel, 'You need to specify a character. Here is the list of available characters:', 'warning');
         return message.channel.send({
           embed: {
             author: {
@@ -50,7 +51,7 @@ module.exports = {
       const character = characters.find((c) => c.toLowerCase() === input.toLowerCase());
 
       if (!character) {
-        return message.channel.send(`The character "${input}" doesn't exist.`);
+        return sendAlertMessage(message.channel, `The character "${input}" doesn't exist.`, 'warning');
       }
 
       Player.findOne({ discordId: message.author.id }).then((player) => {
@@ -61,9 +62,9 @@ module.exports = {
 
         player.favCharacter = character;
         player.save().then(() => {
-          message.channel.send(`Your favorite character has been set to "${character}".`);
+          sendAlertMessage(message.channel, `Your favorite character has been set to "${character}".`, 'success');
         }).catch((error) => {
-          message.channel.send(`Unable to update player. Error: ${error}`);
+          sendAlertMessage(message.channel, `Unable to update player. Error: ${error}`, 'error');
         });
       });
     });

@@ -1,4 +1,5 @@
 const Duo = require('../db/models/duos');
+const sendAlertMessage = require('../utils/sendAlertMessage');
 
 module.exports = {
   name: 'partner',
@@ -10,9 +11,9 @@ module.exports = {
     const authorSavedDuo = await Duo.findOne({ guild: guild.id, $or: [{ discord1: author.id }, { discord2: author.id }] });
     if (authorSavedDuo) {
       const savedPartner = authorSavedDuo.discord1 === author.id ? authorSavedDuo.discord2 : authorSavedDuo.discord1;
-      message.reply('...').then((m) => m.edit(`${author}, your partner is <@${savedPartner}>.`));
+      sendAlertMessage(message.channel, `${author}, your partner is <@${savedPartner}>.`, 'info');
     } else {
-      message.reply('your don\'t have a partner.');
+      sendAlertMessage(message.channel, 'You don\'t have a partner set.', 'info');
     }
   },
 };

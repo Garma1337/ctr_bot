@@ -111,7 +111,7 @@ const TRACK_OPTION_RNG = 'Full RNG';
 const TRACK_OPTION_POOLS = 'Pools';
 const TRACK_OPTION_DRAFT = 'Draft';
 
-const PLAYER_DEFAULT_RANK = 1000;
+const PLAYER_DEFAULT_RANK = 1200;
 const DEFAULT_RANK = PLAYER_DEFAULT_RANK;
 const ITEMS_MAX = 8;
 const _3V3_MAX = 6;
@@ -572,13 +572,13 @@ function startLobby(docId) {
                 }
 
                 roomChannel.send({
-                  color: embedColors[doc.type],
                   content: `**The ${getTitle(doc)} has started**
 *Organize your host and scorekeeper*
 Your room is ${roomChannel}.
 Use \`!lobby end\` when your match is done.
 ${playersText}`,
                   embed: {
+                    color: embedColors[doc.type],
                     title: `The ${getTitle(doc)} has started`,
                     fields,
                   },
@@ -2217,12 +2217,12 @@ async function getRanks() {
   const url = 'https://gb.hlorenzi.com/api/v1/graphql';
 
   const types = {
-    [ITEMS]: 'ay6wNS',
-    [ITEMLESS]: 'pAfqYh',
-    [DUOS]: 'c9iLJU',
+    [ITEMS]: 'tJLAVi',
+    [ITEMLESS]: 'xgEBFt',
+    [DUOS]: 'lxd_JN',
     [_3V3]: 'V8s-GJ',
-    [_4V4]: '4fBRNF',
-    [BATTLE]: 'oXNYH1',
+    [_4V4]: 'oNvm3e',
+    [BATTLE]: 'ylWyts',
   };
 
   const ranks = {};

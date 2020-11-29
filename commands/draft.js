@@ -1,6 +1,7 @@
 const Discord = require('discord.js');
 const createDraft = require('../utils/createDraft');
 const isStaffMember = require('../utils/isStaffMember');
+const sendAlertMessage = require('../utils/sendAlertMessage');
 
 module.exports = {
   name: 'draft',
@@ -21,15 +22,15 @@ Team B: @CaptainB\``;
     rows.shift();
 
     if (rows.length !== 2) {
-      return message.channel.send(wrongSyntax);
+      return sendAlertMessage(message.channel, wrongSyntax, 'warning');
     }
 
     if (mentions.users.size !== 2) {
-      return message.channel.send('You should mention two team captains');
+      return sendAlertMessage(message.channel, 'You should mention two team captains.', 'warning');
     }
 
     if (!isStaffMember(message.member) && !mentions.users.map((m) => m.id).includes(message.author.id)) {
-      return message.channel.send('You should be a captain of one of the teams');
+      return sendAlertMessage(message.channel, 'You should be a captain of one of the teams.', 'warning');
     }
 
     const teams = [];
@@ -70,8 +71,11 @@ Team B: @CaptainB\``;
             } else {
               throw new Error('cancel');
             }
-          })
-          .catch(() => confirmMessage.edit('Command cancelled.'));
+          }).catch(() => {
+            confirmMessage.delete();
+
+            sendAlertMessage(message.channel, 'Command cancelled.', 'error');
+          });
       });
     }).catch((error) => {
       throw error;

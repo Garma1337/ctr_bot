@@ -1,5 +1,6 @@
 const Player = require('../db/models/player');
 const isStaffMember = require('../utils/isStaffMember');
+const sendAlertMessage = require('../utils/sendAlertMessage');
 
 module.exports = {
   name: 'set_flag',
@@ -17,10 +18,10 @@ module.exports = {
         // eslint-disable-next-line prefer-destructuring
         user = message.mentions.users.first();
       } else {
-        return message.channel.send('Nope.');
+        return sendAlertMessage(message.channel, 'Nope.', 'warning');
       }
     } else if (args.length > 1) {
-      return message.channel.send('Nope.');
+      return sendAlertMessage(message.channel, 'Nope.', 'warning');
     } else {
       countryFlag = args.shift();
       user = message.author;
@@ -31,13 +32,13 @@ module.exports = {
 
       const e = 'You should specify country flag. To see them all use the `!flags` command';
       if (!countryFlag) {
-        return message.channel.send(e);
+        return sendAlertMessage(message.channel, e, 'warning');
       }
 
       const { flags } = message.client;
 
       if (!flags.includes(countryFlag)) {
-        return message.channel.send(e);
+        return sendAlertMessage(message.channel, e, 'warning');
       }
 
       Player.findOne({ discordId }).then((doc) => {
@@ -49,7 +50,7 @@ module.exports = {
           promise = player.save();
         } else {
           if (!isStaff && doc.flag) {
-            return message.channel.send(`You've already set your flag to ${doc.flag}. It cannot be changed.`);
+            return sendAlertMessage(message.channel, `You've already set your flag to ${doc.flag}. It cannot be changed.`, 'warning');
           }
           // eslint-disable-next-line no-param-reassign
           doc.flag = countryFlag;
@@ -57,7 +58,7 @@ module.exports = {
         }
 
         promise.then(() => {
-          message.channel.send(`Flag has been set ${countryFlag}`);
+          sendAlertMessage(message.channel, `Flag has been set ${countryFlag}.`, 'success');
         });
       });
     });

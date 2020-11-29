@@ -1,4 +1,5 @@
 const drawTable = require('../utils/drawTable');
+const sendAlertMessage = require('../utils/sendAlertMessage');
 const sendLogMessage = require('../utils/sendLogMessage');
 
 module.exports = {
@@ -15,16 +16,14 @@ Team2: p1,p2,p3
 
     const MAX_RACES = 30;
     if (numOfRaces > MAX_RACES) {
-      message.reply(`too many races. Max is: ${MAX_RACES}`);
-      return;
+      return sendAlertMessage(message.channel, `Too many races. Max is: ${MAX_RACES}`, 'warning');
     }
 
     const rows = message.content.split('\n');
     rows.shift();
 
     if (!rows.length) {
-      message.reply('you didn\'t provide list of teams');
-      return;
+      return sendAlertMessage(message.channel, 'You didn\'t provide a list of teams.', 'warning');
     }
 
     let data = [];
@@ -35,6 +34,7 @@ Team2: p1,p2,p3
         error = `There is no players in the team ${teamName}`;
         return false;
       }
+
       teamName = teamName.trim();
       const abbreviation = teamName.split(/ +/).map((word) => (word ? word[0] : '')).join('');
 
@@ -46,8 +46,7 @@ Team2: p1,p2,p3
     });
 
     if (!result) {
-      message.reply(error);
-      return;
+      return sendAlertMessage(message.channel, error, 'error');
     }
 
     data = data.join('\n\n');
@@ -55,8 +54,7 @@ Team2: p1,p2,p3
     const url = `https://gb.hlorenzi.com/table?data=${encodedData}`;
 
     if (url.length > 1700) {
-      message.reply('template is too long.');
-      return;
+      return sendAlertMessage(message.channel, 'The template is too long.', 'warning');
     }
 
     drawTable(data).then((attachment) => {
@@ -75,6 +73,7 @@ Team2: p1,p2,p3
         message.channel.stopTyping(true);
       }).catch((error) => {
         sendLogMessage(message.guild, error.message);
+
         message.channel.send(url);
         message.channel.send({ files: [attachment] });
       });

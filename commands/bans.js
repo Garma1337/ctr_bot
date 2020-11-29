@@ -1,13 +1,14 @@
 const moment = require('moment');
 const Ban = require('../db/models/bans');
 const createPageableContent = require('../utils/createPageableContent');
+const sendAlertMessage = require('../utils/sendAlertMessage');
 
 module.exports = {
   name: 'bans',
   description: 'bans',
   guildOnly: true,
   permissions: ['MANAGE_CHANNELS', 'MANAGE_ROLES'],
-  execute(message, args) {
+  execute(message) {
     message.guild.fetchBans()
       .then(async (banned) => {
         const list = [];
@@ -35,9 +36,10 @@ module.exports = {
             embedOptions: { heading: `${banned.size} users are banned` },
           });
         } else {
-          return message.channel.send('There are no bans ... yet.');
+          return sendAlertMessage(message.channel, 'There are no bans ... yet.', 'info');
         }
-      })
-      .catch(console.error);
+      }).catch(() => {
+        sendAlertMessage(message.channel, 'Failed to fetch the list of bans.', 'error');
+      });
   },
 };

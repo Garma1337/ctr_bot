@@ -1,5 +1,6 @@
 const Player = require('../db/models/player');
 const createPageableContent = require('../utils/createPageableContent');
+const sendAlertMessage = require('../utils/sendAlertMessage');
 
 module.exports = {
   name: 'countries',
@@ -38,12 +39,12 @@ module.exports = {
         const flag = args.shift();
 
         if (!message.client.flags.includes(flag)) {
-          return message.channel.send('You should specify country flag. To see them all use the `!flags` command');
+          return sendAlertMessage(message.channel, 'You should specify country flag. To see them all use the `!flags` command', 'warning');
         }
 
         Player.find({ flag }).then(async (players) => {
           if (players.length <= 0) {
-            return message.channel.send(`There are no players from ${flag}.`);
+            return sendAlertMessage(message.channel, `There are no players from ${flag}.`, 'info');
           }
 
           players = players.filter((p) => members.has(p.discordId)).map((p) => `<@${p.discordId}>`);

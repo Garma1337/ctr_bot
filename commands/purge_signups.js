@@ -1,5 +1,6 @@
 const SignupsChannel = require('../db/models/signups_channels');
 const fetchMessages = require('../utils/fetchMessages');
+const sendAlertMessage = require('../utils/sendAlertMessage');
 
 const limit = 500;
 
@@ -9,36 +10,35 @@ module.exports = {
   guildOnly: true,
   permissions: ['MANAGE_CHANNELS', 'MANAGE_ROLES'],
   async execute(message) {
-    if (!(message.member && message.member.roles.cache.find((r) => r.name === 'Admin'))) {
-      const adminRole = message.guild.roles.cache.find((r) => r.name === 'Admin');
-      return message.reply(`you should have a role ${adminRole} to use this command!`);
-    }
-
     const channel = message.mentions.channels.first();
     if (!channel) {
-      return message.channel.send('You need to mention a channel.');
+      return sendAlertMessage(message.channel, 'You need to mention a channel.', 'warning');
     }
 
     const signupsChannel = await SignupsChannel.findOne({ channel: channel.id });
     if (!signupsChannel) {
-      return message.channel.send(`The channel <#${channel.id}> is not a signups channel.`);
+      return sendAlertMessage(message.channel, `The channel <#${channel.id}> is not a signups channel.`, 'warning');
     }
 
-    return message.channel.send(`This command will delete **all** messages in ${channel} channel.
-Say \`confirm\` to confirm. Waiting 10 seconds.`).then((confirmMessage) => {
+    return sendAlertMessage(message.channel, `This command will delete **all** messages in ${channel} channel.
+Say \`confirm\` to confirm. Waiting 10 seconds.`, 'warning').then((confirmMessage) => {
       message.channel.awaitMessages((m) => m.author.id === message.author.id, { max: 1, time: 10000, errors: ['time'] })
         .then((collected) => {
           const { content } = collected.first();
           if (content.toLowerCase() === 'confirm') {
             fetchMessages(channel, limit).then((messages) => {
-              message.channel.send(`Found ${messages.length} messages. Deleting...`).then((deletingMessage) => {
+              sendAlertMessage(message.channel, `Found ${messages.length} messages. Deleting...`, 'info').then((deletingMessage) => {
+                deletingMessage.delete();
+
                 const deletedCallback = () => {
-                  deletingMessage.edit(`All messages in ${channel} have been deleted.`).then();
+                  sendAlertMessage(message.channel, `All messages in ${channel} have been deleted.`, 'success');
                 };
+
                 channel.bulkDelete(messages)
                   .then(deletedCallback)
                   .catch((error) => {
-                    deletingMessage.edit(`${error.toString()}\nDeleting one by one now instead. Might take a while.`);
+                    sendAlertMessage(message.channel, `${error.toString()}\nDeleting one by one now instead. Might take a while.`, 'info');
+
                     const deletePromises = messages.map((m) => m.delete());
                     Promise.all(deletePromises).then(deletedCallback);
                   });
@@ -47,8 +47,10 @@ Say \`confirm\` to confirm. Waiting 10 seconds.`).then((confirmMessage) => {
           } else {
             throw new Error('cancel');
           }
-        })
-        .catch(() => confirmMessage.edit('Command cancelled.'));
+        }).catch(() => {
+          confirmMessage.delete();
+          sendAlertMessage(message.channel, 'Command cancelled.', 'error');
+        });
     });
   },
 };

@@ -3,6 +3,7 @@ const RankedLobby = require('../db/models/ranked_lobbies').default;
 const RankedBan = require('../db/models/ranked_bans');
 const findMember = require('../utils/findMember');
 const sendLogMessage = require('../utils/sendLogMessage');
+const sendAlertMessage = require('../utils/sendAlertMessage');
 
 module.exports = {
   name: 'ranked_bans',
@@ -18,7 +19,7 @@ module.exports = {
         try {
           member = await findMember(message.guild, argument);
         } catch (error) {
-          return message.channel.send(error.message);
+          return sendAlertMessage(message.channel, error.message, 'error');
         }
       }
 
@@ -40,7 +41,7 @@ module.exports = {
 
       RankedBan.findOne({ discordId: member.id, guildId: message.guild.id }).then((doc) => {
         if (doc) {
-          return message.channel.send('This member is already banned.');
+          return sendAlertMessage(message.channel, 'This member is already banned.', 'warning');
         }
 
         const rb = new RankedBan();
@@ -95,7 +96,8 @@ module.exports = {
             output += ` Reason: ${reason}.`;
           }
 
-          m.edit(output);
+          m.delete();
+          sendAlertMessage(message.channel, output, 'success');
         });
 
         member.createDM().then((channel) => {
@@ -118,14 +120,16 @@ module.exports = {
           const logMessage = `Sent message to ${channel.recipient}:\n\`\`\`${out}\`\`\``;
           sendLogMessage(message.guild, logMessage);
         }).catch(() => {
-          message.channel.send(`Could not send a DM to ${member}. Make sure to let them know of their ban.`);
+          sendAlertMessage(message.channel, `Could not send a DM to ${member}. Make sure to let them know of their ban.`, 'error');
         });
       });
     } else {
-      message.channel.send('...').then((m) => {
+      sendAlertMessage(message.channel, '...', 'info').then((m) => {
         RankedBan.find({ guildId: message.guild.id }).then(async (docs) => {
+          m.delete();
+
           if (!docs.length) {
-            return m.edit('There are no bans ... yet.');
+            return sendAlertMessage(message.channel, 'There are no bans ... yet.', 'info');
           }
 
           const bannedMembers = [];
@@ -156,7 +160,8 @@ module.exports = {
 
               bannedMembers.push(out);
             });
-            m.edit(bannedMembers);
+
+            sendAlertMessage(message.channel, bannedMembers, 'success');
           });
         });
       });

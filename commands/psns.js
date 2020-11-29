@@ -5,7 +5,7 @@ module.exports = {
   description: 'Get the list of all members',
   guildOnly: true,
   permissions: ['MANAGE_CHANNELS', 'MANAGE_ROLES'],
-  execute(message, args) {
+  execute(message) {
     const head = ['id', 'username#tag', 'PSN', 'flag'];
     const headRow = `${head.join(',')}\n`;
 

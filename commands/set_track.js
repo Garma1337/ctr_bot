@@ -1,5 +1,6 @@
 const fs = require('fs');
 const Player = require('../db/models/player');
+const sendAlertMessage = require('../utils/sendAlertMessage');
 
 module.exports = {
   name: 'set_track',
@@ -20,7 +21,7 @@ module.exports = {
         const column2 = tracks.slice(15, 30);
         const column3 = tracks.slice(30);
 
-        message.channel.send('You need to specify a track. Here is the list of available tracks:');
+        sendAlertMessage(message.channel, 'You need to specify a track. Here is the list of available tracks:', 'warning');
         return message.channel.send({
           embed: {
             author: {
@@ -51,7 +52,7 @@ module.exports = {
       const track = tracks.find((t) => t.toLowerCase() === input.toLowerCase());
 
       if (!track) {
-        return message.channel.send(`The track "${input}" doesn't exist.`);
+        return sendAlertMessage(message.channel, `The track "${input}" doesn't exist.`, 'warning');
       }
 
       Player.findOne({ discordId: message.author.id }).then((player) => {
@@ -62,9 +63,9 @@ module.exports = {
 
         player.favTrack = track;
         player.save().then(() => {
-          message.channel.send(`Your favorite track has been set to "${track}".`);
+          sendAlertMessage(message.channel, `Your favorite track has been set to "${track}".`, 'success');
         }).catch((error) => {
-          message.channel.send(`Unable to update player. Error: ${error}`);
+          sendAlertMessage(message.channel, `Unable to update player. Error: ${error}`, 'error');
         });
       });
     });

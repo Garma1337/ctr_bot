@@ -1,3 +1,5 @@
+const sendAlertMessage = require('../utils/sendAlertMessage');
+
 /**
  * Returns the embed for the poll
  * @param userName
@@ -58,15 +60,15 @@ module.exports = {
     const question = splittedFirstLine.join(' ');
 
     if (lines.length < 3 || question.length < 1) {
-      return message.channel.send(wrongSyntax);
+      return sendAlertMessage(message.channel, wrongSyntax, 'warning');
     }
 
     if (lines.length < 3) {
-      return message.channel.send('You need to specify at least 2 options to choose from.');
+      return sendAlertMessage(message.channel, 'You need to specify at least 2 options to choose from.', 'warning');
     }
 
     if (lines.length > reactionEmojis.length) {
-      return message.channel.send(`More than ${reactionEmojis.length} options are not supported.`);
+      return sendAlertMessage(message.channel, `More than ${reactionEmojis.length} options are not supported.`, 'warning');
     }
 
     lines.shift(); // remove command

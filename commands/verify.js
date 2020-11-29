@@ -1,4 +1,6 @@
+const createAndFindRole = require('../utils/createAndFindRole');
 const findMember = require('../utils/findMember');
+const sendAlertMessage = require('../utils/sendAlertMessage');
 const sendLogMessage = require('../utils/sendLogMessage');
 const config = require('../config');
 
@@ -16,7 +18,7 @@ module.exports = {
       try {
         member = await findMember(message.guild, args[0]);
       } catch (error) {
-        return message.channel.send(error.message);
+        return sendAlertMessage(message.channel, error.message, 'error');
       }
     }
 
@@ -26,27 +28,18 @@ module.exports = {
     };
 
     const { guild } = message;
-    const roleName = 'ranked verified';
-    let role = guild.roles.cache.find((r) => r.name.toLowerCase() === roleName);
-    if (!role) {
-      role = await guild.roles.create({
-        data: { name: roleName, mentionable: true },
-        reason: `imagine not having ${roleName} role smh`,
-      });
-    }
+    const role = await createAndFindRole(guild, 'ranked verified');
 
     await member.roles.add(role);
 
     member.createDM().then((dm) => {
-      dm.send(config.ranked_verification_dm)
-        .then((m) => {
-          DMCallback(m);
-        })
-        .catch((error) => {
-          message.channel.send(error.message);
-        });
+      dm.send(config.ranked_verification_dm).then((m) => {
+        DMCallback(m);
+      }).catch((error) => {
+        sendAlertMessage(message.channel, error.message, 'error');
+      });
     });
 
-    message.channel.send(`${member.toString()} has been verified.`);
+    sendAlertMessage(message.channel, `${member.toString()} has been verified.`, 'success');
   },
 };

@@ -1,17 +1,18 @@
+const sendAlertMessage = require('../utils/sendAlertMessage');
+
 module.exports = {
   name: 'purge',
-  description: 'Delete last N messages in current channel.',
+  description: 'Delete last X messages in current channel.',
   guildOnly: true,
   permissions: ['MANAGE_MESSAGES'],
   args: true,
-  usage: 'purge [N]',
+  usage: 'purge [X]',
   execute(message, args) {
     const limit = parseInt(args[0], 10);
 
     const LIMIT = 50;
     if (limit > LIMIT) {
-      message.channel.send(`Too much. Limit is ${LIMIT}.`);
-      return;
+      return sendAlertMessage(message.channel, `You cannot delete more than ${LIMIT} messages at once.`, 'warning');
     }
 
     const { channel } = message;
@@ -23,10 +24,11 @@ module.exports = {
       const deletedCallback = () => {
         message.delete();
       };
+
       channel.bulkDelete(messages)
         .then(deletedCallback)
         .catch((error) => {
-          message.channel.send(`${error.toString()}\nDeleting one by one now instead. Might take a while...`).then((deletingMessage) => {
+          sendAlertMessage(message.channel, `${error.toString()}\nDeleting one by one now instead. Might take a while...`, 'info').then((deletingMessage) => {
             const deletePromises = messages.map((m) => m.delete());
             Promise.all(deletePromises).then(deletedCallback).then(() => deletingMessage.delete());
           });

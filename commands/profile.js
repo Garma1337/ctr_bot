@@ -4,6 +4,7 @@ const Player = require('../db/models/player');
 const Rank = require('../db/models/rank');
 const calculateSuperScore = require('../utils/calculateSuperScore');
 const getConfigValue = require('../utils/getConfigValue');
+const sendAlertMessage = require('../utils/sendAlertMessage');
 const { regions } = require('../utils/regions');
 
 const {
@@ -146,17 +147,18 @@ module.exports = {
   cooldown: 10,
   execute(message, args) {
     if (args[0] === 'help') {
-      return message.channel.send(`To customize your profile, use these commands:
-\`!set_psn\`
-\`!set_country\`
-\`!set_region\`
-\`!set_languages\`
-\`!set_birthday\`
-\`!set_voice_chat\`
-\`!set_nat\`
-\`!set_time_zone\`
-\`!set_character\`
-\`!set_track\``);
+      return sendAlertMessage(message.channel, `To customize your profile, use these commands:\n
+!set_psn
+!set_country
+!set_region
+!set_language
+!set_birthday
+!set_voice_chat
+!set_nat
+!set_time_zone
+!set_character
+!set_track
+!set_console`, 'info');
     }
 
     let user = message.author;
@@ -165,7 +167,7 @@ module.exports = {
       user = message.mentions.users.first();
 
       if (!user) {
-        return message.channel.send('You need to mention a user.');
+        return sendAlertMessage(message.channel, 'You need to mention a user.', 'warning');
       }
     }
 
@@ -178,13 +180,14 @@ module.exports = {
         let psn;
         let flag;
         let region;
-        let languages = [];
+        let languages;
         let birthday;
         let voiceChat = [];
         let nat;
         let timeZone;
         let favCharacter;
         let favTrack;
+        let playerConsoles;
 
         if (!player) {
           psn = '-';
@@ -196,15 +199,17 @@ module.exports = {
           timeZone = '-';
           favCharacter = '-';
           favTrack = '-';
+          playerConsoles = ['-'];
         } else {
           psn = player.psn || '-';
           flag = player.flag || '-';
           region = getRegionName(player.region);
-          languages = player.languages || ['-'];
+          languages = player.languages.length > 0 ? player.languages : ['-'];
           nat = player.nat || '-';
           timeZone = player.timeZone || '-';
           favCharacter = player.favCharacter || '-';
           favTrack = player.favTrack || '-';
+          playerConsoles = player.consoles.length > 0 ? player.consoles : ['-'];
 
           if (!player.birthday) {
             birthday = '-';
@@ -271,6 +276,7 @@ module.exports = {
         }
 
         const gameData = [
+          `**Consoles**: ${playerConsoles.join(', ')}`,
           `**Clans**: ${playerClans.join(', ')}`,
           `**Fav. Character**: ${favCharacter}`,
           `**Fav. Track**: ${favTrack}`,

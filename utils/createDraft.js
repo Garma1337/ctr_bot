@@ -1,4 +1,5 @@
 const axios = require('axios');
+const sendAlertMessage = require('./sendAlertMessage');
 
 /**
  * Creates a draft between 2 teams
@@ -31,18 +32,18 @@ function createDraft(channel, draftMode, teams, captains) {
 
       const captainAPromise = captainA.createDM()
         .then((dm) => dm.send(`Draft link for a war with ${teamB}:\n${teamALink}`))
-        .catch(() => channel.send(`Couldn't message ${captainA}.\n${teamA} link:\n${teamALink}`));
+        .catch(() => sendAlertMessage(channel, `Couldn't message ${captainA}.\n${teamA} link:\n${teamALink}`, 'error'));
 
       const captainBPromise = captainB.createDM()
         .then((dm) => dm.send(`Draft link for a war with ${teamB}:\n${teamBLink}`))
-        .catch(() => channel.send(`Couldn't message ${captainB}.\n${teamB} link:\n${teamBLink}`));
+        .catch(() => sendAlertMessage(channel, `Couldn't message ${captainB}.\n${teamB} link:\n${teamBLink}`, 'error'));
 
       Promise.all([captainAPromise, captainBPromise]).then(() => {
         m.edit(`I've messaged both captains: ${captains.join(', ')} with team links.
 Spectator link: <${specLink}>`);
       });
     }).catch(() => {
-      channel.send('Couldn\'t connect to `draft.crashteamranking.com\nTry again later.`');
+      sendAlertMessage(channel, 'Couldn\'t connect to `draft.crashteamranking.com\nTry again later.`', 'error');
     });
   });
 }

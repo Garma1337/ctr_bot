@@ -2,6 +2,7 @@ const moment = require('moment');
 const { CronJob } = require('cron');
 const Ban = require('../db/models/bans');
 const findMember = require('../utils/findMember');
+const sendAlertMessage = require('../utils/sendAlertMessage');
 const sendLogMessage = require('../utils/sendLogMessage');
 const { client } = require('../bot');
 
@@ -20,7 +21,7 @@ module.exports = {
       try {
         user = await findMember(guild, argument);
       } catch (error) {
-        return message.channel.send(error.message);
+        return sendAlertMessage(message.channel, error.message, 'error');
       }
     }
 
@@ -36,8 +37,9 @@ module.exports = {
 
     Ban.findOne({ discordId: user.id, guildId: guild.id }).then(async (doc) => {
       if (doc) {
-        return message.channel.send('This member is already banned.');
+        return sendAlertMessage(message.channel, 'This member is already banned.', 'warning');
       }
+
       guild.members.ban(user.id, { reason }).then(() => {
         const rb = new Ban();
         rb.guildId = guild.id;
@@ -59,10 +61,12 @@ module.exports = {
             output += ` for ${duration.humanize()}`;
           }
           output += '.';
-          m.edit(output);
+
+          m.delete();
+          sendAlertMessage(message.channel, output, 'success');
         });
       }).catch((error) => {
-        message.channel.send(`Error: ${error.message}`);
+        sendAlertMessage(message.channel, error.message, 'error');
       });
     });
   },

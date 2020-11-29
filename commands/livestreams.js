@@ -1,3 +1,5 @@
+const sendAlertMessage = require('../utils/sendAlertMessage');
+
 module.exports = {
   name: 'livestreams',
   guildOnly: true,
@@ -27,14 +29,15 @@ module.exports = {
     });
 
     if (liveStreams.length <= 0) {
-      return message.channel.send('There are currently no CTR livestreams.');
+      return sendAlertMessage(message.channel, 'There are currently no CTR livestreams.', 'info');
     }
 
     const format = (l) => `<@!${l.userId}> is now streaming \`${l.title}\`\nWatch their stream live at <${l.url}>`;
 
-    message.channel.send('Generating stream list ...').then((m) => {
-      /* No pings */
-      m.edit(liveStreams.map(format).join('\n\n'));
+    sendAlertMessage(message.channel, 'Generating stream list ...', 'info').then((m) => {
+      m.delete();
+
+      sendAlertMessage(message.channel, liveStreams.map(format).join('\n\n'), 'success');
     });
 
     return true;

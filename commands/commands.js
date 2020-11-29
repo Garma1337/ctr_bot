@@ -1,4 +1,5 @@
 const Command = require('../db/models/command');
+const sendAlertMessage = require('../utils/sendAlertMessage');
 
 module.exports = {
   name: 'commands',
@@ -10,13 +11,12 @@ module.exports = {
     if (args.length === 0) {
       Command.find().then((docs) => {
         if (docs.length) {
-          const commands = docs.map((doc) => `\`${doc.name}\``).join('\n');
-          message.channel.send(`List of dynamic commands:\n${commands}`);
-        } else {
-          message.channel.send('There is no dynamic commands.');
+          const commands = docs.map((doc) => `!${doc.name}`).join('\n');
+          return sendAlertMessage(message.channel, `List of dynamic commands:\n${commands}`, 'info');
         }
+
+        return sendAlertMessage(message.channel, 'There are no dynamic commands.', 'info');
       });
-      return;
     }
 
     const action = args[0];
@@ -26,8 +26,7 @@ module.exports = {
     const DELETE = 'delete';
     const actions = [ADD, EDIT, DELETE];
     if (!actions.includes(action)) {
-      message.channel.send(`Wrong action. Allowed actions: ${actions}`);
-      return;
+      return sendAlertMessage(message.channel, `Wrong action. Allowed actions: ${actions}`, 'warning');
     }
 
     const { client } = message;
@@ -35,15 +34,13 @@ module.exports = {
     switch (action) {
       case ADD:
         if (args.length < 2) {
-          message.channel.send('Wrong amount of arguments. Example: `!commands add name`');
-          return;
+          return sendAlertMessage(message.channel, 'Wrong amount of arguments. Example: `!commands add name`', 'warning');
         }
 
         const staticCommand = client.commands.get(commandName)
           || client.commands.find((cmd) => cmd.aliases && cmd.aliases.includes(commandName));
         if (staticCommand) {
-          message.channel.send('There is already a static command with that name!');
-          return;
+          return sendAlertMessage(message.channel, 'There is already a static command with that name!', 'warning');
         }
 
         message.channel.send(`Send a response message for this command. Waiting 1 minute.
@@ -58,25 +55,22 @@ Type \`cancel\` to cancel.`).then(() => {
 
               Command.findOne({ name: commandName }).then((command) => {
                 if (command) {
-                  message.channel.send('There is already a dynamic command with that name!');
-                  return;
+                  return sendAlertMessage(message.channel, 'There is already a dynamic command with that name!', 'warning');
                 }
                 const newCommand = new Command();
                 newCommand.name = commandName;
                 newCommand.message = content;
                 newCommand.save().then(() => {
-                  message.channel.send('Command added.');
+                  sendAlertMessage(message.channel, 'Command added.', 'success');
                 });
               });
-            })
-            .catch(() => message.channel.send('Command cancelled.'));
+            }).catch(() => sendAlertMessage(message.channel, 'Command cancelled.', 'error'));
         });
 
         break;
       case EDIT:
         if (args.length < 2) {
-          message.channel.send('Wrong amount of arguments. Example: `!commands edit name`');
-          return;
+          return sendAlertMessage(message.channel, 'Wrong amount of arguments. Example: `!commands edit name`', 'warning');
         }
 
         Command.findOne({ name: commandName }).then((command) => {
@@ -94,13 +88,12 @@ Type \`cancel\` to cancel.`).then(() => {
                   // eslint-disable-next-line no-param-reassign
                   command.message = content;
                   command.save().then(() => {
-                    message.channel.send('Command edited.');
+                    sendAlertMessage(message.channel, 'Command edited.', 'success');
                   });
-                })
-                .catch(() => message.channel.send('Command cancelled.'));
+                }).catch(() => sendAlertMessage(message.channel, 'Command cancelled.', 'error'));
             });
           } else {
-            message.channel.send('There is no dynamic command with that name.');
+            sendAlertMessage(message.channel, 'There is no dynamic command with that name.', 'warning');
           }
         });
 
@@ -108,9 +101,9 @@ Type \`cancel\` to cancel.`).then(() => {
 
       case DELETE:
         if (args.length < 2) {
-          message.channel.send('Wrong amount of arguments. Example: `!commands delete name`');
-          return;
+          return sendAlertMessage(message.channel, 'Wrong amount of arguments. Example: `!commands delete name`', 'warning');
         }
+
         Command.findOne({ name: commandName }).then((command) => {
           if (command) {
             message.channel.send('Are you sure you want to delete this command? Yes/No. Waiting 1 minute.')
@@ -121,18 +114,18 @@ Type \`cancel\` to cancel.`).then(() => {
                     const { content } = collected.first();
                     if (content.toLowerCase() === 'yes') {
                       command.delete().then(() => {
-                        message.channel.send('Command deleted.');
+                        sendAlertMessage(message.channel, 'Command deleted.', 'success');
                       });
                     } else {
                       throw Error('cancel');
                     }
-                  })
-                  .catch(() => message.channel.send('Command cancelled.'));
+                  }).catch(() => sendAlertMessage(message.channel, 'Command cancelled.', 'error'));
               });
           } else {
-            message.channel.send('There is no dynamic command with that name.');
+            sendAlertMessage(message.channel, 'There is no dynamic command with that name.', 'warning');
           }
         });
+
         break;
     }
   },

@@ -1,3 +1,6 @@
+const config = require('../config');
+const sendAlertMessage = require('../utils/sendAlertMessage');
+
 module.exports = {
   name: 'stop',
   description: 'STOP',
@@ -7,11 +10,11 @@ module.exports = {
   execute(message) {
     if (!(message.member && message.member.roles.cache.find((r) => r.name === 'Admin')) && message.author.id !== config.owner) {
       const adminRole = message.guild.roles.cache.find((r) => r.name === 'Admin');
-      return message.reply(`you should have a role ${adminRole} to use this command!`);
+      return sendAlertMessage(message.channel, `You should have the role ${adminRole} to use this command!`, 'warning');
     }
 
     // eslint-disable-next-line no-param-reassign
     message.client.stop = true;
-    return message.reply('you stopped me :slight_frown:');
+    return sendAlertMessage(message.channel, 'you stopped me :slight_frown:', 'success');
   },
 };

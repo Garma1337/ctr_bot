@@ -1,4 +1,5 @@
 const Config = require('../db/models/config');
+const sendAlertMessage = require('../utils/sendAlertMessage');
 
 module.exports = {
   name: 'config',
@@ -11,10 +12,9 @@ module.exports = {
       Config.find({ editable: { $ne: false } }).then((docs) => {
         if (docs.length) {
           const config = docs.map((doc) => `\`${doc.name}\``).join('\n');
-          message.channel.send(`Config variables:\n${config}`);
+          return sendAlertMessage(message.channel, `Config variables:\n${config}`, 'info');
         }
       });
-      return;
     }
 
     const action = args[0];
@@ -24,23 +24,21 @@ module.exports = {
     const actions = [SHOW, EDIT];
 
     if (!actions.includes(action)) {
-      message.channel.send(`Wrong command action. Allowed actions: ${actions}`);
-      return;
+      return sendAlertMessage(message.channel, `Wrong command action. Allowed actions: ${actions}`, 'warning');
     }
 
     if (args.length < 2) {
-      message.channel.send('Wrong amount of arguments. Example: `!config edit name`');
-      return;
+      return sendAlertMessage(message.channel, 'Wrong amount of arguments. Example: `!config edit name`', 'warning');
     }
 
-    let configName = args[1];
+    const configName = args[1];
 
     if (action === SHOW) {
       Config.findOne({ name: configName, editable: { $ne: false } }).then((config) => {
         if (config) {
-          message.channel.send(`The value of \`${configName}\` variable is:\n${config.value}`);
+          sendAlertMessage(message.channel, `The value of \`${configName}\` variable is:\n${config.value}`, 'info');
         } else {
-          message.channel.send('There is no config variable with that name.');
+          sendAlertMessage(message.channel, 'There is no config variable with that name.', 'warning');
         }
       });
     } else {
@@ -59,13 +57,12 @@ Type \`cancel\` to cancel.`).then(() => {
                 // eslint-disable-next-line no-param-reassign
                 config.value = content;
                 config.save().then(() => {
-                  message.channel.send('Config variable edited.');
+                  sendAlertMessage(message.channel, 'Config variable edited.', 'success');
                 });
-              })
-              .catch(() => message.channel.send('Command cancelled.'));
+              }).catch(() => sendAlertMessage(message.channel, 'Command cancelled.', 'error'));
           });
         } else {
-          message.channel.send('There is no config variable with that name.');
+          sendAlertMessage(message.channel, 'There is no config variable with that name.', 'warning');
         }
       });
     }

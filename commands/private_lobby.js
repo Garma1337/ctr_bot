@@ -3,6 +3,7 @@ const Player = require('../db/models/player');
 const PrivateLobby = require('../db/models/private_lobbies');
 const createAndFindRole = require('../utils/createAndFindRole');
 const deletePrivateLobbyByUser = require('../utils/deletePrivateLobbyByUser');
+const sendAlertMessage = require('../utils/sendAlertMessage');
 
 /**
  * Returns the embed for the private lobby
@@ -93,8 +94,8 @@ module.exports = {
     const postChannel = message.channel.guild.channels.cache.find((c) => c.name.toLowerCase() === 'private-lobbies');
 
     if (!allowedChannels.find((c) => c && c.name === message.channel.name)) {
-      return message.channel.send(`This command can only be used in the following channels:
-${allowedChannels.join('\n')}`);
+      return sendAlertMessage(message.channel, `This command can only be used in the following channels:
+${allowedChannels.join('\n')}`, 'warning');
     }
 
     const modes = [
@@ -109,14 +110,14 @@ ${allowedChannels.join('\n')}`);
     let mode = args[0] || 'FFA';
 
     if (mode === 'help') {
-      return message.channel.send(`\`\`\`This command lets you create private lobbies similar to ranked lobbies. The usage is: !private_lobby [mode] [players].
+      return sendAlertMessage(message.channel, `This command lets you create private lobbies similar to ranked lobbies. The usage is: \`!private_lobby [mode] [players]\`.
 
 [mode] can be any of:
  - ${modes.join('\n - ')}
 
 [players] is the maximum amount of players that can join the lobby.
 
-Example usage: !private_lobby FFA 8.\`\`\``);
+Example usage: \`!private_lobby FFA 8\`.`, 'info');
     }
 
     if (['end', 'remove', 'delete'].includes(mode)) {
@@ -124,22 +125,22 @@ Example usage: !private_lobby FFA 8.\`\`\``);
 
       privateLobbyPromise.then((privateLobby) => {
         if (!privateLobby) {
-          return message.channel.send('You have not started a private lobby.');
+          return sendAlertMessage(message.channel, 'You have not started a private lobby.', 'warning');
         }
 
         deletePrivateLobbyByUser(postChannel, message.member.user.id);
         removePinMessages(postChannel);
 
-        message.channel.send('Your private lobby was removed.');
+        sendAlertMessage(message.channel, 'Your private lobby was removed.', 'success');
       });
     } else {
       PrivateLobby.findOne({ creator: message.member.user.id }).then((privateLobby) => {
         if (privateLobby) {
-          return message.channel.send('You have already created a private lobby. Please remove the old one if you want to create another one.');
+          return sendAlertMessage(message.channel, 'You have already created a private lobby. Please remove the old one if you want to create another one.', 'warning');
         }
 
         if (!modes.find((t) => (t.toLowerCase() === mode.toLowerCase()))) {
-          return message.channel.send('Invalid mode.');
+          return sendAlertMessage(message.channel, 'Invalid mode.', 'warning');
         }
 
         mode = mode.charAt(0).toUpperCase() + mode.slice(1);
@@ -226,7 +227,7 @@ Example usage: !private_lobby FFA 8.\`\`\``);
             }));
           });
 
-          message.channel.send('Your private lobby was created.');
+          sendAlertMessage(message.channel, 'Your private lobby was created.', 'success');
         });
       });
     }
