@@ -30,7 +30,7 @@ function sendAlertMessage(channel, content, type) {
   };
 
   const emotes = {
-    [TYPE_INFO]: ':speech_balloon:',
+    [TYPE_INFO]: ':information_source:',
     [TYPE_SUCCESS]: ':white_check_mark:',
     [TYPE_WARNING]: ':warning:',
     [TYPE_ERROR]: ':no_entry:',

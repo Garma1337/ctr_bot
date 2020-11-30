@@ -31,7 +31,7 @@ module.exports = {
       }
 
       return sendAlertMessage(message.channel, `Please select your region. Waiting 1 minute.\n
-${regions.map((r, i) => `${i + 1} - ${r.description}`).join('\n')}`, 'info').then((confirmMessage) => {
+\`\`\`${regions.map((r, i) => `${i + 1} - ${r.description}`).join('\n')}\`\`\``, 'info').then((confirmMessage) => {
         const filter = (m) => m.author.id === message.author.id;
         const options = { max: 1, time: 60000, errors: ['time'] };
 

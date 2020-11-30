@@ -44,9 +44,9 @@ module.exports = {
     }
 
     return sendAlertMessage(message.channel, `Select voice chat option. Waiting 1 minute.\n
-1 - Discord
+\`\`\`1 - Discord
 2 - PS4
-3 - Discord & PS4`, 'info').then((confirmMessage) => {
+3 - Discord & PS4\`\`\``, 'info').then((confirmMessage) => {
       const filter = (m) => m.author.id === message.author.id;
       const options = { max: 1, time: 60000, errors: ['time'] };
 

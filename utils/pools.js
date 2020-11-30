@@ -1,6 +1,7 @@
 module.exports.itemPools = [
   [
     'Crash Cove',
+    'Roo\'s Tubes',
     'Coco Park',
     'Tiger Temple',
     'Dingo Canyon',
@@ -69,6 +70,7 @@ module.exports.battlePools = [
 module.exports._4v4Pools = [
   [
     'Crash Cove',
+    'Roo\'s Tubes',
     'Coco Park',
     'Blizzard Bluff',
     'Inferno Island',

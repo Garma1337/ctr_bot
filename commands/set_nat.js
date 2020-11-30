@@ -25,10 +25,10 @@ module.exports = {
     }
 
     return sendAlertMessage(message.channel, `Select NAT type. Waiting 1 minute.\n
-1 - NAT 1
+\`\`\`1 - NAT 1
 2 - NAT 2 Open
 3 - NAT 2 Closed
-4 - NAT 3`, 'info').then((confirmMessage) => {
+4 - NAT 3\`\`\``, 'info').then((confirmMessage) => {
       const filter = (m) => m.author.id === message.author.id;
       const options = { max: 1, time: 60000, errors: ['time'] };
       message.channel.awaitMessages(filter, options).then((collectedMessages) => {

@@ -93,7 +93,7 @@ module.exports = {
           const year = content;
 
           return sendAlertMessage(message.channel, `Select month. Waiting 1 minute.\n
-${months.map((m, i) => m = `${i + 1} - ${m}`).join('\n')}`, 'info').then((confirmMessage) => {
+\`\`\`${months.map((m, i) => m = `${i + 1} - ${m}`).join('\n')}\`\`\``, 'info').then((confirmMessage) => {
             message.channel.awaitMessages(filter, options).then((collectedMessages) => {
               const collectedMessage = collectedMessages.first();
               const { content } = collectedMessage;

@@ -11,7 +11,7 @@ module.exports = {
     const regions = Object.keys(timeZones);
 
     return sendAlertMessage(message.channel, `Please select your region. Waiting 1 minute.\n
-${regions.map((r, i) => `${i + 1} - ${r}`).join('\n')}`, 'info').then((confirmMessage) => {
+\`\`\`${regions.map((r, i) => `${i + 1} - ${r}`).join('\n')}\`\`\``, 'info').then((confirmMessage) => {
       const filter = (m) => m.author.id === message.author.id;
       const options = { max: 1, time: 60000, errors: ['time'] };
 
@@ -27,7 +27,7 @@ ${regions.map((r, i) => `${i + 1} - ${r}`).join('\n')}`, 'info').then((confirmMe
           const regionTimeZones = timeZones[region];
 
           return sendAlertMessage(message.channel, `Please select your time zone. Waiting 1 minute.\n
-${regionTimeZones.map((t, i) => `${i + 1} - ${t}`).join('\n')}`, 'info').then((confirmMessage) => {
+\`\`\`${regionTimeZones.map((t, i) => `${i + 1} - ${t}`).join('\n')}\`\`\``, 'info').then((confirmMessage) => {
             message.channel.awaitMessages(filter, options).then((collectedMessages) => {
               const collectedMessage = collectedMessages.first();
               const { content } = collectedMessage;
