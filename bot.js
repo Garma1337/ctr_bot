@@ -356,7 +356,7 @@ client.on('message', (message) => {
   if (!command) {
     Command.findOne({ name: commandName }).then((cmd) => {
       if (!cmd) {
-        return sendAlertMessage(message.channel, `<@!${message.author.id}>, the command !${commandName} does not exist.`, 'warning');
+        return sendAlertMessage(message.channel, `<@!${message.author.id}>, the command \`!${commandName}\` does not exist.`, 'warning');
       }
 
       if (!isStaff && !allowedChannels.find((c) => c.name === message.channel.name)) {
