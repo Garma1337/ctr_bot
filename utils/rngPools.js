@@ -1,9 +1,11 @@
+const getRandomArrayElement = require('./getRandomArrayElement');
+
 const {
   BATTLE, _4V4, _3V3, DUOS, ITEMLESS, ITEMS,
 } = require('../db/models/ranked_lobbies');
 
 const {
-  itemPools, battlePools, _4v4Pools,
+  itemPools, battlePools, _4v4Pools, spicyPools,
 } = require('./pools');
 
 async function rngPools(doc) {
@@ -16,7 +18,13 @@ async function rngPools(doc) {
     case DUOS:
     case _3V3:
       N = 8;
-      pools = itemPools;
+
+      if (!doc.spicyTracks) {
+        pools = itemPools;
+      } else {
+        pools = [getRandomArrayElement(spicyPools)];
+      }
+
       break;
     case ITEMLESS:
       N = 5;
@@ -25,8 +33,14 @@ async function rngPools(doc) {
       break;
     case _4V4:
       N = 10;
-      pools = _4v4Pools;
-      pools[2].splice(7, 1); // Remove Spyro Circuit
+
+      if (!doc.spicyTracks) {
+        pools = _4v4Pools;
+        pools[2].splice(7, 1); // Remove Spyro Circuit
+      } else {
+        pools = [getRandomArrayElement(spicyPools)];
+      }
+
       break;
     case BATTLE:
       N = 5;

@@ -76,7 +76,7 @@ New: \`${PSN}\``);
           }
 
           promise.then(() => {
-            sendAlertMessage(message.channel, `PSN has been set \`${PSN}\`.`, 'warning');
+            sendAlertMessage(message.channel, `PSN has been set \`${PSN}\`.`, 'success');
           });
         });
       });

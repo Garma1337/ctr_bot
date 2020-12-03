@@ -23,10 +23,10 @@ function sendAlertMessage(channel, content, type) {
   }
 
   const colors = {
-    [TYPE_INFO]: 4242687,
-    [TYPE_SUCCESS]: 7012160,
-    [TYPE_WARNING]: 16770880,
-    [TYPE_ERROR]: 16728131,
+    [TYPE_INFO]: 3901635,
+    [TYPE_SUCCESS]: 7844437,
+    [TYPE_WARNING]: 16763981,
+    [TYPE_ERROR]: 12458289,
   };
 
   const emotes = {
@@ -40,7 +40,7 @@ function sendAlertMessage(channel, content, type) {
     [TYPE_INFO]: 'Info',
     [TYPE_SUCCESS]: 'Success!',
     [TYPE_WARNING]: 'Warning!',
-    [TYPE_ERROR]: 'An error occured!',
+    [TYPE_ERROR]: 'Error!',
   };
 
   const color = colors[type];

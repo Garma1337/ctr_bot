@@ -4,8 +4,7 @@
  * @returns {*}
  */
 function getRandomElement(array) {
-  const randomKey = Math.floor((array.length - 1) * Math.random());
-  return array[randomKey];
+  return array[Math.floor(Math.random() * array.length)];
 }
 
 module.exports = getRandomElement;

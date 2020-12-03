@@ -9,7 +9,7 @@ const sendAlertMessage = require('./sendAlertMessage');
  * @param captains
  */
 function createDraft(channel, draftMode, teams, captains) {
-  channel.send('Connecting to `draft.crashteamranking.com`...').then((m) => {
+  sendAlertMessage(channel, 'Connecting to `draft.crashteamranking.com`...', 'info').then((m) => {
     const teamB = teams[1];
     const teamA = teams[0];
 
@@ -39,8 +39,10 @@ function createDraft(channel, draftMode, teams, captains) {
         .catch(() => sendAlertMessage(channel, `Couldn't message ${captainB}.\n${teamB} link:\n${teamBLink}`, 'error'));
 
       Promise.all([captainAPromise, captainBPromise]).then(() => {
-        m.edit(`I've messaged both captains: ${captains.join(', ')} with team links.
-Spectator link: <${specLink}>`);
+        m.delete();
+
+        sendAlertMessage(channel, `I've messaged both captains: ${captains.join(', ')} with team links.
+Spectator link: <${specLink}>`, 'success');
       });
     }).catch(() => {
       sendAlertMessage(channel, 'Couldn\'t connect to `draft.crashteamranking.com\nTry again later.`', 'error');

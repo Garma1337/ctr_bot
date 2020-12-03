@@ -97,7 +97,7 @@ module.exports = {
             player.consoles = playerConsoles;
             player.save();
 
-            sendAlertMessage(message.channel, `${console.name} has been removed from your languages.`, 'success');
+            sendAlertMessage(message.channel, `${console.name} has been removed from your consoles.`, 'success');
           });
         }
       }));

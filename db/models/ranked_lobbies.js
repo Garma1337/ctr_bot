@@ -33,6 +33,7 @@ const RankedLobby = new Schema({
   type: { type: String, enum: [ITEMS, ITEMLESS, DUOS, _3V3, _4V4, BATTLE] },
   allowPremadeTeams: { type: Boolean, default: true },
   draftTracks: { type: Boolean, default: false },
+  spicyTracks: { type: Boolean, default: false },
 });
 
 RankedLobby.methods = {

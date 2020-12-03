@@ -2,6 +2,7 @@
 const Discord = require('discord.js');
 const moment = require('moment-timezone');
 const SignupsChannel = require('../db/models/signups_channels');
+const sendAlertMessage = require('../utils/sendAlertMessage');
 const { parsers } = require('../utils/SignupParsers');
 
 function parseDateString(dateString) {

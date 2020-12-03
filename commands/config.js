@@ -12,9 +12,11 @@ module.exports = {
       Config.find({ editable: { $ne: false } }).then((docs) => {
         if (docs.length) {
           const config = docs.map((doc) => `\`${doc.name}\``).join('\n');
-          return sendAlertMessage(message.channel, `Config variables:\n${config}`, 'info');
+          sendAlertMessage(message.channel, `Config variables:\n${config}`, 'info');
         }
       });
+
+      return;
     }
 
     const action = args[0];

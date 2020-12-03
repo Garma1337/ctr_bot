@@ -1,5 +1,6 @@
 const moment = require('moment-timezone');
 const Config = require('../db/models/config');
+const sendAlertMessage = require('../utils/sendAlertMessage');
 
 Config.findOne({ name: 'signups_schedule' }).then((doc) => {
   if (!doc) {
@@ -27,8 +28,8 @@ module.exports = {
         const notSet = 'Not set';
         const open = value.open ? moment.tz(value.open, 'UTC').format('YYYY-MM-DD h:mm A z') : notSet;
         const close = value.close ? moment.tz(value.close, 'UTC').format('YYYY-MM-DD h:mm A z') : notSet;
-        message.channel.send(`open: ${open}
-close: ${close}`);
+        sendAlertMessage(message.channel, `Open: ${open}
+Close: ${close}`, 'info');
       });
     }
 
@@ -43,11 +44,11 @@ close: ${close}`);
         doc.value[arg] = date.toDate();
         doc.markModified('value');
         doc.save().then(() => {
-          message.channel.send(`Done ${date.format('YYYY-MM-DD h:mm A z')}`);
+          sendAlertMessage(message.channel, `Done ${date.format('YYYY-MM-DD h:mm A z')}`, 'success');
         });
       });
     } else {
-      message.channel.send('Wrong action.');
+      sendAlertMessage(message.channel, 'Wrong action.', 'warning');
     }
   },
 };

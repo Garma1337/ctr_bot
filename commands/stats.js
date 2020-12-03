@@ -4,6 +4,7 @@ const createPageableContent = require('../utils/createPageableContent');
 const sendAlertMessage = require('../utils/sendAlertMessage');
 const sortObject = require('../utils/sortObject');
 const { regions } = require('../utils/regions');
+const { consoles } = require('../utils/consoles');
 
 module.exports = {
   name: 'stats',
@@ -27,7 +28,7 @@ module.exports = {
     const type = args[0];
     if (!types.includes(type)) {
       return sendAlertMessage(message.channel, `Invalid type. Here is a list of all available statistics types:\n
-${types.join('\n')}`, 'warning');
+\`\`\`${types.join('\n')}\`\`\``, 'warning');
     }
 
     const players = await Player.find();
@@ -210,6 +211,28 @@ ${types.join('\n')}`, 'warning');
         }
         break;
 
+      case 'consoles':
+        embedHeading = 'Most used consoles';
+        let playerConsoles = {};
+
+        players.forEach((p) => {
+          p.consoles.forEach((console) => {
+            if (!playerConsoles[console]) {
+              playerConsoles[console] = 1;
+            } else {
+              playerConsoles[console] += 1;
+            }
+          });
+        });
+
+        playerConsoles = sortObject(playerConsoles);
+
+        for (const i in playerConsoles) {
+          const console = consoles.find((c) => c.tag === i);
+
+          elements.push(`${console.name} - ${playerConsoles[i]} players`);
+        }
+        break;
       default:
         break;
     }
