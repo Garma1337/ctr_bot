@@ -19,7 +19,7 @@ module.exports = {
         // eslint-disable-next-line prefer-destructuring
         user = message.mentions.users.first();
       } else {
-        return sendAlertMessage(message.channel, 'Nope.', 'warning');
+        user = message.author;
       }
     } else if (args.length > 1) {
       return sendAlertMessage(message.channel, 'Nope.', 'warning');

@@ -15,7 +15,7 @@ module.exports = {
       if (args.length === 1) {
         discordId = message.mentions.members.first().id;
       } else {
-        return sendAlertMessage(message.channel, 'Nope.', 'warning');
+        discordId = message.author.id;
       }
     } else if (args.length > 0) {
       return sendAlertMessage(message.channel, 'Nope.', 'warning');

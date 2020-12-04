@@ -7,6 +7,24 @@ module.exports = {
   description: 'Set your NAT type.',
   guildOnly: true,
   execute(message, args) {
+    if (args[0] === 'unset') {
+      Player.findOne({ discordId: message.author.id }).then((player) => {
+        if (!player) {
+          player = new Player();
+          player.discordId = message.author.id;
+        }
+
+        player.nat = null;
+        player.save().then(() => {
+          sendAlertMessage(message.channel, 'Your NAT Type has been unset.', 'success');
+        }).catch((error) => {
+          sendAlertMessage(message.channel, `Unable to update player. Error: ${error}`, 'error');
+        });
+      });
+
+      return;
+    }
+
     const natTypes = [
       'NAT 1',
       'NAT 2 Open',

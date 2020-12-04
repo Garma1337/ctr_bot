@@ -8,9 +8,14 @@ const TYPE_ERROR = 'error';
  * @param channel
  * @param content
  * @param type
+ * @param mentionedUsers
  * @returns null
  */
-function sendAlertMessage(channel, content, type) {
+function sendAlertMessage(channel, content, type, mentionedUsers) {
+  if (arguments.length < 4) {
+    mentionedUsers = [];
+  }
+
   const types = [
     TYPE_INFO,
     TYPE_SUCCESS,
@@ -57,7 +62,14 @@ function sendAlertMessage(channel, content, type) {
     ],
   };
 
-  return channel.send({ embed });
+  if (mentionedUsers.length <= 0) {
+    return channel.send({ embed });
+  }
+
+  return channel.send({
+    content: mentionedUsers.map((m) => `<@!${m}>`).join(', '),
+    embed,
+  });
 }
 
 module.exports = sendAlertMessage;

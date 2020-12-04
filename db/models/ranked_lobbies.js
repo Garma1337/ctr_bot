@@ -34,6 +34,7 @@ const RankedLobby = new Schema({
   allowPremadeTeams: { type: Boolean, default: true },
   draftTracks: { type: Boolean, default: false },
   spicyTracks: { type: Boolean, default: false },
+  reservedTeam: String,
 });
 
 RankedLobby.methods = {
