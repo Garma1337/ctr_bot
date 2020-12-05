@@ -468,7 +468,7 @@ client.on('guildMemberAdd', (member) => {
 });
 
 function checkDeletedPings(message) {
-  if (message) {
+  if (message && !message.author.bot) {
     const { roles } = message.mentions;
     if (roles.find((r) => ['war', 'private lobby', 'instateam'].includes(r.name.toLowerCase()))) {
       sendAlertMessage(message.channel, `<@!${message.author.id}>, don't ghost ping this role, please.`, 'warning');

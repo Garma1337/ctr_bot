@@ -57,7 +57,7 @@ module.exports = {
       return sendAlertMessage(message.channel, 'You are already in a team.', 'warning');
     }
 
-    const lobby = await RankedLobby.findOne({ type: { $in: [_4V4, _3V3] }, players: { $in: [author.id, ...teammateIds] } });
+    const lobby = await RankedLobby.findOne({ type: { $in: [_3V3, _4V4] }, players: { $in: [author.id, ...teammateIds] } });
     if (lobby) {
       return sendAlertMessage(message.channel, 'You can\'t set a team while one of you is playing a ranked match.', 'warning');
     }
@@ -96,7 +96,7 @@ module.exports = {
         confirmMessage.delete();
 
         // eslint-disable-next-line no-shadow
-        const lobby = await RankedLobby.findOne({ guild: guild.id, type: { $in: [_4V4, _3V3] }, players: author.id });
+        const lobby = await RankedLobby.findOne({ guild: guild.id, type: { $in: [_3V3, _4V4] }, players: author.id });
         if (lobby) {
           return sendAlertMessage(message.channel, `Command cancelled: ${author} joined another ranked lobby.`, 'warning');
         }

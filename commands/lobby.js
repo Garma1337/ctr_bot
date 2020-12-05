@@ -988,7 +988,7 @@ module.exports = {
                   return parseInt(content, 10);
                 }).catch(() => {
                   sentMessage.delete();
-                  return false;
+                  return 1;
                 });
 
                 const index = trackOption - 1;
@@ -1131,6 +1131,8 @@ The value should be in the range of \`${diffMin} to ${diffMax}\`. The value defa
 
                   if (!discordId) {
                     return sendAlertMessage(message.channel, 'You need to mention a user.', 'warning');
+                  } if (discordId === message.author.id) {
+                    return sendAlertMessage(message.channel, 'You cannot mention yourself', 'warning');
                   }
 
                   reservedTeam = discordId;
@@ -1183,6 +1185,8 @@ The value should be in the range of \`${diffMin} to ${diffMax}\`. The value defa
                     });
                   });
               });
+            } else {
+              return sendAlertMessage(message.channel, 'Command cancelled.', 'error').then((m) => m.delete({ timeout: 5000 }));
             }
           }).catch(() => sendAlertMessage(message.channel, 'Command cancelled.', 'error').then((m) => m.delete({ timeout: 5000 })));
         }).catch(() => sendAlertMessage(message.channel, 'Command cancelled.', 'error').then((m) => m.delete({ timeout: 5000 })));
@@ -1276,6 +1280,7 @@ The value should be in the range of \`${diffMin} to ${diffMax}\`. The value defa
                       relobby.teamList = doc.teamList;
                       relobby.allowPremadeTeams = doc.allowPremadeTeams;
                       relobby.draftTracks = doc.draftTracks;
+                      relobby.reservedTeam = doc.reservedTeam;
 
                       deleteLobby(doc, msg);
 
@@ -1359,8 +1364,8 @@ async function restrictSoloQueue(doc, user, reaction, channel, soloQueue) {
   const player = await Player.findOne({ discordId: user.id });
 
   if (doc.reservedTeam) {
-    if (doc.reservedTeam !== user.id) {
-      errors.push(`This lobby is reserved for <@!${doc.reservedTeam}>'s team.`);
+    if (![doc.creator, doc.reservedTeam].includes(user.id)) {
+      errors.push(`This lobby is reserved for <@!${doc.creator}>'s and <@!${doc.reservedTeam}>'s teams.`);
     } else {
       errors.push('This lobby is reserved for your team. Please set your team members first.');
     }
@@ -1847,9 +1852,9 @@ async function mogi(reaction, user, removed = false) {
                   }
                 }
 
-                if (doc.reservedTeam && !team.players.includes(doc.reservedTeam)) {
+                if (doc.reservedTeam && !team.players.includes(doc.creator) && !team.players.includes(doc.reservedTeam)) {
                   reaction.users.remove(user);
-                  errors.push(`The lobby is reserved for <@!${doc.reservedTeam}>'s team.`);
+                  errors.push(`The lobby is reserved for <@!${doc.creator}>'s and <@!${doc.reservedTeam}>'s teams.`);
                 }
 
                 let cutoffPlayerCount;
