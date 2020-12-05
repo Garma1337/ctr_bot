@@ -10,7 +10,7 @@ const {
 } = require('../db/models/ranked_lobbies');
 
 const ranks = {
-  [ITEMS]: 'Items',
+  [ITEMS]: 'FFA',
   [ITEMLESS]: 'Itemless',
   [DUOS]: 'Duos',
   [_3V3]: '3 vs. 3',
