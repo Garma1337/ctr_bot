@@ -612,15 +612,7 @@ ${playersText}`,
                           embedFields.push({
                             name: mode,
                             value: entry.settings.join('\n'),
-                            inline: true,
                           });
-
-                          if (i % 2 === 0) {
-                            embedFields.push({
-                              name: '\u200B',
-                              value: '\u200B',
-                            });
-                          }
                         }
                       });
                     });
@@ -628,7 +620,7 @@ ${playersText}`,
                     roomChannel.send({
                       embed: {
                         color: embedColors[doc.type],
-                        description: '**Global Settings**\n\nTeams: None (4 for Steal The Bacon)\nAI: Disabled',
+                        description: '**Global Settings**\nTeams: None (4 for Steal The Bacon)\nAI: Disabled',
                         author: {
                           name: 'Battle Mode Settings',
                         },
