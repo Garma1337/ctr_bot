@@ -647,23 +647,24 @@ ${playersText}`,
                     });
                   }
 
-                  let hasPs5 = false;
-                  let hasPs4 = false;
-                  players.forEach(async (p) => {
-                    const player = await Player.findOne({ discordId: p });
+                  Player.find({ discordId: { $in: players } }).then((playerModels) => {
+                    let hasPs5 = false;
+                    let hasPs4 = false;
 
-                    if (player.consoles.includes('PS5')) {
-                      hasPs5 = true;
-                    }
+                    playerModels.forEach((p) => {
+                      if (p.consoles.includes('PS5')) {
+                        hasPs5 = true;
+                      }
 
-                    if (player.consoles.includes('PS4')) {
-                      hasPs4 = true;
+                      if (p.consoles.includes('PS4')) {
+                        hasPs4 = true;
+                      }
+                    });
+
+                    if (hasPs5 && hasPs4) {
+                      sendAlertMessage(roomChannel, 'This lobby has players on PS4 as well as PS5. Please remember to turn on cutscenes and not start the next race too quickly to avoid lobby crashes!', 'info');
                     }
                   });
-
-                  if (hasPs5 && hasPs4) {
-                    sendAlertMessage(roomChannel, 'This lobby has players on PS4 as well as PS5. Please remember to turn on cutscenes and not start the next race too quickly to avoid lobby crashes!', 'info');
-                  }
                 });
               });
             });
