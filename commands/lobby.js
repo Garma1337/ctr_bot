@@ -2062,10 +2062,10 @@ const checkOldLobbies = () => {
         if (minutes >= CLOSE_MINUTES) {
           const duration = moment.duration(CLOSE_MINUTES, 'minutes').humanize();
           deleteLobby(doc);
-          sendAlertMessage(channel, `${creatorMember}, your lobby \`${doc.id}\` has been deleted because it wasn't started in ${duration}.`, 'warning');
+          sendAlertMessage(channel, `${creatorMember}, your lobby \`${doc.id}\` has been deleted because it wasn't started in ${duration}.`, 'info', [doc.creator]);
         } else {
           const duration = moment.duration(CLOSE_MINUTES - minutes, 'minutes').humanize();
-          sendAlertMessage(channel, `${creatorMember}, your lobby \`${doc.id}\` will be deleted in ${duration} if it will not be started.`, 'warning');
+          sendAlertMessage(channel, `${creatorMember}, your lobby \`${doc.id}\` will be deleted in ${duration} if it will not be started.`, 'warning', [doc.creator]);
         }
       }
     });
