@@ -2078,13 +2078,17 @@ function checkRankedBans() {
   const now = new Date();
   RankedBan.find({ bannedTill: { $lte: now } }).then((docs) => {
     docs.forEach((doc) => {
-      const channel = client.guilds.cache.get(doc.guildId).channels.cache.find((c) => c.name === 'ranked-lobbies');
-      const permissionOverwrites = channel.permissionOverwrites.get(doc.discordId);
-      if (permissionOverwrites) {
-        permissionOverwrites.delete().then(() => {});
-      }
+      const guild = client.guilds.cache.get(doc.guildId);
 
-      doc.delete();
+      if (guild) {
+        const channel = guild.channels.cache.find((c) => c.name === 'ranked-lobbies');
+        const permissionOverwrites = channel.permissionOverwrites.get(doc.discordId);
+        if (permissionOverwrites) {
+          permissionOverwrites.delete().then(() => {});
+        }
+
+        doc.delete();
+      }
     });
   });
 }
@@ -2390,10 +2394,13 @@ function checkOldDuos() {
           if (!activeLobby) {
             duo.delete().then(() => {
               const guild = client.guilds.cache.get(duo.guild);
-              const generalChannel = guild.channels.cache.find((c) => c.name === 'ranked-general');
-              const message = `Duo <@${duo.discord1}> & <@${duo.discord2}> was removed after ${teamDuration.humanize()}.`;
 
-              sendAlertMessage(generalChannel, message, 'info');
+              if (guild) {
+                const generalChannel = guild.channels.cache.find((c) => c.name === 'ranked-general');
+                const message = `Duo <@${duo.discord1}> & <@${duo.discord2}> was removed after ${teamDuration.humanize()}.`;
+
+                sendAlertMessage(generalChannel, message, 'info');
+              }
             });
           }
         });
@@ -2415,11 +2422,14 @@ function checkOldTeams() {
           if (!activeLobby) {
             team.delete().then(() => {
               const guild = client.guilds.cache.get(team.guild);
-              const generalChannel = guild.channels.cache.find((c) => c.name === 'ranked-general');
-              const teamPing = team.players.map((p) => `<@${p}>`).join(', ');
-              const message = `Team ${teamPing} was removed after ${teamDuration.humanize()}.`;
 
-              sendAlertMessage(generalChannel, message, 'info');
+              if (guild) {
+                const generalChannel = guild.channels.cache.find((c) => c.name === 'ranked-general');
+                const teamPing = team.players.map((p) => `<@${p}>`).join(', ');
+                const message = `Team ${teamPing} was removed after ${teamDuration.humanize()}.`;
+
+                sendAlertMessage(generalChannel, message, 'info');
+              }
             });
           }
         });
