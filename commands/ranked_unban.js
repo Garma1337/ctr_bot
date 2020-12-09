@@ -1,3 +1,4 @@
+const config = require('../config');
 const RankedBan = require('../db/models/ranked_bans');
 const findMember = require('../utils/findMember');
 const sendAlertMessage = require('../utils/sendAlertMessage');
@@ -29,7 +30,7 @@ module.exports = {
         const docDeletePromise = doc.delete();
         promises.push(docDeletePromise);
 
-        const channel = message.guild.channels.cache.find((c) => c.name === 'ranked-lobbies');
+        const channel = message.guild.channels.cache.find((c) => c.name === config.channels.ranked_lobbies_channel);
         const permissionOverwrites = channel.permissionOverwrites.get(doc.discordId);
         if (permissionOverwrites) {
           const permissionDeletePromise = permissionOverwrites.delete();

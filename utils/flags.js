@@ -759,6 +759,7 @@ const flagName = {
   '🇺🇦': 'Ukraine',
   '🇦🇪': 'United Arab Emirates',
   '🇬🇧': 'United Kingdom',
+  '🇺🇳': 'United Nations',
   '🇺🇸': 'United States',
   '🇺🇲': 'United States Minor Outlying Islands',
   '🇺🇾': 'Uruguay',

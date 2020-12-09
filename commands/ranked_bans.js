@@ -1,4 +1,5 @@
 const moment = require('moment');
+const config = require('../config');
 const RankedLobby = require('../db/models/ranked_lobbies').default;
 const RankedBan = require('../db/models/ranked_bans');
 const findMember = require('../utils/findMember');
@@ -57,7 +58,7 @@ module.exports = {
 
         const savePromise = rb.save();
 
-        const lobbiesChannel = message.guild.channels.cache.find((c) => c.name === 'ranked-lobbies');
+        const lobbiesChannel = message.guild.channels.cache.find((c) => c.name === config.channels.ranked_lobbies_channel);
         const overwritePromise = lobbiesChannel.createOverwrite(member, { VIEW_CHANNEL: false });
 
         const msg = message.channel.send('...');

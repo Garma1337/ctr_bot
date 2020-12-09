@@ -1,4 +1,5 @@
 const Moment = require('moment');
+const config = require('../config');
 const Player = require('../db/models/player');
 const PrivateLobby = require('../db/models/private_lobbies');
 const createAndFindRole = require('../utils/createAndFindRole');
@@ -34,7 +35,7 @@ function getEmbed(info, players, psns, description, created) {
       icon_url: icon,
     },
     description,
-    timestamp: new Date(),
+    timestamp: created,
     fields: [
       {
         name: 'Info',
@@ -87,11 +88,11 @@ module.exports = {
   aliases: ['pl'],
   execute(message, args) {
     const allowedChannels = [
-      message.channel.guild.channels.cache.find((c) => c.name.toLowerCase() === 'war-search'),
-      message.channel.guild.channels.cache.find((c) => c.name.toLowerCase() === 'private-lobby-chat'),
+      message.channel.guild.channels.cache.find((c) => c.name.toLowerCase() === config.channels.war_search_channel),
+      message.channel.guild.channels.cache.find((c) => c.name.toLowerCase() === config.channels.private_lobby_chat_channel),
     ];
 
-    const postChannel = message.channel.guild.channels.cache.find((c) => c.name.toLowerCase() === 'private-lobbies');
+    const postChannel = message.channel.guild.channels.cache.find((c) => c.name.toLowerCase() === config.channels.private_lobby_channel);
 
     if (!allowedChannels.find((c) => c && c.name === message.channel.name)) {
       return sendAlertMessage(message.channel, `This command can only be used in the following channels:

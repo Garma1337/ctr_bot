@@ -417,8 +417,8 @@ async function findRoomChannel(guildId, n) {
 
   let channel = guild.channels.cache.find((c) => c.name === channelName);
   if (!channel) {
-    const roleStaff = await createAndFindRole(guild, 'Staff');
-    const roleRanked = await createAndFindRole(guild, 'Ranked Verified');
+    const roleStaff = await createAndFindRole(guild, config.roles.staff_role);
+    const roleRankedVerified = await createAndFindRole(guild, config.roles.ranked_verified_role);
 
     channel = await guild.channels.create(channelName, {
       type: 'text',
@@ -426,7 +426,7 @@ async function findRoomChannel(guildId, n) {
     });
 
     await channel.createOverwrite(roleStaff, { VIEW_CHANNEL: true });
-    await channel.createOverwrite(roleRanked, { VIEW_CHANNEL: true });
+    await channel.createOverwrite(roleRankedVerified, { VIEW_CHANNEL: true });
     await channel.createOverwrite(guild.roles.everyone, { VIEW_CHANNEL: false });
   }
 
@@ -866,24 +866,24 @@ module.exports = {
 
     const banned = await RankedBan.findOne({ discordId: user.id, guildId: guild.id });
     if (banned) {
-      return sendAlertMessage(message.channel, `<@!${user.id}>, you are currently banned from ranked lobbies.`, 'warning');
+      return sendAlertMessage(message.channel, 'You are currently banned from ranked lobbies.', 'warning');
     }
 
     const player = await Player.findOne({ discordId: user.id });
     if (!player || !player.psn) {
-      return sendAlertMessage(message.channel, `<@!${user.id}>, you need to set your PSN first by using \`!set_psn\`.`, 'warning');
+      return sendAlertMessage(message.channel, 'You need to set your PSN first by using `!set_psn`.', 'warning');
     }
 
     const isStaff = isStaffMember(member);
 
-    const hasRankedRole = member.roles.cache.find((r) => r.name.toLowerCase() === 'ranked verified');
+    const hasRankedRole = member.roles.cache.find((r) => r.name.toLowerCase() === config.roles.ranked_verified_role);
 
     if (!isStaff && !hasRankedRole) {
-      return sendAlertMessage(message.channel, `<@!${user.id}>, you don't have a ranked verified role to execute this command.`, 'warning');
+      return sendAlertMessage(message.channel, 'You don\'t have the `Ranked Verified` role to execute this command.', 'warning');
     }
 
     if (message.channel.parent && message.channel.parent.name.toLowerCase() !== 'ranked lobbies') {
-      return sendAlertMessage(message.channel, `<@!${user.id}>, you can use this command only in the \`Ranked Lobbies\` category.`, 'warning');
+      return sendAlertMessage(message.channel, 'You can use this command only in the `Ranked Lobbies` category.', 'warning');
     }
 
     action = action && action.toLowerCase();
@@ -892,7 +892,7 @@ module.exports = {
         // eslint-disable-next-line no-case-declarations
         const creatorsLobby = await RankedLobby.findOne({ creator: message.author.id });
         if (creatorsLobby && !isStaff) {
-          return sendAlertMessage(message.channel, `<@!${user.id}>, you have already created a lobby.`, 'warning');
+          return sendAlertMessage(message.channel, 'You have already created a lobby.', 'warning');
         }
 
         const cooldown = await Cooldown.findOne({ guildId: guild.id, discordId: message.author.id, name: 'lobby' });
@@ -901,7 +901,7 @@ module.exports = {
           updatedAt.add(5, 'm');
           const wait = moment.duration(now.diff(updatedAt));
 
-          return sendAlertMessage(message.channel, `<@!${user.id}>, you cannot create multiple lobbies so often. You have to wait ${wait.humanize()}.`, 'warning');
+          return sendAlertMessage(message.channel, `You cannot create multiple lobbies so often. You have to wait ${wait.humanize()}.`, 'warning');
         }
 
         const filter = (m) => m.author.id === message.author.id;
@@ -986,7 +986,9 @@ module.exports = {
 
                 const index = trackOption - 1;
 
-                if (trackOptions[index] === TRACK_OPTION_POOLS) {
+                if (trackOptions[index] === TRACK_OPTION_RNG) {
+                  pools = false;
+                } else if (trackOptions[index] === TRACK_OPTION_POOLS) {
                   pools = true;
                 } else if (trackOptions[index] === TRACK_OPTION_SPICY) {
                   pools = false;
@@ -1165,7 +1167,7 @@ The value should be in the range of \`${diffMin} to ${diffMax}\`. The value defa
               lobby.save().then(async (doc) => {
                 const role = await createAndFindRole(guild, getRoleName(type));
 
-                guild.channels.cache.find((c) => c.name === 'ranked-lobbies')
+                guild.channels.cache.find((c) => c.name === config.channels.ranked_lobbies_channel)
                   .send({
                     content: role,
                     embed: await getEmbed(doc),
@@ -1279,7 +1281,7 @@ The value should be in the range of \`${diffMin} to ${diffMax}\`. The value defa
 
                       relobby.save().then(async (savedRelobby) => {
                         const role = await createAndFindRole(guild, getRoleName(relobby.type));
-                        const channel = guild.channels.cache.find((c) => c.name === 'ranked-lobbies');
+                        const channel = guild.channels.cache.find((c) => c.name === config.channels.ranked_lobbies_channel);
                         channel.send({ content: role, embed: await getEmbed(savedRelobby) }).then((m) => {
                           savedRelobby.channel = m.channel.id;
                           savedRelobby.message = m.id;
@@ -1336,15 +1338,15 @@ async function tickCount(reaction, user) {
           { upsert: true },
         ).exec();
 
-        const lobbiesChannel = guild.channels.cache.find((c) => c.name === 'ranked-lobbies');
+        const lobbiesChannel = guild.channels.cache.find((c) => c.name === config.channels.ranked_lobbies_channel);
         lobbiesChannel.createOverwrite(user, { VIEW_CHANNEL: false });
 
-        const generalChannel = guild.channels.cache.find((c) => c.name === 'ranked-general');
+        const generalChannel = guild.channels.cache.find((c) => c.name === config.channels.ranked_general_channel);
         const message = `You've been banned from ranked lobbies for ${banDuration.humanize()}.`;
         user.createDM().then((dm) => dm.send(message)).catch(() => { });
         sendAlertMessage(generalChannel, message, 'warning', [user.id]);
       } else if (doc.tickCount === 3 || doc.tickCount === 5) {
-        const channel = guild.channels.cache.find((c) => c.name === 'ranked-general');
+        const channel = guild.channels.cache.find((c) => c.name === config.channels.ranked_general_channel);
         const message = `I will ban you from ranked lobbies for ${banDuration.humanize()} if you continue to spam reactions.`;
         user.createDM().then((dm) => dm.send(message)).catch(() => { });
         sendAlertMessage(channel, message, 'warning', [user.id]);
@@ -1530,9 +1532,9 @@ async function mogi(reaction, user, removed = false) {
 
     const { guild } = message;
 
-    let rankedGeneral = guild.channels.cache.find((c) => c.name === 'ranked-general');
+    let rankedGeneral = guild.channels.cache.find((c) => c.name === config.channels.ranked_general_channel);
     if (!rankedGeneral) {
-      rankedGeneral = await guild.channels.create('ranked-general');
+      rankedGeneral = await guild.channels.create(config.channels.ranked_general_channel);
     }
 
     RankedLobby.findOne(conditions).then(async (doc) => {
@@ -1548,12 +1550,12 @@ async function mogi(reaction, user, removed = false) {
           const banned = await RankedBan.findOne({ discordId: member.id, guildId: guild.id });
           if (banned) {
             reaction.users.remove(user);
-            const lobbiesChannel = guild.channels.cache.find((c) => c.name === 'ranked-lobbies');
+            const lobbiesChannel = guild.channels.cache.find((c) => c.name === config.channels.ranked_lobbies_channel);
             lobbiesChannel.createOverwrite(user, { VIEW_CHANNEL: false });
             errors.push('You are banned.');
           }
 
-          if (member.roles.cache.find((r) => r.name.toLowerCase() === 'muted')) {
+          if (member.roles.cache.find((r) => r.name.toLowerCase() === config.roles.muted_role)) {
             reaction.users.remove(user);
             errors.push('You are muted.');
           }
@@ -2048,24 +2050,25 @@ const checkOldLobbies = () => {
       const minutes = diffMinutes(new Date(), doc.date);
 
       const remindMinutes = [55];
-
       const CLOSE_MINUTES = 60;
 
       if (remindMinutes.includes(minutes) || minutes >= CLOSE_MINUTES) {
         const guild = client.guilds.cache.get(doc.guild);
-        let channel = guild.channels.cache.find((c) => c.name === 'ranked-general');
-        if (!channel) {
-          channel = await guild.channels.create('ranked-general');
-        }
-        const creatorMember = `<@${doc.creator}>`;
 
-        if (minutes >= CLOSE_MINUTES) {
-          const duration = moment.duration(CLOSE_MINUTES, 'minutes').humanize();
-          deleteLobby(doc);
-          sendAlertMessage(channel, `${creatorMember}, your lobby \`${doc.id}\` has been deleted because it wasn't started in ${duration}.`, 'info', [doc.creator]);
-        } else {
-          const duration = moment.duration(CLOSE_MINUTES - minutes, 'minutes').humanize();
-          sendAlertMessage(channel, `${creatorMember}, your lobby \`${doc.id}\` will be deleted in ${duration} if it will not be started.`, 'warning', [doc.creator]);
+        if (guild) {
+          let channel = guild.channels.cache.find((c) => c.name === config.channels.ranked_general_channel);
+          if (!channel) {
+            channel = await guild.channels.create(config.channels.ranked_general_channel);
+          }
+
+          if (minutes >= CLOSE_MINUTES) {
+            const duration = moment.duration(CLOSE_MINUTES, 'minutes').humanize();
+            deleteLobby(doc);
+            sendAlertMessage(channel, `Your lobby \`${doc.id}\` has been deleted because it wasn't started in ${duration}.`, 'info', [doc.creator]);
+          } else {
+            const duration = moment.duration(CLOSE_MINUTES - minutes, 'minutes').humanize();
+            sendAlertMessage(channel, `Your lobby \`${doc.id}\` will be deleted in ${duration} if it will not be started.`, 'warning', [doc.creator]);
+          }
         }
       }
     });
@@ -2081,7 +2084,7 @@ function checkRankedBans() {
       const guild = client.guilds.cache.get(doc.guildId);
 
       if (guild) {
-        const channel = guild.channels.cache.find((c) => c.name === 'ranked-lobbies');
+        const channel = guild.channels.cache.find((c) => c.name === config.channels.ranked_lobbies_channel);
         const permissionOverwrites = channel.permissionOverwrites.get(doc.discordId);
         if (permissionOverwrites) {
           permissionOverwrites.delete().then(() => {});
@@ -2157,17 +2160,17 @@ function checkScoresSum(message) {
 
     const correctSums = correctSumsByTeamsCount[data.clans.length];
     if (!correctSums) {
-      return sendAlertMessage(`<@!${message.author.id}>, your scores are incorrect.`, 'warning');
+      return sendAlertMessage(message.channel, 'Your scores are incorrect.', 'warning', [message.author.id]);
     }
 
     const correctSum = correctSums[players.length];
     if (correctSum && sum !== correctSum) {
       if (sum > correctSum) {
-        return sendAlertMessage(`<@!${message.author.id}>, the total number of points for your lobby is over ${correctSum} points.
-If there were 1 or multiple ties in your lobby, you can ignore this message. If not, please double check the results.`, 'warning');
+        return sendAlertMessage(message.channel, `The total number of points for your lobby is over ${correctSum} points.
+If there were 1 or multiple ties in your lobby, you can ignore this message. If not, please double check the results.`, 'warning', [message.author.id]);
       }
-      return sendAlertMessage(`<@!${message.author.id}>, the total number of points for your lobby is under ${correctSum} points.
-Unless somebody left the lobby before all races were played or was penalized, please double check the results.`, 'warning');
+      return sendAlertMessage(message.channel, `The total number of points for your lobby is under ${correctSum} points.
+Unless somebody left the lobby before all races were played or was penalized, please double check the results.`, 'warning', [message.author.id]);
     }
   }
 }
@@ -2211,7 +2214,7 @@ client.on('message', (message) => {
   const isStaff = isStaffMember(member);
 
   // check submissions
-  if (message.channel.name === 'results-submissions') {
+  if (message.channel.name === config.channels.ranked_results_submissions_channel) {
     if (!isStaff && !message.content.includes('`') && message.content.includes('|')) {
       message.reply(`\`\`\`${message.content}\`\`\``).then(() => {
         message.delete();
@@ -2225,10 +2228,10 @@ client.on('message', (message) => {
 
   const { roles } = message.mentions;
 
-  if (message.channel.parent && message.channel.parent.name.toLowerCase() === 'ranked lobbies' && roles.find((r) => r.name.toLowerCase() === 'tournament staff')) {
-    let rankedStaff = '@Ranked Staff';
+  if (message.channel.parent && message.channel.parent.name.toLowerCase() === config.channels.ranked_lobbies_category && roles.find((r) => r.name.toLowerCase() === config.roles.tournament_staff_role)) {
+    let rankedStaff = `@${config.roles.ranked_staff_role}`;
 
-    sendAlertMessage(message.channel, `${message.author}, incorrect staff ping. If you have a problem ping ${rankedStaff}.`, 'warning').then((m) => {
+    sendAlertMessage(message.channel, `Incorrect staff ping. If you have a problem ping ${rankedStaff}.`, 'warning').then((m) => {
       const rankedStaffRole = message.guild.roles.cache.find((r) => r.name.toLowerCase() === 'ranked staff');
       if (rankedStaffRole) {
         rankedStaff = rankedStaffRole.toString();
@@ -2317,7 +2320,7 @@ client.on('guildMemberAdd', (member) => {
 
   RankedBan.findOne({ discordId: user.id, guildId: guild.id, bannedTill: { $gte: now } }).then((doc) => {
     if (doc) {
-      const lobbiesChannel = guild.channels.cache.find((c) => c.name === 'ranked-lobbies');
+      const lobbiesChannel = guild.channels.cache.find((c) => c.name === config.channels.ranked_lobbies_channel);
       lobbiesChannel.createOverwrite(user, { VIEW_CHANNEL: false }).then(() => {
         sendLogMessage(guild, `<@${user.id}> ranked banned on rejoin`);
       });
@@ -2340,33 +2343,33 @@ client.on('guildMemberUpdate', async (oldMember, newMember) => {
   const oldRoles = oldMember.roles.cache;
   const newRoles = newMember.roles.cache;
 
-  if (oldRoles.some((r) => r.name.toLowerCase() === 'ranked verified')) {
+  if (oldRoles.some((r) => r.name.toLowerCase() === config.roles.ranked_verified_role)) {
     return;
   }
 
-  if (!oldRoles.some((r) => r.name.toLowerCase() === 'ranked') && newRoles.some((r) => r.name.toLowerCase() === 'ranked')) {
+  if (!oldRoles.some((r) => r.name.toLowerCase() === config.roles.ranked_role) && newRoles.some((r) => r.name.toLowerCase() === config.roles.ranked_role)) {
     newMember.createDM().then((dm) => {
       dm.send(config.ranked_welcome).then(DMCallback).catch(DMCatchCallback);
     });
   }
 
-  if (newRoles.some((r) => r.name.toLowerCase() === 'ranked verified')) {
+  if (newRoles.some((r) => r.name.toLowerCase() === config.roles.ranked_verified_role)) {
     const { guild } = newMember;
-    let channel = guild.channels.cache.find((c) => c.name.toLowerCase() === 'ranked-general');
+    let channel = guild.channels.cache.find((c) => c.name.toLowerCase() === config.channels.ranked_general_channel);
     if (!channel) {
-      channel = await guild.channels.create('ranked-general');
+      channel = await guild.channels.create(config.channels.ranked_general_channel);
     }
 
-    let rankedRules = '#ranked-rules';
+    let rankedRules = `#${config.channels.ranked_rules_channel}`;
 
-    const rankedRulesChannel = guild.channels.cache.find((c) => c.name.toLowerCase() === 'ranked-rules');
+    const rankedRulesChannel = guild.channels.cache.find((c) => c.name.toLowerCase() === config.channels.ranked_rules_channel);
     if (rankedRulesChannel) {
       rankedRules = rankedRulesChannel.toString();
     }
 
-    let rankedGuide = '#ranked-guide';
+    let rankedGuide = `#${config.channels.ranked_guide_channel}`;
 
-    const rankedGuideChannel = guild.channels.cache.find((c) => c.name.toLowerCase() === 'ranked-guide');
+    const rankedGuideChannel = guild.channels.cache.find((c) => c.name.toLowerCase() === config.channels.ranked_guide_channel);
     if (rankedGuideChannel) {
       rankedGuide = rankedGuideChannel.toString();
     }
@@ -2396,7 +2399,7 @@ function checkOldDuos() {
               const guild = client.guilds.cache.get(duo.guild);
 
               if (guild) {
-                const generalChannel = guild.channels.cache.find((c) => c.name === 'ranked-general');
+                const generalChannel = guild.channels.cache.find((c) => c.name === config.channels.ranked_general_channel);
                 const message = `Duo <@${duo.discord1}> & <@${duo.discord2}> was removed after ${teamDuration.humanize()}.`;
 
                 sendAlertMessage(generalChannel, message, 'info');
@@ -2424,7 +2427,7 @@ function checkOldTeams() {
               const guild = client.guilds.cache.get(team.guild);
 
               if (guild) {
-                const generalChannel = guild.channels.cache.find((c) => c.name === 'ranked-general');
+                const generalChannel = guild.channels.cache.find((c) => c.name === config.channels.ranked_general_channel);
                 const teamPing = team.players.map((p) => `<@${p}>`).join(', ');
                 const message = `Team ${teamPing} was removed after ${teamDuration.humanize()}.`;
 

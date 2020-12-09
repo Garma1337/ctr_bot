@@ -1,5 +1,6 @@
 /* eslint-disable consistent-return */
 require('log-timestamp');
+const axios = require('axios');
 const util = require('util');
 const fs = require('fs');
 const Discord = require('discord.js');
@@ -11,9 +12,11 @@ const Config = require('./db/models/config');
 const Cooldown = require('./db/models/cooldowns');
 const config = require('./config.js');
 const Mute = require('./db/models/mutes');
+const Player = require('./db/models/player');
 const SignupsChannel = require('./db/models/signups_channels');
 const alarms = require('./alarms');
 const getSignupsCount = require('./utils/getSignupsCount');
+const createAndFindRole = require('./utils/createAndFindRole');
 const db = require('./db');
 const isStaffMember = require('./utils/isStaffMember');
 const sendLogMessage = require('./utils/sendLogMessage');
@@ -99,7 +102,7 @@ client.on('rateLimit', (rateLimitData) => {
 
 // joined a server
 client.on('guildCreate', (guild) => {
-  const channel = guild.channels.cache.find((c) => c.name === 'general');
+  const channel = guild.channels.cache.find((c) => c.name === config.channels.main_channel);
   channel.send('Hi guys! :slight_smile:');
 });
 
@@ -199,7 +202,9 @@ client.on('messageUpdate', (oldMessage, message) => {
 client.on('messageReactionAdd', (reaction) => {
   const { message } = reaction;
 
-  if (!message.channel.name.includes('signups')) return;
+  if (!message.channel.name.includes('signups')) {
+    return;
+  }
 
   const { reactions } = message;
   reactions.cache.forEach((r) => {
@@ -215,33 +220,14 @@ client.on('messageReactionAdd', (reaction) => {
   });
 });
 
-const logDM = async (message) => {
-  const guild = client.guilds.cache.get(process.env.TEST ? config.test_guild : config.main_guild);
-
-  let channelDM = guild.channels.cache.find((c) => c.name === 'tourney-bot-dm');
-  if (!channelDM) {
-    channelDM = await guild.channels.create('tourney-bot-dm');
-  }
-  const attachment = message.attachments.first();
-  const attachments = [];
-  if (attachment) {
-    attachments.push(attachment.url);
-  }
-  channelDM.send(`New DM by ${message.author} ${message.author.tag}\n${message.content}`, { files: attachments });
-};
-
 const muteDuration = moment.duration(1, 'h');
 
 async function mute(member, message, duration = moment.duration(1, 'h')) {
-  let mutedRole = member.guild.roles.cache.find((r) => r.name.toLowerCase() === 'muted');
-  if (!mutedRole) {
-    mutedRole = await member.guild.roles.create({ data: { name: 'Muted' } });
-  }
-
+  const mutedRole = createAndFindRole(message.guild, config.roles.muted_role);
   member.roles.add(mutedRole);
 
   if (message) {
-    sendAlertMessage(message.channel, `<@!${member.id}>, you've been muted for ${duration.humanize()}.`, 'info');
+    sendAlertMessage(message.channel, `You've been muted for ${duration.humanize()}.`, 'info', [member.id]);
   }
 
   const muteObj = new Mute();
@@ -270,7 +256,16 @@ function checkPings(message) {
   const { guild } = message;
 
   // ranked pings
-  if (roles.find((r) => ['ranked items', 'ranked itemless', 'ranked duos', 'ranked 3v3', 'ranked 4v4', 'ranked battle'].includes(r.name.toLowerCase()))) {
+  const rankedRoles = [
+    config.roles.ranked_ffa_role,
+    config.roles.ranked_itemless_role,
+    config.roles.ranked_duos_role,
+    config.roles.ranked_3v3_role,
+    config.roles.ranked_4v4_role,
+    config.roles.ranked_battle_role,
+  ];
+
+  if (roles.find((r) => rankedRoles.includes(r.name.toLowerCase()))) {
     Cooldown.findOneAndUpdate(
       { guildId: guild.id, discordId: message.author.id, name: 'ranked pings' },
       { $inc: { count: 1 }, $set: { updatedAt: now } },
@@ -280,13 +275,19 @@ function checkPings(message) {
         if (doc.count >= 2) { // mute
           mute(member, message);
         } else if (doc.count >= 1) {
-          sendAlertMessage(message.channel, `<@!${member.id}>, please don't ping this role, or I will have to mute you for ${muteDuration.humanize()}.`, 'warning');
+          sendAlertMessage(message.channel, `Please don't ping this role, or I will have to mute you for ${muteDuration.humanize()}.`, 'warning', [member.id]);
         }
       });
   }
 
   // war & private lobby pings
-  if (roles.find((r) => ['war', 'private lobby', 'instateam'].includes(r.name.toLowerCase()))) {
+  const socialRoles = [
+    config.roles.war_search_role,
+    config.roles.private_lobby_role,
+    config.roles.instateam_role,
+  ];
+
+  if (roles.find((r) => socialRoles.includes(r.name.toLowerCase()))) {
     Cooldown.findOneAndUpdate(
       { guildId: guild.id, discordId: message.author.id, name: 'pings' },
       { $inc: { count: 1 }, $set: { updatedAt: now } },
@@ -296,7 +297,7 @@ function checkPings(message) {
         if (doc.count >= 3) { // mute
           mute(member, message);
         } else if (doc.count >= 2) {
-          sendAlertMessage(message.channel, `<@!${member.id}>, please don't ping people so often, or I will have to mute you for ${muteDuration.humanize()}.`, 'warning');
+          sendAlertMessage(message.channel, `Please don't ping people so often, or I will have to mute you for ${muteDuration.humanize()}.`, 'warning', [member.id]);
         }
       });
   }
@@ -332,16 +333,7 @@ client.on('message', (message) => {
   if (message.channel.type === 'text') {
     isStaff = isStaffMember(message.member);
     allowedChannels = message.guild.channels.cache.filter((c) => {
-      const channels = [
-        'music-and-memes',
-        'bot-spam',
-        'war-search',
-        'private-lobby-chat',
-        'tournament-results',
-        'tournament-discussion',
-        'ranked-general',
-      ];
-
+      const channels = config.channels.commands_allowed;
       return channels.includes(c.name) || c.name.match(/^ranked-room-[0-9]{1,2}/i);
     }).sort((a, b) => a.rawPosition - b.rawPosition);
   }
@@ -356,11 +348,11 @@ client.on('message', (message) => {
   if (!command) {
     Command.findOne({ name: commandName }).then((cmd) => {
       if (!cmd) {
-        return sendAlertMessage(message.channel, `<@!${message.author.id}>, the command \`!${commandName}\` does not exist.`, 'warning');
+        return sendAlertMessage(message.channel, `The command \`!${commandName}\` does not exist.`, 'warning');
       }
 
       if (!isStaff && !allowedChannels.find((c) => c.name === message.channel.name)) {
-        return sendAlertMessage(message.channel, `<@!${message.author.id}>, you cannot use commands in this channel.`, 'warning');
+        return sendAlertMessage(message.channel, 'You cannot use commands in this channel.', 'warning');
       }
 
       message.channel.send(cmd.message);
@@ -370,15 +362,15 @@ client.on('message', (message) => {
   }
 
   if (command.guildOnly && message.channel.type !== 'text') {
-    return sendAlertMessage(message.channel, `<@!${message.author.id}>, you cannot use commands inside DMs. Please head over to #bot-spam and use the command there.`, 'warning');
+    return sendAlertMessage(message.channel, 'You cannot use commands inside DMs. Please head over to #bot-spam and use the command there.', 'warning');
   }
 
   if (!isStaff && !allowedChannels.find((c) => c.name === message.channel.name)) {
-    return sendAlertMessage(message.channel, `<@!${message.author.id}>, you cannot use commands in this channel.`, 'warning');
+    return sendAlertMessage(message.channel, 'You cannot use commands in this channel.', 'warning');
   }
 
   if (command.permissions && !(message.member && isStaffMember(message.member))) {
-    return sendAlertMessage(message.channel, `<@!${message.author.id}>, you don't have permission to use this command.`, 'warning');
+    return sendAlertMessage(message.channel, 'You don\'t have permission to use this command.', 'warning');
   }
 
   if (command.args && !args.length) {
@@ -404,7 +396,7 @@ client.on('message', (message) => {
 
     if (now < expirationTime) {
       const timeLeft = (expirationTime - now) / 1000;
-      return sendAlertMessage(message.channel, `<@!${message.author.id}>, please wait ${timeLeft.toFixed(1)} more second(s) before reusing the \`${command.name}\` command.`, 'warning');
+      return sendAlertMessage(message.channel, `Please wait ${timeLeft.toFixed(1)} more second(s) before reusing the \`${command.name}\` command.`, 'warning');
     }
   }
 
@@ -438,7 +430,7 @@ client.on('guildMemberAdd', (member) => {
   const { guild } = member;
   const { memberCount } = guild;
 
-  if (config.main_guild === guild.id || config.test_guild === guild.id) {
+  if (config.main_guild === guild.id) {
     const DMCallback = (m) => {
       const logMessage = `Sent message to ${m.channel.recipient}:\n\`\`\`${m.content}\`\`\``;
       sendLogMessage(guild, logMessage);
@@ -453,7 +445,7 @@ client.on('guildMemberAdd', (member) => {
 
   if (memberCount % 100 === 0) {
     const message = `We have ${memberCount} members! :partying_face:`;
-    const channel = guild.channels.cache.find((c) => c.name.toLowerCase() === 'general');
+    const channel = guild.channels.cache.find((c) => c.name.toLowerCase() === config.channels.main_channel);
     channel.send(message);
   }
 
@@ -465,13 +457,43 @@ client.on('guildMemberAdd', (member) => {
       mute(member).then(() => {});
     }
   });
+
+  Player.findOne({ discordId: user.id }).then((player) => {
+    if (!player) {
+      if (!player) {
+        player = new Player();
+        player.discordId = user.id;
+        player.flag = ':united_nations:';
+      }
+
+      player.save().then(() => {
+        console.log(`New record for player has been created: ${user.id}`);
+      }).catch(() => {
+        console.log(`Could not create record for new player: ${user.id}`);
+      });
+    }
+  });
+});
+
+client.on('guildMemberRemove', (member) => {
+  const { user } = member;
+
+  Player.findOne({ discordId: user.id }).then((player) => {
+    if (!player) {
+      return;
+    }
+
+    player.delete().then(() => {
+      console.log(`Record for player has been deleted: ${user.id}`);
+    });
+  });
 });
 
 function checkDeletedPings(message) {
-  if (message && !message.author.bot) {
+  if (message && message.author && !message.author.bot) {
     const { roles } = message.mentions;
-    if (roles.find((r) => ['war', 'private lobby', 'instateam'].includes(r.name.toLowerCase()))) {
-      sendAlertMessage(message.channel, `<@!${message.author.id}>, don't ghost ping this role, please.`, 'warning');
+    if (roles.find((r) => [config.roles.war_search_role, config.roles.private_lobby_role, config.roles.instateam_role].includes(r.name.toLowerCase()))) {
+      sendAlertMessage(message.channel, 'Don\'t ghost ping this role please.', 'warning', [message.author.id]);
     }
   }
 }
@@ -494,7 +516,7 @@ ${message.content}`;
 
 client.on('presenceUpdate', (oldPresence, newPresence) => {
   const isCTRStream = (a) => a.type === 'STREAMING' && a.state.toLowerCase().includes('crash team');
-  const livestreamsChannel = newPresence.guild.channels.cache.find((c) => c.name.toLowerCase() === 'livestreams');
+  const livestreamsChannel = newPresence.guild.channels.cache.find((c) => c.name.toLowerCase() === config.channels.livestreams_channel);
 
   if (livestreamsChannel) {
     let isNewStream = true;
@@ -529,7 +551,6 @@ client.on('presenceUpdate', (oldPresence, newPresence) => {
           author: {
             name: `New Livestream on ${a.name}!`,
             url: a.url,
-            icon_url: 'https://cdn0.iconfinder.com/data/icons/network-and-communications-1-3/128/live_stream-livestream-video-tv-streaming-512.png',
           },
           fields: [
             {
@@ -539,7 +560,19 @@ client.on('presenceUpdate', (oldPresence, newPresence) => {
           ],
         };
 
-        livestreamsChannel.send({ embed });
+        const account = a.url.split('/').pop();
+
+        const url = `http://static-cdn.jtvnw.net/previews-ttv/live_user_${account}-1920x1080.jpg`;
+        const promiseThumbnail = axios.get(url, { responseType: 'stream' });
+        promiseThumbnail.then((responseThumbnail) => {
+          const attachment = new Discord.MessageAttachment(responseThumbnail.data, 'thumbnail.png');
+          embed.author.icon_url = { url: `attachment://${attachment.name}` };
+
+          livestreamsChannel.send({ embed });
+        }).catch(() => {
+          embed.author.icon_url = 'https://cdn0.iconfinder.com/data/icons/network-and-communications-1-3/128/live_stream-livestream-video-tv-streaming-512.png';
+          livestreamsChannel.send({ embed });
+        });
       }
     });
   }
@@ -551,7 +584,7 @@ function checkMutes() {
     docs.forEach((doc) => {
       const guild = client.guilds.cache.get(doc.guildId);
       guild.members.fetch(doc.discordId).then((member) => {
-        const mutedRole = guild.roles.cache.find((r) => r.name.toLowerCase() === 'muted');
+        const mutedRole = guild.roles.cache.find((r) => r.name.toLowerCase() === config.roles.muted_role);
         if (mutedRole && member.roles.cache.has(mutedRole.id)) {
           member.roles.remove(mutedRole).then(() => {});
         }

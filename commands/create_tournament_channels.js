@@ -1,3 +1,4 @@
+const config = require('../config');
 const sendAlertMessage = require('../utils/sendAlertMessage');
 
 module.exports = {
@@ -8,15 +9,15 @@ module.exports = {
   permissions: ['MANAGE_CHANNELS', 'MANAGE_ROLES'],
   execute(message, args) {
     const { guild } = message;
-    const category = guild.channels.cache.find((c) => c.name === 'Tournament Lobbies' && c.type === 'category');
+    const category = guild.channels.cache.find((c) => c.name.toLowerCase() === config.channels.tournament_lobbies_category && c.type === 'category');
 
     const outMessageRows = [];
 
     args.forEach((name) => {
       // eslint-disable-next-line no-param-reassign
       name = name.toLowerCase();
-      outMessageRows.push(`Creating a role @${name}`);
-      outMessageRows.push(`Creating a channel #${name}`);
+      outMessageRows.push(`Creating role @${name} ...`);
+      outMessageRows.push(`Creating channel #${name} ...`);
       guild.roles.create({ data: { name } })
         .then((role) => {
           guild.channels.create(name, {

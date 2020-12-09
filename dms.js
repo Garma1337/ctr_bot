@@ -8,10 +8,11 @@ const client = new Discord.Client();
 const logDM = async (message) => {
   const guild = client.guilds.cache.get(process.env.TEST ? config.test_guild : config.main_guild);
 
-  let channelDM = guild.channels.cache.find((c) => c.name === 'tourney-bot-dm');
+  let channelDM = guild.channels.cache.find((c) => c.name === config.channels.tourney_dm_channel);
   if (!channelDM) {
-    channelDM = await guild.channels.create('tourney-bot-dm');
+    channelDM = await guild.channels.create(config.channels.tourney_dm_channel);
   }
+
   const attachments = message.attachments.map((a) => a.url);
 
   let { content } = message;

@@ -1,3 +1,4 @@
+const config = require('../config');
 const Duo = require('../db/models/duos');
 const RankedLobby = require('../db/models/ranked_lobbies').default;
 const Player = require('../db/models/player');
@@ -24,12 +25,12 @@ module.exports = {
       return sendAlertMessage(message.channel, 'You cannot set yourself or a bot as your partner.', 'warning');
     }
 
-    const authorVerified = message.member.roles.cache.find((r) => r.name.toLowerCase() === 'ranked verified');
+    const authorVerified = message.member.roles.cache.find((r) => r.name.toLowerCase() === config.roles.ranked_verified_role);
     if (!authorVerified) {
       return sendAlertMessage(message.channel, 'You are not verified.', 'warning');
     }
 
-    const partnerVerified = partner.roles.cache.find((r) => r.name.toLowerCase() === 'ranked verified');
+    const partnerVerified = partner.roles.cache.find((r) => r.name.toLowerCase() === config.roles.ranked_verified_role);
     if (!partnerVerified) {
       return sendAlertMessage(message.channel, 'Your partner is not verified.', 'warning');
     }

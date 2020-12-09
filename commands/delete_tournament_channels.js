@@ -1,5 +1,6 @@
 const Discord = require('discord.js');
 const bot = require('../bot');
+const config = require('../config');
 const sendAlertMessage = require('../utils/sendAlertMessage');
 
 module.exports = {
@@ -40,7 +41,7 @@ Command will be automatically cancelled after ${autoCancelSeconds} seconds.`, 'i
 
   async confirm(message) {
     sendAlertMessage(message.channel, 'Processing...', 'info').then(async (botMsg) => {
-      const channels = message.guild.channels.cache.filter((c) => c.parent && c.parent.name === 'Tournament Lobbies');
+      const channels = message.guild.channels.cache.filter((c) => c.parent && c.parent.name.toLowerCase() === config.channels.tournament_lobbies_category);
 
       const outMessageRows = [];
 
@@ -63,7 +64,7 @@ Command will be automatically cancelled after ${autoCancelSeconds} seconds.`, 'i
             try {
             // eslint-disable-next-line no-await-in-loop
               await r.delete();
-              outMessageRows.push(`Removed role @${c.name}`);
+              outMessageRows.push(`Removing role @${c.name} ...`);
             } catch (e) {
               sendAlertMessage(message.channel, `\`${e.name}: ${e.message}\``, 'error');
               break;

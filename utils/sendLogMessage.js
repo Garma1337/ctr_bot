@@ -1,7 +1,7 @@
 const config = require('../config.js');
 
 const sendLogMessage = (guild, message, noPing = false) => {
-  const logChannel = guild.channels.cache.find((c) => c.name === config.log_channel_name);
+  const logChannel = guild.channels.cache.find((c) => c.name === config.channels.tourney_log_channel);
   if (logChannel) {
     if (noPing) {
       logChannel.send('...').then((m) => {
@@ -11,8 +11,9 @@ const sendLogMessage = (guild, message, noPing = false) => {
       logChannel.send(message);
     }
   } else {
-    console.error(`CHANNEL NOT FOUND ${config.log_channel_name}!`);
+    console.error(`Channel "${config.channels.tourney_log_channel}" does not exist.`);
     console.log(message);
   }
 };
+
 module.exports = sendLogMessage;

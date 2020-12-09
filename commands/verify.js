@@ -1,8 +1,8 @@
+const config = require('../config');
 const createAndFindRole = require('../utils/createAndFindRole');
 const findMember = require('../utils/findMember');
 const sendAlertMessage = require('../utils/sendAlertMessage');
 const sendLogMessage = require('../utils/sendLogMessage');
-const config = require('../config');
 
 module.exports = {
   name: 'verify',
@@ -28,7 +28,7 @@ module.exports = {
     };
 
     const { guild } = message;
-    const role = await createAndFindRole(guild, 'ranked verified');
+    const role = await createAndFindRole(guild, config.roles.ranked_verified_role);
 
     await member.roles.add(role);
 
