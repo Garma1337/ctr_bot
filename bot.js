@@ -223,7 +223,7 @@ client.on('messageReactionAdd', (reaction) => {
 const muteDuration = moment.duration(1, 'h');
 
 async function mute(member, message, duration = moment.duration(1, 'h')) {
-  const mutedRole = createAndFindRole(message.guild, config.roles.muted_role);
+  const mutedRole = await createAndFindRole(message.guild, config.roles.muted_role);
   member.roles.add(mutedRole);
 
   if (message) {
@@ -472,20 +472,6 @@ client.on('guildMemberAdd', (member) => {
         console.log(`Could not create record for new player: ${user.id}`);
       });
     }
-  });
-});
-
-client.on('guildMemberRemove', (member) => {
-  const { user } = member;
-
-  Player.findOne({ discordId: user.id }).then((player) => {
-    if (!player) {
-      return;
-    }
-
-    player.delete().then(() => {
-      console.log(`Record for player has been deleted: ${user.id}`);
-    });
   });
 });
 

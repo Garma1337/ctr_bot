@@ -1,5 +1,5 @@
-const config = require('config');
 const moment = require('moment');
+const config = require('../config');
 const Clan = require('../db/models/clans').default;
 const Player = require('../db/models/player');
 const Rank = require('../db/models/rank');
@@ -115,6 +115,7 @@ function getEmbed(guildMember, fields) {
     config.roles.staff_role,
     config.roles.bot_developer_role,
     config.roles.ctr_staff_role,
+    config.roles.media_staff_role,
     config.roles.ranked_updater_role,
     config.roles.champion_role,
     config.roles.donator_role,
@@ -345,6 +346,10 @@ module.exports = {
 
             if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === config.roles.bot_developer_role)) {
               achievements.push('Bot Developer');
+            }
+
+            if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === config.roles.media_staff_role)) {
+              achievements.push('Media Staff');
             }
 
             if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === config.roles.ctr_staff_role)) {
