@@ -27,10 +27,8 @@ const client = new Discord.Client({ partials: ['MESSAGE', 'CHANNEL', 'REACTION']
 module.exports.client = client;
 
 // todo use prefix everywhere in help messages
-client.prefix = process.env.TEST ? config.test_prefix : config.prefix;
-
+client.prefix = config.prefix;
 client.flags = flags;
-
 client.commands = new Discord.Collection();
 
 client.getEmote = (name) => {

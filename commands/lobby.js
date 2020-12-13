@@ -410,7 +410,7 @@ function findRoom(lobby) {
 async function findRoomChannel(guildId, n) {
   const guild = client.guilds.cache.get(guildId);
   const channelName = `ranked-room-${n}`;
-  let category = guild.channels.cache.find((c) => c.name.toLowerCase() === config.channels.ranked_lobbies_category && c.type === 'category');
+  let category = guild.channels.cache.find((c) => c.name.toLowerCase() === config.channels.ranked_lobbies_category.toLowerCase() && c.type === 'category');
   if (!category) {
     category = await guild.channels.create(config.channels.ranked_lobbies_category, { type: 'category' });
   }
@@ -2249,7 +2249,7 @@ client.on('message', (message) => {
 
   const { roles } = message.mentions;
 
-  if (message.channel.parent && message.channel.parent.name.toLowerCase() === config.channels.ranked_lobbies_category && roles.find((r) => r.name.toLowerCase() === config.roles.tournament_staff_role.toLowerCase())) {
+  if (message.channel.parent && message.channel.parent.name.toLowerCase() === config.channels.ranked_lobbies_category.toLowerCase() && roles.find((r) => r.name.toLowerCase() === config.roles.tournament_staff_role.toLowerCase())) {
     let rankedStaff = `@${config.roles.ranked_staff_role}`;
 
     sendAlertMessage(message.channel, `Incorrect staff ping. If you have a problem ping ${rankedStaff}.`, 'warning').then((m) => {
