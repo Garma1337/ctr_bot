@@ -15,7 +15,6 @@ module.exports = {
     if (isStaff && args.length !== 1) {
       if (args.length === 2) {
         countryFlag = args[1];
-        // eslint-disable-next-line prefer-destructuring
         user = message.mentions.users.first();
       } else {
         return sendAlertMessage(message.channel, 'Nope.', 'warning');
@@ -49,10 +48,10 @@ module.exports = {
           player.flag = countryFlag;
           promise = player.save();
         } else {
-          if (!isStaff && doc.flag) {
+          if (!isStaff && doc.flag && doc.flag !== ':united_nations:') {
             return sendAlertMessage(message.channel, `You've already set your flag to ${doc.flag}. It cannot be changed.`, 'warning');
           }
-          // eslint-disable-next-line no-param-reassign
+
           doc.flag = countryFlag;
           promise = doc.save();
         }
