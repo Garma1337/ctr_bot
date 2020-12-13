@@ -1,4 +1,5 @@
 const bot = require('../bot');
+const sendAlertMessage = require('../utils/sendAlertMessage');
 
 module.exports = {
   name: 'cancel',
@@ -11,19 +12,20 @@ module.exports = {
 
     const authorId = message.author.id;
     if (!confirmations.has(authorId)) {
-      return message.reply('you don\'t have anything to cancel!');
+      return sendAlertMessage(message.channel, 'You don\'t have anything to cancel!', 'warning');
     }
 
     const userConfirmation = confirmations.get(authorId);
     if (!userConfirmation) {
-      return message.reply('you don\'t have anything to cancel!');
+      return sendAlertMessage(message.channel, 'You don\'t have anything to cancel!', 'warning');
     }
 
     const command = userConfirmation.get('command');
     if (command) {
       userConfirmation.delete('command');
-      return message.reply(`you cancelled \`${command}\``);
+      return sendAlertMessage(message.channel, `You cancelled \`${command}\``, 'success');
     }
-    return message.reply('you don\'t have anything to cancel!');
+
+    return sendAlertMessage(message.channel, 'You don\'t have anything to cancel!', 'warning');
   },
 };

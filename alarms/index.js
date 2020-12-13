@@ -56,18 +56,17 @@ const closeSignups = (client, doc) => {
   channel.send('Signups are now closed!').catch(console.error);
   channel.createOverwrite(channel.guild.roles.everyone, { SEND_MESSAGES: false }).then(() => {
     sendLogMessage(guild, `Changed permission in channel${channel} for everyone SEND_MESSAGES: false`);
-  }).catch(console.error)
-    .then(async () => {
-      const data = await getSignupsData(channel, doc);
-      const txt = data.rows.join('\n');
-      sendLogMessage(guild, {
-        content: `${data.count} signups\n${data.hosts} hosts`,
-        files: [{
-          attachment: Buffer.from(txt, 'utf-8'),
-          name: 'signups.csv',
-        }],
-      });
+  }).catch(console.error).then(async () => {
+    const data = await getSignupsData(channel, doc);
+    const txt = data.rows.join('\n');
+    sendLogMessage(guild, {
+      content: `${data.count} signups\n${data.hosts} hosts`,
+      files: [{
+        attachment: Buffer.from(txt, 'utf-8'),
+        name: 'signups.csv',
+      }],
     });
+  });
 };
 
 const sendScheduledMessage = (client, scheduledMessage) => {
