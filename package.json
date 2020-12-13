@@ -14,7 +14,7 @@
     "axios": "^0.20.0",
     "canvas": "^2.6.1",
     "cron": "^1.8.2",
-    "discord.js": "^12.4.0",
+    "discord.js": "^12.4.1",
     "karmarkar-karp": "^0.1.0",
     "lodash.escaperegexp": "^4.1.2",
     "log-timestamp": "^0.3.0",
