@@ -41,28 +41,19 @@ Command will be automatically cancelled after ${autoCancelSeconds} seconds.`, 'i
 
   async confirm(message) {
     sendAlertMessage(message.channel, 'Processing...', 'info').then(async (botMsg) => {
-      const channels = message.guild.channels.cache.filter((c) => c.parent && c.parent.name.toLowerCase() === config.channels.tournament_lobbies_category);
+      const channels = message.guild.channels.cache.filter((c) => c.parent && c.parent.name.toLowerCase() === config.channels.tournament_lobbies_category.toLowerCase());
 
       const outMessageRows = [];
 
-      /**
-       * couldn't use await in iterable callback functions,
-       * so using standard loops
-       */
-
-      // eslint-disable-next-line no-restricted-syntax
       for (const c of channels.array()) {
         try {
-        // eslint-disable-next-line no-await-in-loop
           await c.delete();
           outMessageRows.push(`Removed channel #${c.name}`);
 
           const roles = message.guild.roles.cache.filter((r) => r.name === c.name);
 
-          // eslint-disable-next-line no-restricted-syntax
           for (const r of roles.array()) {
             try {
-            // eslint-disable-next-line no-await-in-loop
               await r.delete();
               outMessageRows.push(`Removing role @${c.name} ...`);
             } catch (e) {

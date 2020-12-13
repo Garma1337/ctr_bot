@@ -257,12 +257,12 @@ function checkPings(message) {
 
   // ranked pings
   const rankedRoles = [
-    config.roles.ranked_ffa_role,
-    config.roles.ranked_itemless_role,
-    config.roles.ranked_duos_role,
-    config.roles.ranked_3v3_role,
-    config.roles.ranked_4v4_role,
-    config.roles.ranked_battle_role,
+    config.roles.ranked_ffa_role.toLowerCase(),
+    config.roles.ranked_itemless_role.toLowerCase(),
+    config.roles.ranked_duos_role.toLowerCase(),
+    config.roles.ranked_3v3_role.toLowerCase(),
+    config.roles.ranked_4v4_role.toLowerCase(),
+    config.roles.ranked_battle_role.toLowerCase(),
   ];
 
   if (roles.find((r) => rankedRoles.includes(r.name.toLowerCase()))) {
@@ -282,9 +282,9 @@ function checkPings(message) {
 
   // war & private lobby pings
   const socialRoles = [
-    config.roles.war_search_role,
-    config.roles.private_lobby_role,
-    config.roles.instateam_role,
+    config.roles.war_search_role.toLowerCase(),
+    config.roles.private_lobby_role.toLowerCase(),
+    config.roles.instateam_role.toLowerCase(),
   ];
 
   if (roles.find((r) => socialRoles.includes(r.name.toLowerCase()))) {
@@ -478,7 +478,7 @@ client.on('guildMemberAdd', (member) => {
 function checkDeletedPings(message) {
   if (message && message.author && !message.author.bot) {
     const { roles } = message.mentions;
-    if (roles.find((r) => [config.roles.war_search_role, config.roles.private_lobby_role, config.roles.instateam_role].includes(r.name.toLowerCase()))) {
+    if (roles.find((r) => [config.roles.war_search_role.toLowerCase(), config.roles.private_lobby_role.toLowerCase(), config.roles.instateam_role.toLowerCase()].includes(r.name.toLowerCase()))) {
       sendAlertMessage(message.channel, 'Don\'t ghost ping this role please.', 'warning', [message.author.id]);
     }
   }
@@ -501,7 +501,7 @@ ${message.content}`;
 });
 
 client.on('presenceUpdate', (oldPresence, newPresence) => {
-  const isCTRStream = (a) => a.type === 'STREAMING' && a.state.toLowerCase().includes('crash team');
+  const isCTRStream = (a) => a.type === 'STREAMING' && a.state && a.state.toLowerCase().includes('crash team');
   const livestreamsChannel = newPresence.guild.channels.cache.find((c) => c.name.toLowerCase() === config.channels.livestreams_channel);
 
   if (livestreamsChannel) {
@@ -552,7 +552,7 @@ client.on('presenceUpdate', (oldPresence, newPresence) => {
         const promiseThumbnail = axios.get(url, { responseType: 'stream' });
         promiseThumbnail.then((responseThumbnail) => {
           const attachment = new Discord.MessageAttachment(responseThumbnail.data, 'thumbnail.png');
-          embed.author.icon_url = { url: `attachment://${attachment.name}` };
+          embed.author.icon_url = `attachment://${attachment.name}`;
 
           livestreamsChannel.send({ embed });
         }).catch(() => {
@@ -586,7 +586,7 @@ new CronJob('* * * * *', checkMutes).start();
 try {
   db(() => {
     console.log('Bot startup successful!');
-    client.login(process.env.TEST ? config.test_token : config.token);
+    client.login(config.token);
   });
 } catch (e) {
   console.error(e);

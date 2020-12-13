@@ -9,7 +9,7 @@ module.exports = {
   permissions: ['MANAGE_CHANNELS', 'MANAGE_ROLES'],
   execute(message, args) {
     const { guild } = message;
-    const category = guild.channels.cache.find((c) => c.name.toLowerCase() === config.channels.tournament_lobbies_category && c.type === 'category');
+    const category = guild.channels.cache.find((c) => c.name.toLowerCase() === config.channels.tournament_lobbies_category.toLowerCase() && c.type === 'category');
 
     const outMessageRows = [];
 
@@ -18,25 +18,24 @@ module.exports = {
       name = name.toLowerCase();
       outMessageRows.push(`Creating role @${name} ...`);
       outMessageRows.push(`Creating channel #${name} ...`);
-      guild.roles.create({ data: { name } })
-        .then((role) => {
-          guild.channels.create(name, {
-            type: 'text',
-            parent: category,
-          }).then(async (c) => {
-            await c.lockPermissions();
-            await c.createOverwrite(role, {
-              VIEW_CHANNEL: true,
-            });
-            await role.edit({ mentionable: true });
-          }).catch((e) => {
-            sendAlertMessage(message.channel, `\`${e.name}: ${e.message}\``, 'error');
+      guild.roles.create({ data: { name } }).then((role) => {
+        guild.channels.create(name, {
+          type: 'text',
+          parent: category,
+        }).then(async (c) => {
+          await c.lockPermissions();
+          await c.createOverwrite(role, {
+            VIEW_CHANNEL: true,
           });
+          await role.edit({ mentionable: true });
         }).catch((e) => {
           sendAlertMessage(message.channel, `\`${e.name}: ${e.message}\``, 'error');
         });
+      }).catch((e) => {
+        sendAlertMessage(message.channel, `\`${e.name}: ${e.message}\``, 'error');
+      });
     });
 
-    sendAlertMessage(message.channel, outMessageRows.join('\n'), 'success');
+    sendAlertMessage(message.channel, outMessageRows.join('\n'), 'info');
   },
 };

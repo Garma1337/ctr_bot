@@ -6,19 +6,23 @@ const config = require('./config.js');
 const client = new Discord.Client();
 
 const logDM = async (message) => {
-  const guild = client.guilds.cache.get(process.env.TEST ? config.test_guild : config.main_guild);
+  const guild = client.guilds.cache.get(config.main_guild);
 
-  let channelDM = guild.channels.cache.find((c) => c.name === config.channels.tourney_dm_channel);
-  if (!channelDM) {
-    channelDM = await guild.channels.create(config.channels.tourney_dm_channel);
+  if (guild) {
+    let channelDM = guild.channels.cache.find((c) => c.name === config.channels.tourney_dm_channel);
+    if (!channelDM) {
+      channelDM = await guild.channels.create(config.channels.tourney_dm_channel);
+    }
+
+    const attachments = message.attachments.map((a) => a.url);
+
+    let { content } = message;
+    if (content) content = content.split('\n').map((r) => `> ${r}`).join('\n');
+
+    channelDM.send(`**New DM by ${message.author} \`${message.author.tag}\` \`${message.author.id}\`**\n${content}`, { files: attachments });
+  } else {
+    console.log(`Could not find guild ${config.main_guild}`);
   }
-
-  const attachments = message.attachments.map((a) => a.url);
-
-  let { content } = message;
-  if (content) content = content.split('\n').map((r) => `> ${r}`).join('\n');
-
-  channelDM.send(`**New DM by ${message.author} \`${message.author.tag}\` \`${message.author.id}\`**\n${content}`, { files: attachments });
 };
 
 client.on('message', (message) => {
@@ -29,4 +33,4 @@ client.on('message', (message) => {
   }
 });
 
-client.login(process.env.TEST ? config.test_token : config.token);
+client.login(config.token);

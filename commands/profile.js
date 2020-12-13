@@ -126,7 +126,7 @@ function getEmbed(guildMember, fields) {
   let colorRole;
 
   colorRoles.some((colorRoleName) => {
-    const r = guildMember.roles.cache.find((role) => role.name.toLowerCase() === colorRoleName);
+    const r = guildMember.roles.cache.find((role) => role.name.toLowerCase() === colorRoleName.toLowerCase());
     if (r) {
       colorRole = r;
       return true;
@@ -336,51 +336,51 @@ module.exports = {
             /* Achievements */
             const achievements = [];
 
-            if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === config.roles.admin_role)) {
+            if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === config.roles.admin_role.toLowerCase())) {
               achievements.push('Administrator');
             }
 
-            if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === config.roles.staff_role)) {
+            if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === config.roles.staff_role.toLowerCase())) {
               achievements.push('Staff Member');
             }
 
-            if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === config.roles.bot_developer_role)) {
+            if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === config.roles.bot_developer_role.toLowerCase())) {
               achievements.push('Bot Developer');
             }
 
-            if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === config.roles.media_staff_role)) {
+            if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === config.roles.media_staff_role.toLowerCase())) {
               achievements.push('Media Staff');
             }
 
-            if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === config.roles.ctr_staff_role)) {
+            if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === config.roles.ctr_staff_role.toLowerCase())) {
               achievements.push('CTRanking Staff');
             }
 
-            if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === config.roles.donator_role)) {
+            if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === config.roles.donator_role.toLowerCase())) {
               achievements.push('Donator');
             }
 
-            if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === config.roles.wc_champion_role)) {
+            if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === config.roles.wc_champion_role.toLowerCase())) {
               achievements.push('World Cup Champion');
             }
 
-            if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === config.roles.tournament_champion_role)) {
+            if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === config.roles.tournament_champion_role.toLowerCase())) {
               achievements.push('Tournament Champion');
             }
 
-            if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === config.roles.ranked_champion_role)) {
+            if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === config.roles.ranked_champion_role.toLowerCase())) {
               achievements.push('Ranked Champion');
             }
 
-            if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === config.roles.challenge_master_role)) {
+            if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === config.roles.challenge_master_role.toLowerCase())) {
               achievements.push('Challenge Master');
             }
 
-            if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === config.roles.captain_role)) {
+            if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === config.roles.captain_role.toLowerCase())) {
               achievements.push('Captain');
             }
 
-            if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === config.roles.nitro_booster_role)) {
+            if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === config.roles.nitro_booster_role.toLowerCase())) {
               achievements.push('Server Booster');
             }
 
@@ -391,7 +391,7 @@ module.exports = {
               achievements.push('Member for over 1 year');
             }
 
-            if (player.psn && player.flag && player.nat && player.timeZone && player.birthday && (player.discordVc || player.ps4Vc) && player.favCharacter && player.favCharacter) {
+            if (player.psn && player.flag && player.nat && player.timeZone && player.birthday && (player.discordVc || player.ps4Vc) && player.favCharacter && player.favCharacter && player.languages.length > 0 && player.consoles.length > 0) {
               achievements.push('Complete Profile');
             }
 

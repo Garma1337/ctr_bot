@@ -8,8 +8,8 @@ module.exports = {
   guildOnly: true,
   permissions: ['MANAGE_CHANNELS', 'MANAGE_ROLES'],
   execute(message) {
-    if (!(message.member && message.member.roles.cache.find((r) => r.name === config.roles.admin_role)) && message.author.id !== config.owner) {
-      const adminRole = message.guild.roles.cache.find((r) => r.name === config.roles.admin_role);
+    if (!(message.member && message.member.roles.cache.find((r) => r.name.toLowerCase() === config.roles.admin_role.toLowerCase())) && message.author.id !== config.owner) {
+      const adminRole = message.guild.roles.cache.find((r) => r.name.toLowerCase() === config.roles.admin_role.toLowerCase());
       return sendAlertMessage(message.channel, `You should have the role ${adminRole} to use this command!`, 'warning');
     }
 

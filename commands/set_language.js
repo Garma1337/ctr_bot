@@ -7,6 +7,7 @@ module.exports = {
   description: 'Set your languages.',
   guildOnly: true,
   aliases: ['set_language', 'language_set'],
+  cooldown: 300,
   execute(message, args) {
     if (args[0] === 'unset') {
       Player.findOne({ discordId: message.author.id }).then((player) => {
@@ -65,7 +66,7 @@ module.exports = {
       const filter = (r, u) => emoteChars.includes(r.emoji.name) && u.id === message.author.id;
       const options = {
         max: serverLanguages.length,
-        time: 60000,
+        time: 300000,
         errors: ['time'],
         dispose: true,
       };

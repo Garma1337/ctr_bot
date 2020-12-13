@@ -2249,7 +2249,7 @@ client.on('message', (message) => {
 
   const { roles } = message.mentions;
 
-  if (message.channel.parent && message.channel.parent.name.toLowerCase() === config.channels.ranked_lobbies_category && roles.find((r) => r.name.toLowerCase() === config.roles.tournament_staff_role)) {
+  if (message.channel.parent && message.channel.parent.name.toLowerCase() === config.channels.ranked_lobbies_category && roles.find((r) => r.name.toLowerCase() === config.roles.tournament_staff_role.toLowerCase())) {
     let rankedStaff = `@${config.roles.ranked_staff_role}`;
 
     sendAlertMessage(message.channel, `Incorrect staff ping. If you have a problem ping ${rankedStaff}.`, 'warning').then((m) => {
@@ -2368,7 +2368,7 @@ client.on('guildMemberUpdate', async (oldMember, newMember) => {
     return;
   }
 
-  if (!oldRoles.some((r) => r.name.toLowerCase() === config.roles.ranked_role) && newRoles.some((r) => r.name.toLowerCase() === config.roles.ranked_role)) {
+  if (!oldRoles.some((r) => r.name.toLowerCase() === config.roles.ranked_role.toLowerCase()) && newRoles.some((r) => r.name.toLowerCase() === config.roles.ranked_role.toLowerCase())) {
     newMember.createDM().then((dm) => {
       dm.send(config.ranked_welcome).then(DMCallback).catch(DMCatchCallback);
     });
@@ -2408,57 +2408,55 @@ const teamDuration = moment.duration(3, 'hours');
 
 function checkOldDuos() {
   const lte = moment().subtract(teamDuration);
-  Duo.find({ date: { $lte: lte } })
-    .then((duos) => {
-      duos.forEach((duo) => {
-        RankedLobby.findOne({
-          type: DUOS,
-          players: { $in: [duo.discord1, duo.discord2] },
-        }).then((activeLobby) => {
-          if (!activeLobby) {
-            duo.delete().then(() => {
-              const guild = client.guilds.cache.get(duo.guild);
+  Duo.find({ date: { $lte: lte } }).then((duos) => {
+    duos.forEach((duo) => {
+      RankedLobby.findOne({
+        type: DUOS,
+        players: { $in: [duo.discord1, duo.discord2] },
+      }).then((activeLobby) => {
+        if (!activeLobby) {
+          duo.delete().then(() => {
+            const guild = client.guilds.cache.get(duo.guild);
 
-              if (guild) {
-                const generalChannel = guild.channels.cache.find((c) => c.name === config.channels.ranked_general_channel);
-                const message = `Duo <@${duo.discord1}> & <@${duo.discord2}> was removed after ${teamDuration.humanize()}.`;
+            if (guild) {
+              const generalChannel = guild.channels.cache.find((c) => c.name === config.channels.ranked_general_channel);
+              const message = `Duo <@${duo.discord1}> & <@${duo.discord2}> was removed after ${teamDuration.humanize()}.`;
 
-                sendAlertMessage(generalChannel, message, 'info');
-              }
-            });
-          }
-        });
+              sendAlertMessage(generalChannel, message, 'info');
+            }
+          });
+        }
       });
     });
+  });
 }
 
 new CronJob('* * * * *', checkOldDuos).start();
 
 function checkOldTeams() {
   const lte = moment().subtract(teamDuration);
-  Team.find({ date: { $lte: lte } })
-    .then((teams) => {
-      teams.forEach((team) => {
-        RankedLobby.findOne({
-          type: { $in: [_3V3, _4V4] },
-          players: { $in: teams.players },
-        }).then((activeLobby) => {
-          if (!activeLobby) {
-            team.delete().then(() => {
-              const guild = client.guilds.cache.get(team.guild);
+  Team.find({ date: { $lte: lte } }).then((teams) => {
+    teams.forEach((team) => {
+      RankedLobby.findOne({
+        type: { $in: [_3V3, _4V4] },
+        players: { $in: teams.players },
+      }).then((activeLobby) => {
+        if (!activeLobby) {
+          team.delete().then(() => {
+            const guild = client.guilds.cache.get(team.guild);
 
-              if (guild) {
-                const generalChannel = guild.channels.cache.find((c) => c.name === config.channels.ranked_general_channel);
-                const teamPing = team.players.map((p) => `<@${p}>`).join(', ');
-                const message = `Team ${teamPing} was removed after ${teamDuration.humanize()}.`;
+            if (guild) {
+              const generalChannel = guild.channels.cache.find((c) => c.name === config.channels.ranked_general_channel);
+              const teamPing = team.players.map((p) => `<@${p}>`).join(', ');
+              const message = `Team ${teamPing} was removed after ${teamDuration.humanize()}.`;
 
-                sendAlertMessage(generalChannel, message, 'info');
-              }
-            });
-          }
-        });
+              sendAlertMessage(generalChannel, message, 'info');
+            }
+          });
+        }
       });
     });
+  });
 }
 
 new CronJob('* * * * *', checkOldTeams).start();

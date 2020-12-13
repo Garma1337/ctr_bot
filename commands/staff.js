@@ -6,7 +6,6 @@ module.exports = {
   description: 'List staff members',
   guildOnly: true,
   aliases: ['staff_members'],
-  cooldown: 15,
   execute(message) {
     message.guild.members.fetch().then(async (members) => {
       const admins = [];
@@ -22,31 +21,31 @@ module.exports = {
           return;
         }
 
-        if (member.roles.cache.find((r) => r.name.toLowerCase() === config.roles.admin_role)) {
+        if (member.roles.cache.find((r) => r.name.toLowerCase() === config.roles.admin_role.toLowerCase())) {
           admins.push(member.id);
         }
 
-        if (member.roles.cache.find((r) => r.name.toLowerCase() === config.roles.bot_developer_role)) {
+        if (member.roles.cache.find((r) => r.name.toLowerCase() === config.roles.bot_developer_role.toLowerCase())) {
           developers.push(member.id);
         }
 
-        if (member.roles.cache.find((r) => r.name.toLowerCase() === config.roles.tournament_staff_role)) {
+        if (member.roles.cache.find((r) => r.name.toLowerCase() === config.roles.tournament_staff_role.toLowerCase())) {
           tournamentStaff.push(member.id);
         }
 
-        if (member.roles.cache.find((r) => r.name.toLowerCase() === config.roles.ranked_staff_role)) {
+        if (member.roles.cache.find((r) => r.name.toLowerCase() === config.roles.ranked_staff_role.toLowerCase())) {
           rankedStaff.push(member.id);
         }
 
-        if (member.roles.cache.find((r) => r.name.toLowerCase() === config.roles.wc_staff_role)) {
+        if (member.roles.cache.find((r) => r.name.toLowerCase() === config.roles.wc_staff_role.toLowerCase())) {
           wcStaff.push(member.id);
         }
 
-        if (member.roles.cache.find((r) => r.name.toLowerCase() === config.roles.ctr_staff_role)) {
+        if (member.roles.cache.find((r) => r.name.toLowerCase() === config.roles.ctr_staff_role.toLowerCase())) {
           crashteamrankingStaff.push(member.id);
         }
 
-        if (member.roles.cache.find((r) => r.name.toLowerCase() === config.roles.media_staff_role)) {
+        if (member.roles.cache.find((r) => r.name.toLowerCase() === config.roles.media_staff_role.toLowerCase())) {
           mediaStaff.push(member.id);
         }
       });
@@ -83,12 +82,12 @@ module.exports = {
         },
         fields: [
           {
-            name: 'Admins',
+            name: config.roles.admin_role,
             value: admins.map(mention).join('\n'),
             inline: true,
           },
           {
-            name: 'Bot Developers',
+            name: config.roles.bot_developer_role,
             value: developers.map(mention).join('\n'),
             inline: true,
           },
@@ -98,12 +97,12 @@ module.exports = {
             inline: true,
           },
           {
-            name: 'Tournament Staff',
+            name: config.roles.tournament_staff_role,
             value: tournamentStaff.map(mention).join('\n'),
             inline: true,
           },
           {
-            name: 'Ranked Staff',
+            name: config.roles.ranked_staff_role,
             value: rankedStaff.map(mention).join('\n'),
             inline: true,
           },
@@ -113,12 +112,12 @@ module.exports = {
             inline: true,
           },
           {
-            name: 'Weekly Challenge Staff',
+            name: config.roles.wc_staff_role,
             value: wcStaff.map(mention).join('\n'),
             inline: true,
           },
           {
-            name: 'CrashTeamRanking Staff',
+            name: config.roles.ctr_staff_role,
             value: crashteamrankingStaff.map(mention).join('\n'),
             inline: true,
           },
@@ -128,7 +127,7 @@ module.exports = {
             inline: true,
           },
           {
-            name: 'Media Staff',
+            name: config.roles.media_staff_role,
             value: mediaStaff.map(mention).join('\n'),
             inline: true,
           },
