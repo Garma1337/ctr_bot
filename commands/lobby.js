@@ -871,7 +871,7 @@ module.exports = {
 
     const isStaff = isStaffMember(member);
 
-    const hasRankedRole = member.roles.cache.find((r) => r.name.toLowerCase() === config.roles.ranked_verified_role);
+    const hasRankedRole = member.roles.cache.find((r) => r.name.toLowerCase() === config.roles.ranked_verified_role.toLowerCase());
 
     if (!isStaff && !hasRankedRole) {
       return sendAlertMessage(message.channel, 'You don\'t have the `Ranked Verified` role to execute this command.', 'warning');
@@ -2364,7 +2364,7 @@ client.on('guildMemberUpdate', async (oldMember, newMember) => {
   const oldRoles = oldMember.roles.cache;
   const newRoles = newMember.roles.cache;
 
-  if (oldRoles.some((r) => r.name.toLowerCase() === config.roles.ranked_verified_role)) {
+  if (oldRoles.some((r) => r.name.toLowerCase() === config.roles.ranked_verified_role.toLowerCase())) {
     return;
   }
 
@@ -2374,7 +2374,7 @@ client.on('guildMemberUpdate', async (oldMember, newMember) => {
     });
   }
 
-  if (newRoles.some((r) => r.name.toLowerCase() === config.roles.ranked_verified_role)) {
+  if (newRoles.some((r) => r.name.toLowerCase() === config.roles.ranked_verified_role.toLowerCase())) {
     const { guild } = newMember;
     let channel = guild.channels.cache.find((c) => c.name.toLowerCase() === config.channels.ranked_general_channel);
     if (!channel) {

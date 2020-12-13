@@ -250,7 +250,7 @@ module.exports = {
           `**Registered**: ${guildMember.user.createdAt.toLocaleString('default', { month: 'short' })} ${guildMember.user.createdAt.getDate()}, ${guildMember.user.createdAt.getFullYear()}`,
         ];
 
-        if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === config.roles.ranked_verified_role)) {
+        if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === config.roles.ranked_verified_role.toLowerCase())) {
           profile.push('**Ranked Verified** :white_check_mark:');
         }
 

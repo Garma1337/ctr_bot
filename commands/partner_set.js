@@ -25,12 +25,12 @@ module.exports = {
       return sendAlertMessage(message.channel, 'You cannot set yourself or a bot as your partner.', 'warning');
     }
 
-    const authorVerified = message.member.roles.cache.find((r) => r.name.toLowerCase() === config.roles.ranked_verified_role);
+    const authorVerified = message.member.roles.cache.find((r) => r.name.toLowerCase() === config.roles.ranked_verified_role.toLowerCase());
     if (!authorVerified) {
       return sendAlertMessage(message.channel, 'You are not verified.', 'warning');
     }
 
-    const partnerVerified = partner.roles.cache.find((r) => r.name.toLowerCase() === config.roles.ranked_verified_role);
+    const partnerVerified = partner.roles.cache.find((r) => r.name.toLowerCase() === config.roles.ranked_verified_role.toLowerCase());
     if (!partnerVerified) {
       return sendAlertMessage(message.channel, 'Your partner is not verified.', 'warning');
     }

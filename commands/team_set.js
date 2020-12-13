@@ -38,7 +38,7 @@ module.exports = {
       return sendAlertMessage(message.channel, 'very funny :)', 'warning');
     }
 
-    const authorVerified = message.member.roles.cache.find((r) => r.name.toLowerCase() === config.roles.ranked_verified_role);
+    const authorVerified = message.member.roles.cache.find((r) => r.name.toLowerCase() === config.roles.ranked_verified_role.toLowerCase());
     if (!authorVerified) {
       return sendAlertMessage(message.channel, 'you are not verified.', 'warning');
     }
@@ -64,7 +64,7 @@ module.exports = {
     }
 
     for (const teammate of teammates.array()) {
-      const partnerVerified = teammate.roles.cache.find((r) => r.name.toLowerCase() === config.roles.ranked_verified_role);
+      const partnerVerified = teammate.roles.cache.find((r) => r.name.toLowerCase() === config.roles.ranked_verified_role.toLowerCase());
       if (!partnerVerified) {
         return sendAlertMessage(message.channel, `${teammate} isn't verified.`, 'warning');
       }
