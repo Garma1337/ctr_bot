@@ -94,12 +94,12 @@ module.exports = {
               });
             });
 
-            const sortedRanking = rankedPlayers.sort((a, b) => b.superScore - a.superScore).map((rp, i) => `${i + 1}. <@!${rp.discordId}> (${rp.psn}) - Score: ${rp.superScore}`);
+            const sortedRanking = rankedPlayers.sort((a, b) => b.superScore - a.superScore).map((rp, i) => `**${i + 1}**. <@!${rp.discordId}>\n**PSN**: (${rp.psn})\n**Score**: ${rp.superScore}\n`);
 
             createPageableContent(message.channel, message.author.id, {
               outputType: 'embed',
               elements: sortedRanking,
-              elementsPerPage: 20,
+              elementsPerPage: 5,
               embedOptions: {
                 heading: 'Super Score Ranking',
                 image: 'https://static.wikia.nocookie.net/crashban/images/5/5a/CTRNF-Master_Wheels.png',

@@ -461,7 +461,7 @@ client.on('guildMemberAdd', (member) => {
       if (!player) {
         player = new Player();
         player.discordId = user.id;
-        player.flag = ':united_nations:';
+        player.flag = '🇺🇳';
       }
 
       player.save().then(() => {

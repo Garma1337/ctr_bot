@@ -626,6 +626,8 @@ ${playersText}`,
                     fields: embedFields,
                   },
                 });
+
+                sendAlertMessage(roomChannel, 'Season 2 is using a new scoring system for tied placements. Use `!battleties` for more information.', 'info');
               }
 
               if (doc.isWar() && doc.draftTracks) {

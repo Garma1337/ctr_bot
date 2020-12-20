@@ -160,12 +160,12 @@ Edit clans:
 
               const clanList = transformed
                 .sort((a, b) => b.score - a.score)
-                .map((c, i) => `${i + 1}. **${c.fullName}** [${c.shortName}] - Score: ${c.score} - Members: ${c.members.length}`);
+                .map((c, i) => `**${i + 1}.** ${c.fullName} [${c.shortName}]\n**Score**: ${c.score}\n**Members**: ${c.members.length}\n`);
 
               createPageableContent(message.channel, message.author.id, {
                 outputType: 'embed',
                 elements: clanList,
-                elementsPerPage: 20,
+                elementsPerPage: 5,
                 embedOptions: {
                   heading: `CTR Clan Ranking - ${clanList.length} Clans`,
                   image: 'https://static.wikia.nocookie.net/crashban/images/8/8f/CTRNF-Turbo.png',

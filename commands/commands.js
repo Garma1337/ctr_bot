@@ -17,6 +17,8 @@ module.exports = {
 
         return sendAlertMessage(message.channel, 'There are no dynamic commands.', 'info');
       });
+
+      return;
     }
 
     const action = args[0];
@@ -26,7 +28,7 @@ module.exports = {
     const DELETE = 'delete';
     const actions = [ADD, EDIT, DELETE];
     if (!actions.includes(action)) {
-      return sendAlertMessage(message.channel, `Wrong action. Allowed actions: ${actions}`, 'warning');
+      return sendAlertMessage(message.channel, `Wrong action. Allowed actions: ${actions.join(', ')}`, 'warning');
     }
 
     const { client } = message;

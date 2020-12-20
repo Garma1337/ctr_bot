@@ -17,15 +17,26 @@ module.exports = {
           }
 
           const rooms = docs.map((doc) => {
-            const channel = message.guild.channels.cache.find((c) => c.name === `ranked-room-${doc.number}`);
+            const channelName = `ranked-room-${doc.number}`;
+            const channel = message.guild.channels.cache.find((c) => c.name.toLowerCase() === channelName.toLowerCase());
+            let out = '';
+
             if (channel) {
-              return `${channel} ${doc.lobby}`;
+              out += `${channel}`;
+            } else {
+              out += `#${channelName} (deleted)`;
             }
 
-            return `DELETED_CHANNEL ${doc.lobby}`;
+            if (doc.lobby) {
+              out += ` - ${doc.lobby}`;
+            } else {
+              out += ' - Free';
+            }
+
+            return out;
           });
 
-          sendAlertMessage(message.channel, rooms.join('\n'), 'success');
+          sendAlertMessage(message.channel, rooms.join('\n'), 'info');
         });
     } else {
       const isStaff = isStaffMember(message.member);

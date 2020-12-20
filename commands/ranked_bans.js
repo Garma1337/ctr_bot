@@ -2,6 +2,7 @@ const moment = require('moment');
 const config = require('../config');
 const RankedLobby = require('../db/models/ranked_lobbies').default;
 const RankedBan = require('../db/models/ranked_bans');
+const createPageableContent = require('../utils/createPageableContent');
 const findMember = require('../utils/findMember');
 const sendLogMessage = require('../utils/sendLogMessage');
 const sendAlertMessage = require('../utils/sendAlertMessage');
@@ -125,44 +126,54 @@ module.exports = {
         });
       });
     } else {
-      sendAlertMessage(message.channel, '...', 'info').then((m) => {
+      sendAlertMessage(message.channel, 'Fetching ranked bans ...', 'info').then((m) => {
         RankedBan.find({ guildId: message.guild.id }).then(async (docs) => {
           m.delete();
 
           if (!docs.length) {
-            return sendAlertMessage(message.channel, 'There are no bans ... yet.', 'info');
+            return sendAlertMessage(message.channel, 'There are no bans yet.', 'info');
           }
 
           const bannedMembers = [];
 
           message.guild.members.fetch().then((members) => {
-            docs.forEach((doc) => {
-              let member = members.get(doc.discordId);
-              if (!member) {
-                member = `<@${doc.discordId}> [user left the server]`;
-              }
-
-              let till = 'forever';
-              if (doc.bannedTill) {
-                // noinspection JSCheckFunctionSignatures
-                till = moment(doc.bannedTill).utc().format('YYYY-MM-DD HH:mm:ss z');
-              }
-
+            docs.forEach((doc, i) => {
               let out;
-              if (till !== 'forever') {
-                out = `${member}: Banned until ${till}.`;
-              } else {
-                out = `${member}: Banned forever.`;
-              }
 
-              if (doc.reason) {
-                out += ` Reason: ${doc.reason}.`;
+              const member = members.get(doc.discordId);
+              if (!member) {
+                out = `**${i + 1}. <@${doc.discordId}>** (left server)`;
+              } else {
+                out = `**${i + 1}.** ${member}`;
+
+                let till = 'forever';
+                if (doc.bannedTill) {
+                  till = moment(doc.bannedTill).utc().format('YYYY-MM-DD HH:mm:ss z');
+                }
+
+                if (till !== 'forever') {
+                  out += `\n**Banned until**: ${till}`;
+                } else {
+                  out += '\n**Banned until**: forever';
+                }
+
+                if (doc.reason) {
+                  out += `\n**Reason**: ${doc.reason}\n`;
+                } else {
+                  out += '\n';
+                }
               }
 
               bannedMembers.push(out);
             });
 
-            sendAlertMessage(message.channel, bannedMembers, 'success');
+            // sendAlertMessage(message.channel, bannedMembers, 'success');
+            createPageableContent(message.channel, message.author.id, {
+              outputType: 'embed',
+              elements: bannedMembers,
+              elementsPerPage: 10,
+              embedOptions: { heading: `${bannedMembers.length} users are banned from ranked` },
+            });
           });
         });
       });
