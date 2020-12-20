@@ -94,7 +94,7 @@ module.exports = {
               });
             });
 
-            const sortedRanking = rankedPlayers.sort((a, b) => b.superScore - a.superScore).map((rp, i) => `**${i + 1}**. <@!${rp.discordId}>\n**PSN**: (${rp.psn})\n**Score**: ${rp.superScore}\n`);
+            const sortedRanking = rankedPlayers.sort((a, b) => b.superScore - a.superScore).map((rp, i) => `**${i + 1}**. <@!${rp.discordId}>\n**PSN**: ${rp.psn}\n**Score**: ${rp.superScore}\n`);
 
             createPageableContent(message.channel, message.author.id, {
               outputType: 'embed',
