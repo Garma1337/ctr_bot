@@ -1373,39 +1373,38 @@ async function tickCount(reaction, user) {
     { guildId: guild.id, discordId: user.id },
     { $inc: { tickCount: 1 }, $set: { tickUpdatedAt: now } },
     { upsert: true, new: true },
-  )
-    .then((doc) => {
-      if (doc.tickCount === 7) { // ban
-        if (reaction.users) {
-          reaction.users.remove(user);
-        }
-
-        const bannedTill = moment().add(banDuration);
-        RankedBan.findOneAndUpdate(
-          { guildId: guild.id, discordId: user.id },
-          { bannedAt: now, bannedTill },
-          { upsert: true },
-        ).exec();
-
-        const lobbiesChannel = guild.channels.cache.find((c) => c.name === config.channels.ranked_lobbies_channel);
-        lobbiesChannel.createOverwrite(user, { VIEW_CHANNEL: false });
-
-        const generalChannel = guild.channels.cache.find((c) => c.name === config.channels.ranked_general_channel);
-        const message = `You've been banned from ranked lobbies for ${banDuration.humanize()}.`;
-
-        user.createDM().then((dm) => dm.send(message)).catch(() => { });
-        sendAlertMessage(generalChannel, message, 'warning', [user.id]);
-      } else if (doc.tickCount === 3 || doc.tickCount === 5) {
-        const channel = guild.channels.cache.find((c) => c.name === config.channels.ranked_general_channel);
-        const message = `I will ban you from ranked lobbies for ${banDuration.humanize()} if you continue to spam reactions.`;
-
-        user.createDM().then((dm) => dm.send(message)).catch(() => { });
-        sendAlertMessage(channel, message, 'warning', [user.id]);
+  ).then((doc) => {
+    if (doc.tickCount === 7) { // ban
+      if (reaction.users) {
+        reaction.users.remove(user);
       }
-    });
+
+      const bannedTill = moment().add(banDuration);
+      RankedBan.findOneAndUpdate(
+        { guildId: guild.id, discordId: user.id },
+        { bannedAt: now, bannedTill },
+        { upsert: true },
+      ).exec();
+
+      const lobbiesChannel = guild.channels.cache.find((c) => c.name === config.channels.ranked_lobbies_channel);
+      lobbiesChannel.createOverwrite(user, { VIEW_CHANNEL: false });
+
+      const notificationChannel = guild.channels.cache.find((c) => c.name.toLowerCase() === config.channels.ranked_notifications_channel.toLowerCase());
+      const message = `You've been banned from ranked lobbies for ${banDuration.humanize()}.`;
+
+      user.createDM().then((dm) => dm.send(message)).catch(() => { });
+      sendAlertMessage(notificationChannel, message, 'warning', [user.id]);
+    } else if (doc.tickCount === 3 || doc.tickCount === 5) {
+      const notificationChannel = guild.channels.cache.find((c) => c.name.toLowerCase() === config.channels.ranked_notifications_channel.toLowerCase());
+      const message = `I will ban you from ranked lobbies for ${banDuration.humanize()} if you continue to spam reactions.`;
+
+      user.createDM().then((dm) => dm.send(message)).catch(() => { });
+      sendAlertMessage(notificationChannel, message, 'warning', [user.id]);
+    }
+  });
 }
 
-async function restrictSoloQueue(doc, user, channel, soloQueue) {
+async function restrictSoloQueue(doc, user, soloQueue) {
   const errors = [];
   const player = await Player.findOne({ discordId: user.id });
 
@@ -1578,9 +1577,9 @@ async function mogi(reaction, user, removed = false) {
 
     const { guild } = message;
 
-    let rankedGeneral = guild.channels.cache.find((c) => c.name === config.channels.ranked_general_channel);
-    if (!rankedGeneral) {
-      rankedGeneral = await guild.channels.create(config.channels.ranked_general_channel);
+    let rankedNotifications = guild.channels.cache.find((c) => c.name.toLowerCase() === config.channels.ranked_notifications_channel.toLowerCase());
+    if (!rankedNotifications) {
+      rankedNotifications = await guild.channels.create(config.channels.ranked_notifications_channel);
     }
 
     RankedLobby.findOne(conditions).then(async (doc) => {
@@ -1771,7 +1770,7 @@ async function mogi(reaction, user, removed = false) {
               players = players.filter((p) => p !== user.id);
             } else if (!players.includes(user.id)) {
               const soloQueue = players.filter((p) => !doc.teamList.flat().includes(p));
-              const soloQueueErrors = await restrictSoloQueue(doc, user, rankedGeneral, soloQueue);
+              const soloQueueErrors = await restrictSoloQueue(doc, user, soloQueue);
 
               if (soloQueueErrors <= 0) {
                 players.push(user.id);
@@ -1898,7 +1897,7 @@ async function mogi(reaction, user, removed = false) {
               players = players.filter((p) => p !== user.id);
             } else if (!players.includes(user.id)) {
               const soloQueue = players.filter((p) => !doc.teamList.flat().includes(p));
-              const soloQueueErrors = await restrictSoloQueue(doc, user, rankedGeneral, soloQueue);
+              const soloQueueErrors = await restrictSoloQueue(doc, user, soloQueue);
 
               if (soloQueueErrors <= 0) {
                 players.push(user.id);
@@ -1932,7 +1931,7 @@ async function mogi(reaction, user, removed = false) {
             }
 
             user.createDM().then((dmChannel) => sendAlertMessage(dmChannel, out, 'warning')).catch(() => { });
-            return sendAlertMessage(rankedGeneral, out, 'warning', [user.id]).then((m) => m.delete({ timeout: 60000 }));
+            return sendAlertMessage(rankedNotifications, out, 'warning', [user.id]);
           }
 
           return doc.save().then(async () => {
@@ -2079,18 +2078,18 @@ const checkOldLobbies = () => {
         const guild = client.guilds.cache.get(doc.guild);
 
         if (guild) {
-          let channel = guild.channels.cache.find((c) => c.name === config.channels.ranked_general_channel);
-          if (!channel) {
-            channel = await guild.channels.create(config.channels.ranked_general_channel);
+          let notificationChannel = guild.channels.cache.find((c) => c.name.toLowerCase() === config.channels.ranked_notifications_channel.toLowerCase());
+          if (!notificationChannel) {
+            notificationChannel = await guild.channels.create(config.channels.ranked_notifications_channel);
           }
 
           if (minutes >= CLOSE_MINUTES) {
             const duration = moment.duration(CLOSE_MINUTES, 'minutes').humanize();
             deleteLobby(doc);
-            sendAlertMessage(channel, `Your lobby \`${doc.id}\` has been deleted because it wasn't started in ${duration}.`, 'info', [doc.creator]);
+            sendAlertMessage(notificationChannel, `Your lobby \`${doc.id}\` has been deleted because it wasn't started in ${duration}.`, 'info', [doc.creator]);
           } else {
             const duration = moment.duration(CLOSE_MINUTES - minutes, 'minutes').humanize();
-            sendAlertMessage(channel, `Your lobby \`${doc.id}\` will be deleted in ${duration} if it will not be started.`, 'warning', [doc.creator]);
+            sendAlertMessage(notificationChannel, `Your lobby \`${doc.id}\` will be deleted in ${duration} if it will not be started.`, 'warning', [doc.creator]);
           }
         }
       }
@@ -2378,28 +2377,28 @@ client.on('guildMemberUpdate', async (oldMember, newMember) => {
 
   if (newRoles.some((r) => r.name.toLowerCase() === config.roles.ranked_verified_role.toLowerCase())) {
     const { guild } = newMember;
-    let channel = guild.channels.cache.find((c) => c.name.toLowerCase() === config.channels.ranked_general_channel);
-    if (!channel) {
-      channel = await guild.channels.create(config.channels.ranked_general_channel);
+    let notificationChannel = guild.channels.cache.find((c) => c.name.toLowerCase() === config.channels.ranked_notifications_channel.toLowerCase());
+    if (!notificationChannel) {
+      notificationChannel = await guild.channels.create(config.channels.ranked_notifications_channel);
     }
 
     let rankedRules = `#${config.channels.ranked_rules_channel}`;
 
-    const rankedRulesChannel = guild.channels.cache.find((c) => c.name.toLowerCase() === config.channels.ranked_rules_channel);
+    const rankedRulesChannel = guild.channels.cache.find((c) => c.name.toLowerCase() === config.channels.ranked_rules_channel.toLowerCase());
     if (rankedRulesChannel) {
       rankedRules = rankedRulesChannel.toString();
     }
 
     let rankedGuide = `#${config.channels.ranked_guide_channel}`;
 
-    const rankedGuideChannel = guild.channels.cache.find((c) => c.name.toLowerCase() === config.channels.ranked_guide_channel);
+    const rankedGuideChannel = guild.channels.cache.find((c) => c.name.toLowerCase() === config.channels.ranked_guide_channel.toLowerCase());
     if (rankedGuideChannel) {
       rankedGuide = rankedGuideChannel.toString();
     }
 
     Player.findOne({ discordId: newMember.id }).then((doc) => {
       if (!doc || !doc.psn) {
-        sendAlertMessage(channel, `${newMember}, welcome to the ranked lobbies.
+        sendAlertMessage(notificationChannel, `${newMember}, welcome to the ranked lobbies.
 Make sure to read the ${rankedRules} and ${rankedGuide} and set your PSN by using \`!set_psn\` before you can join any lobby.`, 'info');
       }
     });
@@ -2421,10 +2420,10 @@ function checkOldDuos() {
             const guild = client.guilds.cache.get(duo.guild);
 
             if (guild) {
-              const generalChannel = guild.channels.cache.find((c) => c.name === config.channels.ranked_general_channel);
+              const notificationChannel = guild.channels.cache.find((c) => c.name.toLowerCase() === config.channels.ranked_notifications_channel.toLowerCase());
               const message = `Duo <@${duo.discord1}> & <@${duo.discord2}> was removed after ${teamDuration.humanize()}.`;
 
-              sendAlertMessage(generalChannel, message, 'info');
+              sendAlertMessage(notificationChannel, message, 'info');
             }
           });
         }
@@ -2448,11 +2447,11 @@ function checkOldTeams() {
             const guild = client.guilds.cache.get(team.guild);
 
             if (guild) {
-              const generalChannel = guild.channels.cache.find((c) => c.name === config.channels.ranked_general_channel);
+              const notificationChannel = guild.channels.cache.find((c) => c.name.toLowerCase() === config.channels.ranked_notifications_channel.toLowerCase());
               const teamPing = team.players.map((p) => `<@${p}>`).join(', ');
               const message = `Team ${teamPing} was removed after ${teamDuration.humanize()}.`;
 
-              sendAlertMessage(generalChannel, message, 'info');
+              sendAlertMessage(notificationChannel, message, 'info');
             }
           });
         }
