@@ -2,6 +2,7 @@ const Player = require('../db/models/player');
 const Rank = require('../db/models/rank');
 const calculateSuperScore = require('../utils/calculateSuperScore');
 const createPageableContent = require('../utils/createPageableContent');
+const createPagination = require('../utils/createPagination');
 const getConfigValue = require('../utils/getConfigValue');
 const sendAlertMessage = require('../utils/sendAlertMessage');
 const { flagName, flagToCode } = require('../utils/flags');
@@ -212,16 +213,61 @@ module.exports = {
               return out;
             };
 
-            const embed = getProfileEmbed({
-              name: flagName[flag],
-              flag,
-              shortCode: flagToCode(flag),
-              score: averageSuperScore,
-              players: playerIds.map(formatMembers),
-              psns: playerIds.map(formatPsns),
-            });
+            const playerList = playerIds.map(formatMembers);
+            const psnList = playerIds.map(formatPsns);
 
-            return message.channel.send({ embed });
+            if (playerList.length > 30) {
+              const pages = Math.ceil(playerList.length / 30);
+              for (let i = 1; i <= pages; i += 1) {
+                const paginationPlayers = createPagination(playerList, i, 30);
+                const paginationPsns = createPagination(psnList, i, 30);
+
+                if (i === 1) {
+                  const embed = getProfileEmbed({
+                    name: flagName[flag],
+                    flag,
+                    shortCode: flagToCode(flag),
+                    score: averageSuperScore,
+                    players: paginationPlayers.elements,
+                    psns: paginationPsns.elements,
+                  });
+
+                  message.channel.send({ embed });
+                } else {
+                  message.channel.send({
+                    embed: {
+                      timestamp: new Date(),
+                      author: {
+                        name: `Page ${i}`,
+                      },
+                      fields: [
+                        {
+                          name: '\u200B',
+                          value: paginationPlayers.elements.join('\n'),
+                          inline: true,
+                        },
+                        {
+                          name: '\u200B',
+                          value: paginationPsns.elements.join('\n'),
+                          inline: true,
+                        },
+                      ],
+                    },
+                  });
+                }
+              }
+            } else {
+              const embed = getProfileEmbed({
+                name: flagName[flag],
+                flag,
+                shortCode: flagToCode(flag),
+                score: averageSuperScore,
+                players: playerList,
+                psns: psnList,
+              });
+
+              return message.channel.send({ embed });
+            }
           });
         });
       });
