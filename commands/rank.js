@@ -64,11 +64,13 @@ module.exports = {
           const rankedPlayers = [];
           const psns = [];
           const psnMapping = {};
+          const flagMapping = {};
 
           players.forEach((p) => {
             if (p.psn) {
               psns.push(p.psn);
               psnMapping[p.psn] = p.discordId;
+              flagMapping[p.psn] = p.flag;
             }
           });
 
@@ -80,21 +82,12 @@ module.exports = {
               rankedPlayers.push({
                 discordId,
                 psn: r.name.replace(/_/g, '\\_'),
+                flag: flagMapping[r.name],
                 superScore,
               });
             });
 
-            // Remove players who left the server
-            message.guild.members.fetch().then((guildMembers) => {
-              rankedPlayers.forEach((r, i) => {
-                const member = guildMembers.get(r.discordId);
-                if (!member) {
-                  rankedPlayers.splice(i, 1);
-                }
-              });
-            });
-
-            const sortedRanking = rankedPlayers.sort((a, b) => b.superScore - a.superScore).map((rp, i) => `**${i + 1}**. <@!${rp.discordId}>\n**PSN**: ${rp.psn}\n**Score**: ${rp.superScore}\n`);
+            const sortedRanking = rankedPlayers.sort((a, b) => b.superScore - a.superScore).map((rp, i) => `**${i + 1}**. ${rp.flag} <@!${rp.discordId}>\n**PSN**: ${rp.psn}\n**Score**: ${rp.superScore}\n`);
 
             createPageableContent(message.channel, message.author.id, {
               outputType: 'embed',

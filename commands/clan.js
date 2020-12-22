@@ -167,7 +167,7 @@ Edit clans:
                 elements: clanList,
                 elementsPerPage: 5,
                 embedOptions: {
-                  heading: `CTR Clan Ranking - ${clanList.length} Clans`,
+                  heading: `Clan Ranking - ${clanList.length} Clans`,
                   image: 'https://static.wikia.nocookie.net/crashban/images/8/8f/CTRNF-Turbo.png',
                 },
                 reactionCollectorOptions: { time: 3600000 },
@@ -197,12 +197,6 @@ Edit clans:
       let clan = null;
 
       switch (action) {
-        //  !clan add CTR Crash Team Racing
-        //  !clan add_member CTR @tag
-        //  !clan remove_member
-        //  @Staff
-        //  !clan_member add [CTR] @tag
-        //  !clan_member remove CTR @tag
         case ADD:
           const regexShortName = createCaseInsensitiveRegEx(shortName);
 
@@ -221,7 +215,6 @@ Edit clans:
 
           break;
 
-        // !clan delete CTR
         case REMOVE:
         case DELETE:
           clan = Clan.findOne({ shortName }).then((doc) => {
@@ -236,8 +229,6 @@ Edit clans:
           break;
       }
     } else {
-      // !clan CTR
-      // !clan Crash Team Racing
       const clanName = args[0];
       const clanFullName = args.join(' ');
 

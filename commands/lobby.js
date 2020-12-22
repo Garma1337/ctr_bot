@@ -2180,18 +2180,26 @@ function checkScoresSum(message) {
 
     const sum = players.reduce((s, p) => s + p.totalScore, 0);
 
+    const rankedNotifications = message.guild.channels.cache.find((c) => c.name.toLowerCase() === config.channels.ranked_notifications_channel.toLowerCase());
+    if (!rankedNotifications) {
+      return;
+    }
+
     const correctSums = correctSumsByTeamsCount[data.clans.length];
     if (!correctSums) {
-      return sendAlertMessage(message.channel, 'Your scores are incorrect.', 'warning', [message.author.id]);
+      sendAlertMessage(rankedNotifications, 'Your scores are incorrect.', 'warning', [message.author.id]);
+      return;
     }
 
     const correctSum = correctSums[players.length];
     if (correctSum && sum !== correctSum) {
       if (sum > correctSum) {
-        return sendAlertMessage(message.channel, `The total number of points for your lobby is over ${correctSum} points.
+        sendAlertMessage(rankedNotifications, `The total number of points for your lobby is over ${correctSum} points.
 If there were 1 or multiple ties in your lobby, you can ignore this message. If not, please double check the results.`, 'warning', [message.author.id]);
+        return;
       }
-      return sendAlertMessage(message.channel, `The total number of points for your lobby is under ${correctSum} points.
+
+      sendAlertMessage(rankedNotifications, `The total number of points for your lobby is under ${correctSum} points.
 Unless somebody left the lobby before all races were played or was penalized, please double check the results.`, 'warning', [message.author.id]);
     }
   }
