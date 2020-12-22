@@ -48,7 +48,7 @@ module.exports = {
           player.flag = countryFlag;
           promise = player.save();
         } else {
-          if (!isStaff && doc.flag && doc.flag !== ':united_nations:') {
+          if (!isStaff && doc.flag && doc.flag !== '🇺🇳') {
             return sendAlertMessage(message.channel, `You've already set your flag to ${doc.flag}. It cannot be changed.`, 'warning');
           }
 
