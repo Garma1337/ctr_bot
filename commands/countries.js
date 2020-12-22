@@ -100,7 +100,7 @@ module.exports = {
                 }
               });
 
-              if (countryMembers[i].members.length > 1) {
+              if (countryMembers[i].members.length > 1 && countryMembers[i].superScoreCount > 0) {
                 countryMembers[i].score = Math.floor(superScoreSum / countryMembers[i].superScoreCount);
               } else {
                 countryMembers[i].score = superScoreSum;

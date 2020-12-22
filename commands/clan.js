@@ -140,7 +140,7 @@ Edit clans:
                   }
                 });
 
-                if (clanMembers[i].members.length > 1) {
+                if (clanMembers[i].members.length > 1 && clanMembers[i].superScoreCount > 0) {
                   clanMembers[i].score = Math.floor(superScoreSum / clanMembers[i].superScoreCount);
                 } else {
                   clanMembers[i].score = superScoreSum;
