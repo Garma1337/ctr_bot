@@ -54,28 +54,30 @@ Team B: @CaptainB\``;
         return true;
       });
 
-      return message.channel.send(`Select draft mode. Waiting 1 minute.
+      return sendAlertMessage(message.channel, `Select draft mode. Waiting 1 minute.
 \`\`\`
 0 - Classic - 6 Bans, 10 Picks
 1 - League  - 6 Bans,  8 Picks
 2 - Light   - 4 Bans,  6 Picks
 3 - No Ban  - 0 Bans, 10 Picks
-\`\`\``).then((confirmMessage) => {
-        message.channel.awaitMessages((m) => m.author.id === message.author.id, { max: 1, time: 60000, errors: ['time'] })
-          .then((collected) => {
-            const collectedMessage = collected.first();
-            const { content } = collectedMessage;
-            collectedMessage.delete();
-            if (['0', '1', '2', '3'].includes(content)) {
-              createDraft(message.channel, content, teams, captains);
-            } else {
-              throw new Error('cancel');
-            }
-          }).catch(() => {
+\`\`\``, 'info').then((confirmMessage) => {
+        message.channel.awaitMessages((m) => m.author.id === message.author.id, { max: 1, time: 60000, errors: ['time'] }).then((collected) => {
+          const collectedMessage = collected.first();
+          const { content } = collectedMessage;
+          collectedMessage.delete();
+
+          if (['0', '1', '2', '3'].includes(content)) {
             confirmMessage.delete();
 
-            sendAlertMessage(message.channel, 'Command cancelled.', 'error');
-          });
+            createDraft(message.channel, content, teams, captains);
+          } else {
+            throw new Error('cancel');
+          }
+        }).catch(() => {
+          confirmMessage.delete();
+
+          sendAlertMessage(message.channel, 'Command cancelled.', 'error');
+        });
       });
     }).catch((error) => {
       throw error;
