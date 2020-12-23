@@ -86,8 +86,10 @@ function getRegionName(regionUid) {
  * Returns the profile embed
  * @param guildMember
  * @param fields
+ * @param url
+ * @return Object
  */
-function getEmbed(guildMember, fields) {
+function getEmbed(guildMember, fields, url) {
   let avatarUrl;
   if (guildMember.user.avatar) {
     avatarUrl = `https://cdn.discordapp.com/avatars/${guildMember.user.id}/${guildMember.user.avatar}.png`;
@@ -109,6 +111,10 @@ function getEmbed(guildMember, fields) {
     },
     fields,
   };
+
+  if (url !== null) {
+    embed.author.url = url;
+  }
 
   const colorRoles = [
     config.roles.admin_role,
@@ -406,7 +412,12 @@ module.exports = {
               inline: true,
             });
 
-            const embed = getEmbed(guildMember, embedFields);
+            let url = null;
+            if (player.psn) {
+              url = `https://my.playstation.com/profile/${player.psn}`;
+            }
+
+            const embed = getEmbed(guildMember, embedFields, url);
             return message.channel.send({ embed });
           });
         });

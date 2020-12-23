@@ -1210,7 +1210,7 @@ The value should be in the range of \`${diffMin} to ${diffMax}\`. The value defa
                 const roomChannel = message.guild.channels.cache.find((c) => c.name === `ranked-room-${room.number}`);
                 if (roomChannel) {
                   const pings = doc.players.map((p) => `<@${p}>`).join(' ');
-                  sendAlertMessage(roomChannel, `I need reactions from ${Math.ceil(doc.players.length / 4)} other people in the lobby to confirm.\n${pings}`, 'info').then((voteMessage) => {
+                  sendAlertMessage(roomChannel, `I need reactions from ${Math.ceil(doc.players.length / 4)} other people in the lobby to confirm.\n${pings}`, 'info', doc.players).then((voteMessage) => {
                     voteMessage.react('✅');
 
                     const filter = (r, u) => ['✅'].includes(r.emoji.name) && doc.players.includes(u.id) && u.id !== message.author.id;
