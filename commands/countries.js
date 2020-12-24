@@ -1,5 +1,6 @@
 const Player = require('../db/models/player');
 const Rank = require('../db/models/rank');
+const calculateMeaningfulness = require('../utils/calculateMeaningfulness');
 const calculateSuperScore = require('../utils/calculateSuperScore');
 const createPageableContent = require('../utils/createPageableContent');
 const createPagination = require('../utils/createPagination');
@@ -101,8 +102,9 @@ module.exports = {
                 }
               });
 
-              if (countryMembers[i].members.length > 1 && countryMembers[i].superScoreCount > 0) {
-                countryMembers[i].score = Math.floor(superScoreSum / countryMembers[i].superScoreCount);
+              if (countryMembers[i].members.length >= 1 && countryMembers[i].superScoreCount > 0) {
+                const meaningfulness = calculateMeaningfulness(10, countryMembers[i].superScoreCount, 0.05);
+                countryMembers[i].score = Math.floor((superScoreSum / countryMembers[i].superScoreCount) * meaningfulness);
               } else {
                 countryMembers[i].score = superScoreSum;
               }
@@ -179,7 +181,8 @@ module.exports = {
               }
             });
 
-            const averageSuperScore = Math.floor(superScoreSum / superScoreCount);
+            const meaningfulness = calculateMeaningfulness(10, superScoreCount, 0.05);
+            const weightedSuperScore = Math.floor((superScoreSum / superScoreCount) * meaningfulness);
 
             const formatMembers = (m) => {
               let out = '';
@@ -227,7 +230,7 @@ module.exports = {
                     name: flagName[flag],
                     flag,
                     shortCode: flagToCode(flag),
-                    score: averageSuperScore,
+                    score: weightedSuperScore,
                     players: paginationPlayers.elements,
                     psns: paginationPsns.elements,
                   });
@@ -261,7 +264,7 @@ module.exports = {
                 name: flagName[flag],
                 flag,
                 shortCode: flagToCode(flag),
-                score: averageSuperScore,
+                score: weightedSuperScore,
                 players: playerList,
                 psns: psnList,
               });

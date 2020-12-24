@@ -1,8 +1,9 @@
 const Clan = require('../db/models/clans').default;
 const Player = require('../db/models/player');
 const Rank = require('../db/models/rank');
-const createPageableContent = require('../utils/createPageableContent');
+const calculateMeaningfulness = require('../utils/calculateMeaningfulness');
 const calculateSuperScore = require('../utils/calculateSuperScore');
+const createPageableContent = require('../utils/createPageableContent');
 const getConfigValue = require('../utils/getConfigValue');
 const isStaffMember = require('../utils/isStaffMember');
 const sendAlertMessage = require('../utils/sendAlertMessage');
@@ -140,8 +141,9 @@ Edit clans:
                   }
                 });
 
-                if (clanMembers[i].members.length > 1 && clanMembers[i].superScoreCount > 0) {
-                  clanMembers[i].score = Math.floor(superScoreSum / clanMembers[i].superScoreCount);
+                if (clanMembers[i].members.length >= 1 && clanMembers[i].superScoreCount > 0) {
+                  const meaningfulness = calculateMeaningfulness(5, clanMembers[i].superScoreCount, 0.05);
+                  clanMembers[i].score = Math.floor((superScoreSum / clanMembers[i].superScoreCount) * meaningfulness);
                 } else {
                   clanMembers[i].score = superScoreSum;
                 }
@@ -270,7 +272,8 @@ Edit clans:
                   }
                 });
 
-                const averageSuperScore = Math.floor(superScoreSum / superScoreCount);
+                const meaningfulness = calculateMeaningfulness(5, superScoreCount, 0.05);
+                const weightedSuperScore = Math.floor((superScoreSum / superScoreCount) * meaningfulness);
 
                 const formatMembers = (m) => {
                   let out = '';
@@ -315,7 +318,7 @@ Edit clans:
                   color: clan.color,
                   description: clan.description,
                   logo: clan.logo,
-                  score: averageSuperScore,
+                  score: weightedSuperScore,
                   discord: clan.discord,
                   members: clan.getMemberIds().map(formatMembers),
                   psns: clan.getMemberIds().map(formatPsns),

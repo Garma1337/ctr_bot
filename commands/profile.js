@@ -390,6 +390,10 @@ module.exports = {
               achievements.push('Server Booster');
             }
 
+            if (user.id === '462335970126200832') {
+              achievements.push('Shot in the Head by <@!588477134197096485>');
+            }
+
             const currentDate = moment(new Date());
             const joinDate = moment(guildMember.joinedAt);
 
