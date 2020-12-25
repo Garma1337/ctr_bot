@@ -8,6 +8,7 @@ const moment = require('moment');
 const { CronJob } = require('cron');
 const sendAlertMessage = require('./utils/sendAlertMessage');
 const Command = require('./db/models/command');
+const CommandUsage = require('./db/models/command_usage');
 const Config = require('./db/models/config');
 const Cooldown = require('./db/models/cooldowns');
 const config = require('./config.js');
@@ -419,6 +420,14 @@ client.on('message', (message) => {
     } else {
       command.execute(message, args);
     }
+
+    const commandUsage = new CommandUsage();
+    commandUsage.name = command.name;
+    commandUsage.args = args;
+    commandUsage.discordId = message.author.id;
+    commandUsage.date = new Date();
+
+    commandUsage.save().then(() => {});
   } catch (error) {
     catchExecutionError(error);
   }

@@ -5,7 +5,7 @@ module.exports = {
   name: 'commands',
   description: 'Create, edit, delete dynamic commands.',
   guildOnly: true,
-  permissions: ['MANAGE_ROLES'],
+  permissions: ['MANAGE_CHANNELS', 'MANAGE_ROLES'],
   aliases: ['command'],
   execute(message, args) {
     if (args.length === 0) {
