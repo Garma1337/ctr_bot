@@ -40,10 +40,10 @@ module.exports = {
               out.push(`Removed player ${p.discordId}.`);
             });
           }
+
+          sendAlertMessage(message.channel, out, 'success');
         });
       });
     });
-
-    sendAlertMessage(message.channel, out, 'success');
   },
 };
