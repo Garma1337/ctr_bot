@@ -6,7 +6,7 @@ const fs = require('fs');
 const Discord = require('discord.js');
 const moment = require('moment');
 const { CronJob } = require('cron');
-const sendAlertMessage = require('./utils/sendAlertMessage');
+const Clan = require('./db/models/clans').default;
 const Command = require('./db/models/command');
 const CommandUsage = require('./db/models/command_usage');
 const Config = require('./db/models/config');
@@ -20,6 +20,7 @@ const getSignupsCount = require('./utils/getSignupsCount');
 const createAndFindRole = require('./utils/createAndFindRole');
 const db = require('./db');
 const isStaffMember = require('./utils/isStaffMember');
+const sendAlertMessage = require('./utils/sendAlertMessage');
 const sendLogMessage = require('./utils/sendLogMessage');
 const { parsers, parse, checkRepetitions } = require('./utils/SignupParsers');
 const { flags } = require('./utils/flags');
@@ -467,17 +468,30 @@ client.on('guildMemberAdd', (member) => {
 
   Player.findOne({ discordId: user.id }).then((player) => {
     if (!player) {
-      if (!player) {
-        player = new Player();
-        player.discordId = user.id;
-        player.flag = '🇺🇳';
-      }
+      player = new Player();
+      player.discordId = user.id;
+      player.flag = '🇺🇳';
 
       player.save().then(() => {
         console.log(`New record for player has been created: ${user.id}`);
       }).catch(() => {
         console.log(`Could not create record for new player: ${user.id}`);
       });
+    }
+  });
+});
+
+client.on('guildMemberRemove', (member) => {
+  Clan.find({ 'members.discordId': member.user.id }).then((clans) => {
+    clans.forEach((c) => {
+      c.removeMember(member.user.id);
+      c.save();
+    });
+  });
+
+  Player.findOne({ discordId: member.user.id }).then((player) => {
+    if (player) {
+      player.delete();
     }
   });
 });
