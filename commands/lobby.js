@@ -2020,17 +2020,18 @@ client.on('messageDelete', async (message) => {
 });
 
 const findRoomAndSendMessage = (doc, ping = false) => {
-  let message = 'Don\'t forget to close the lobby with `!lobby end` and submit your scores.';
+  const message = 'Don\'t forget to close the lobby with `!lobby end` and submit your scores.';
 
+  let pings = [];
   if (ping) {
-    message += `\n${doc.players.map((p) => `<@${p}>`).join(' ')}`;
+    pings = doc.players;
   }
 
   Room.findOne({ lobby: doc.id }).then((room) => {
     if (room) {
       const channel = client.guilds.cache.get(room.guild).channels.cache.find((c) => c.name === `ranked-room-${room.number}`);
       if (channel) {
-        sendAlertMessage(channel, message, 'info');
+        sendAlertMessage(channel, message, 'info', pings);
       }
     }
   });
