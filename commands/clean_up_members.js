@@ -9,6 +9,8 @@ module.exports = {
   guildOnly: true,
   permissions: ['MANAGE_CHANNELS', 'MANAGE_ROLES'],
   execute(message) {
+    const out = [];
+
     Player.find().then((players) => {
       players.forEach((p) => {
         message.guild.members.fetch().then((members) => {
@@ -19,7 +21,7 @@ module.exports = {
               clans.forEach((c) => {
                 c.removeMember(p.discordId);
                 c.save().then(() => {
-                  sendAlertMessage(message.channel, `Removed player ${p.discordId} from clan "${c.shortName}".`, 'success');
+                  out.push(`Removed player ${p.discordId} from clan "${c.shortName}".`);
                 });
               });
             });
@@ -28,20 +30,20 @@ module.exports = {
               Rank.findOne({ name: p.psn }).then((rank) => {
                 if (rank) {
                   rank.delete().then(() => {
-                    sendAlertMessage(message.channel, `Removed rank for player ${rank.name}.`, 'success');
+                    out.push(`Removed rank for player ${rank.name}.`);
                   });
                 }
               });
             }
 
             p.delete().then(() => {
-              sendAlertMessage(message.channel, `Removed player ${p.discordId}.`, 'success');
+              out.push(`Removed player ${p.discordId}.`);
             });
           }
         });
       });
     });
 
-    sendAlertMessage(message.channel, 'Done.', 'success');
+    sendAlertMessage(message.channel, out, 'success');
   },
 };

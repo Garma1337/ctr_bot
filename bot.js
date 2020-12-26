@@ -108,7 +108,7 @@ client.on('guildCreate', (guild) => {
 
 async function reactOnSignUp(message, oldMessage = null) {
   try {
-    if (message.type === 'PINS_ADD' || message.author.id === client.user.id) {
+    if (message.type === 'PINS_ADD') {
       return;
     }
 
