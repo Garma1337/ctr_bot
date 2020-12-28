@@ -25,7 +25,7 @@ module.exports = {
 
     Player.findOne({ discordId }).then((doc) => {
       if (doc) {
-        doc.flag = null;
+        doc.flag = '🇺🇳';
 
         doc.save().then(() => {
           sendAlertMessage(message.channel, 'Flag has been removed.', 'success');

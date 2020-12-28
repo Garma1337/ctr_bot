@@ -552,9 +552,6 @@ client.on('presenceUpdate', (oldPresence, newPresence) => {
           url: a.url,
           color: 5385620,
           timestamp: new Date(),
-          thumbnail: {
-            url: 'https://i.imgur.com/arlgVeV.png',
-          },
           author: {
             name: `New Livestream on ${a.name}!`,
             url: a.url,
@@ -573,11 +570,11 @@ client.on('presenceUpdate', (oldPresence, newPresence) => {
         const promiseThumbnail = axios.get(url, { responseType: 'stream' });
         promiseThumbnail.then((responseThumbnail) => {
           const attachment = new Discord.MessageAttachment(responseThumbnail.data, 'thumbnail.png');
-          embed.author.icon_url = `attachment://${attachment.name}`;
+          embed.thumbnail.url = `attachment://${attachment.name}`;
 
-          livestreamsChannel.send({ embed });
+          livestreamsChannel.send({ embed, files: [attachment] });
         }).catch(() => {
-          embed.author.icon_url = 'https://cdn0.iconfinder.com/data/icons/network-and-communications-1-3/128/live_stream-livestream-video-tv-streaming-512.png';
+          embed.thumbnail.url = 'https://i.imgur.com/arlgVeV.png';
           livestreamsChannel.send({ embed });
         });
       }
