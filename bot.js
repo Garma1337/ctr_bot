@@ -555,6 +555,7 @@ client.on('presenceUpdate', (oldPresence, newPresence) => {
           author: {
             name: `New Livestream on ${a.name}!`,
             url: a.url,
+            icon_url: 'https://i.imgur.com/arlgVeV.png',
           },
           fields: [
             {
