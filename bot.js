@@ -570,11 +570,11 @@ client.on('presenceUpdate', (oldPresence, newPresence) => {
         const promiseThumbnail = axios.get(url, { responseType: 'stream' });
         promiseThumbnail.then((responseThumbnail) => {
           const attachment = new Discord.MessageAttachment(responseThumbnail.data, 'thumbnail.png');
-          embed.thumbnail.url = `attachment://${attachment.name}`;
+          embed.thumbnail = { url: `attachment://${attachment.name}` };
 
           livestreamsChannel.send({ embed, files: [attachment] });
         }).catch(() => {
-          embed.thumbnail.url = 'https://i.imgur.com/arlgVeV.png';
+          embed.thumbnail = { url: 'https://i.imgur.com/arlgVeV.png' };
           livestreamsChannel.send({ embed });
         });
       }

@@ -18,6 +18,7 @@ const Player = new Schema({
   favCharacter: String,
   favTrack: String,
   consoles: { type: [String], enum: consoleTags },
+  translation: String,
 });
 
 module.exports = model('players', Player);
