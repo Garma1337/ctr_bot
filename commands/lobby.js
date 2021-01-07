@@ -1209,7 +1209,6 @@ The value should be in the range of \`${diffMin} to ${diffMax}\`. The value defa
 
                 const roomChannel = message.guild.channels.cache.find((c) => c.name === `ranked-room-${room.number}`);
                 if (roomChannel) {
-                  const pings = doc.players.map((p) => `<@${p}>`).join(' ');
                   sendAlertMessage(roomChannel, `I need reactions from ${Math.ceil(doc.players.length / 4)} other people in the lobby to confirm.`, 'info', doc.players).then((voteMessage) => {
                     voteMessage.react('✅');
 
@@ -1218,13 +1217,15 @@ The value should be in the range of \`${diffMin} to ${diffMax}\`. The value defa
                       max: Math.ceil(doc.players.length / 4),
                       time: 60000,
                       errors: ['time'],
-                    })
-                      .then((collected) => {
-                        deleteLobby(doc, msg);
-                      })
-                      .catch(() => {
-                        sendAlertMessage(voteMessage.channel, 'Command cancelled.', 'error');
-                      });
+                    }).then((collected) => {
+                      if (voteMessage.deleted) {
+                        return sendAlertMessage(roomChannel, 'Command cancelled. Stop abusing staff powers.', 'error');
+                      }
+
+                      deleteLobby(doc, msg);
+                    }).catch(() => {
+                      sendAlertMessage(voteMessage.channel, 'Command cancelled.', 'error');
+                    });
                   });
                 }
               });
@@ -1261,6 +1262,10 @@ The value should be in the range of \`${diffMin} to ${diffMax}\`. The value defa
                       time: 60000,
                       errors: ['time'],
                     }).then(async () => {
+                      if (voteMessage.deleted) {
+                        return sendAlertMessage(message.channel, 'Command cancelled. Stop abusing staff powers.', 'error');
+                      }
+
                       const relobby = new RankedLobby();
                       relobby.guild = guild.id;
                       relobby.creator = message.author.id;

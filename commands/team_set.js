@@ -94,6 +94,10 @@ module.exports = {
 
       const filter = (r, u) => r.emoji.name === '✅' && teammateIds.includes(u.id);
       confirmMessage.awaitReactions(filter, { max: tagsCount, time: tagsCount * 60000, errors: ['time'] }).then(async (collected) => {
+        if (confirmMessage.deleted) {
+          return sendAlertMessage(message.channel, 'Command cancelled. Stop abusing staff powers.', 'error');
+        }
+
         confirmMessage.delete();
 
         // eslint-disable-next-line no-shadow
