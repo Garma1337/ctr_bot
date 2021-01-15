@@ -604,7 +604,7 @@ ${playersText}`,
                 m.react('✅');
 
                 const filter = (r, u) => ['✅'].includes(r.emoji.name) && doc.players.includes(u.id);
-                const options = { max: 1, time: 30000, errors: ['time'] };
+                const options = { max: 1, time: 300000, errors: ['time'] };
 
                 m.awaitReactions(filter, options).then((collected) => {
                   const reaction = collected.first();
