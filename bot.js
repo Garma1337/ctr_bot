@@ -16,6 +16,7 @@ const Mute = require('./db/models/mutes');
 const Player = require('./db/models/player');
 const SignupsChannel = require('./db/models/signups_channels');
 const alarms = require('./alarms');
+const getConfigValue = require('./utils/getConfigValue');
 const getSignupsCount = require('./utils/getSignupsCount');
 const createAndFindRole = require('./utils/createAndFindRole');
 const db = require('./db');
@@ -444,11 +445,12 @@ client.on('guildMemberAdd', (member) => {
       sendLogMessage(guild, logMessage);
     };
 
-    member.createDM()
-      .then((dm) => dm.send(config.welcome_message)).then(DMCallback)
-      .catch(() => {
+    const promise = getConfigValue('server_welcome_message', config.default_server_welcome_message);
+    Promise.resolve(promise).then((welcomeMessage) => {
+      member.createDM().then((dm) => dm.send(welcomeMessage)).then(DMCallback).catch(() => {
         sendLogMessage(guild, `Couldn't send welcome message to ${member}.`);
       });
+    });
   }
 
   if (memberCount % 100 === 0) {

@@ -418,6 +418,7 @@ async function findRoomChannel(guildId, n) {
   let channel = guild.channels.cache.find((c) => c.name === channelName);
   if (!channel) {
     const roleStaff = await createAndFindRole(guild, config.roles.staff_role);
+    const roleRanked = await createAndFindRole(guild, config.roles.ranked_role);
     const roleRankedVerified = await createAndFindRole(guild, config.roles.ranked_verified_role);
 
     channel = await guild.channels.create(channelName, {
@@ -426,6 +427,7 @@ async function findRoomChannel(guildId, n) {
     });
 
     await channel.createOverwrite(roleStaff, { VIEW_CHANNEL: true });
+    await channel.createOverwrite(roleRanked, { VIEW_CHANNEL: true });
     await channel.createOverwrite(roleRankedVerified, { VIEW_CHANNEL: true });
     await channel.createOverwrite(guild.roles.everyone, { VIEW_CHANNEL: false });
   }
@@ -573,7 +575,6 @@ function startLobby(docId) {
 
             roomChannel.send({
               content: `**The ${getTitle(doc)} has started**
-*Organize your host and scorekeeper*
 Your room is ${roomChannel}.
 Use \`!lobby end\` when your match is done.
 ${playersText}`,
@@ -585,7 +586,6 @@ ${playersText}`,
             }).then((m) => {
               roomChannel.messages.fetchPinned().then((pinnedMessages) => {
                 pinnedMessages.forEach((pinnedMessage) => pinnedMessage.unpin());
-                m.pin();
               });
 
               roomChannel.send({
@@ -595,6 +595,28 @@ ${playersText}`,
                   description: `\`\`\`${template}\`\`\`
 [Open template on gb.hlorenzi.com](${templateUrl})`,
                 },
+              });
+
+              m.pin();
+
+              sendAlertMessage(roomChannel, `Report any rule violations to ranked staff by sending a DM to <@!${config.bot_user_id}>.`, 'info');
+              sendAlertMessage(roomChannel, 'Select a scorekeeper. The scorekeeper can react to this message to make others aware that he is keeping scores. If nobody reacts to this message within 5 minutes the lobby will be ended automatically.', 'info').then((m) => {
+                m.react('✅');
+
+                const filter = (r, u) => ['✅'].includes(r.emoji.name) && doc.players.includes(u.id);
+                const options = { max: 1, time: 30000, errors: ['time'] };
+
+                m.awaitReactions(filter, options).then((collected) => {
+                  const reaction = collected.first();
+                  const user = reaction.users.cache.last();
+
+                  m.delete();
+                  sendAlertMessage(roomChannel, `<@!${user.id}> has volunteered to do scores. Please make sure you keep the lobby updated about mid-match scores.`, 'success');
+                }).catch(() => {
+                  deleteLobby(doc);
+                  m.delete();
+                  sendAlertMessage(roomChannel, 'The lobby was ended automatically because nobody volunteered to keep scores.', 'warning');
+                });
               });
 
               if (doc.isBattle()) {
@@ -1209,7 +1231,7 @@ The value should be in the range of \`${diffMin} to ${diffMax}\`. The value defa
 
                 const roomChannel = message.guild.channels.cache.find((c) => c.name === `ranked-room-${room.number}`);
                 if (roomChannel) {
-                  sendAlertMessage(roomChannel, `I need reactions from ${Math.ceil(doc.players.length / 4)} other people in the lobby to confirm.`, 'info', doc.players).then((voteMessage) => {
+                  sendAlertMessage(roomChannel, `I need reactions from ${Math.ceil(doc.players.length * 0.75)} other people in the lobby to confirm.`, 'info', doc.players).then((voteMessage) => {
                     voteMessage.react('✅');
 
                     const filter = (r, u) => ['✅'].includes(r.emoji.name) && doc.players.includes(u.id) && u.id !== message.author.id;
@@ -2384,8 +2406,11 @@ client.on('guildMemberUpdate', async (oldMember, newMember) => {
   }
 
   if (!oldRoles.some((r) => r.name.toLowerCase() === config.roles.ranked_role.toLowerCase()) && newRoles.some((r) => r.name.toLowerCase() === config.roles.ranked_role.toLowerCase())) {
-    newMember.createDM().then((dm) => {
-      dm.send(config.ranked_welcome).then(DMCallback).catch(DMCatchCallback);
+    const promise = getConfigValue('ranked_welcome_message', config.default_ranked_welcome_message);
+    Promise.resolve(promise).then((welcomeMessage) => {
+      newMember.createDM().then((dm) => {
+        dm.send(welcomeMessage).then(DMCallback).catch(DMCatchCallback);
+      });
     });
   }
 

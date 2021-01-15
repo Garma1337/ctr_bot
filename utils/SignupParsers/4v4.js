@@ -1,3 +1,5 @@
+const config = require('../../config');
+
 module.exports = {
   fields: [
     {
@@ -44,7 +46,7 @@ module.exports = {
     },
   ],
   template: `Team Name: Template Team
-Captain: <@635410532786110464>
+Captain: <@!${config.bot_user_id}>
 PSN 1: ctr_tourney_bot
 PSN 2: ctr_tourney_bot_2
 PSN 3: ctr_tourney_bot_3

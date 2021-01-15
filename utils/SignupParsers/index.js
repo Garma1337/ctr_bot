@@ -1,13 +1,14 @@
 /* eslint-disable no-param-reassign,no-case-declarations */
 const fetchMessages = require('../fetchMessages');
 const { flagName } = require('../flags');
-const ffa = require('./ffa.js');
-const _2v2 = require('./2v2.js');
-const _3v3 = require('./3v3.js');
-const _4v4 = require('./4v4.js');
-const wc = require('./wc.js');
-const tt = require('./tt.js');
-const rng = require('./random.js');
+const ffa = require('./ffa');
+const _2v2 = require('./2v2');
+const _3v3 = require('./3v3');
+const _4v4 = require('./4v4');
+const wc = require('./wc');
+const tt = require('./tt');
+const rng = require('./random');
+const league = require('./league');
 
 function getUserFromMention(client, mention) {
   if (!mention) return null;
@@ -219,4 +220,5 @@ module.exports.parsers = {
   WC: wc,
   TT: tt,
   RNG: rng,
+  League: league,
 };

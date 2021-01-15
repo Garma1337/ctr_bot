@@ -1,0 +1,15 @@
+module.exports.variables = {
+  'command.general.permissionDenied': 'Dir fehlen die Rechte um diesen Befehl auszuführen.',
+  'command.general.superScore': 'Punkte',
+  'command.clan.profile.name': '**Name**',
+  'command.clan.profile.tag': '**Tag**',
+  'command.clan.profile.discord': '**Discord**',
+  'command.clan.profile.profileHeading': ':shield: Profil',
+  'command.clan.profile.membersHeading': ':busts_in_silhouette: Mitglieder',
+  'command.clan.profile.psnHeading': ':credit_card: PSN IDs',
+  'command.clan.ranking.heading': 'CTR Clan Ranking - #1 Clans',
+  'command.clan.clanMissing': 'Der Clan "#1" existiert nicht.',
+  'command.clanAdd.clanExists': 'Es gibt bereits einen Clan mit dem Namen "#1".',
+  'command.clanAdd.success': 'Der Clan "#1" wurde erstellt.',
+  'command.clanDelete.success': 'Der Clan "#1" wurde gelöscht.',
+};
