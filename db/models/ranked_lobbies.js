@@ -48,7 +48,7 @@ RankedLobby.methods = {
   isWar() { return [_3V3, _4V4].includes(this.type); },
   getMinimumRequiredPlayers() {
     const requirements = {
-      [ITEMS]: 2,
+      [ITEMS]: 6,
       [ITEMLESS]: 4,
       [DUOS]: 6,
       [_3V3]: 6,
