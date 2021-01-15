@@ -1236,7 +1236,7 @@ The value should be in the range of \`${diffMin} to ${diffMax}\`. The value defa
 
                     const filter = (r, u) => ['✅'].includes(r.emoji.name) && doc.players.includes(u.id) && u.id !== message.author.id;
                     voteMessage.awaitReactions(filter, {
-                      max: Math.ceil(doc.players.length / 4),
+                      max: Math.ceil(doc.players.length * 0.75),
                       time: 60000,
                       errors: ['time'],
                     }).then((collected) => {
