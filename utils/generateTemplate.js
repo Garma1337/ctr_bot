@@ -88,7 +88,7 @@ async function generateTemplate(players, doc) {
     const rank = await Rank.findOne({ name: x.psn });
 
     let mmr = 1200;
-    if (rank[doc.type] && rank[doc.type].rank) {
+    if (rank && rank[doc.type] && rank[doc.type].rank) {
       mmr = parseInt(rank[doc.type].rank, 10);
     }
 
