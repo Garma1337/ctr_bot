@@ -543,16 +543,15 @@ function startLobby(docId) {
               playersText = players.map((u, i) => `${i + 1}. <@${u}>`).join('\n');
             }
 
-            const [PSNs, templateUrl, template] = await generateTemplate(players, doc);
+            const [PSNs, templateUrl, template, consoles] = await generateTemplate(players, doc);
 
             message.edit({
               embed: await getEmbed(doc, players, tracks, roomChannel),
             });
 
-            // todo add ranks and tags?
             const fields = [
               {
-                name: 'PSN IDs',
+                name: 'PSN IDs & Ranks',
                 value: PSNs.join('\n'),
                 inline: true,
               },
@@ -586,104 +585,89 @@ ${playersText}`,
             }).then((m) => {
               roomChannel.messages.fetchPinned().then((pinnedMessages) => {
                 pinnedMessages.forEach((pinnedMessage) => pinnedMessage.unpin());
-              });
-
-              roomChannel.send({
-                embed: {
-                  color: embedColors[doc.type],
-                  title: 'Scores Template',
-                  description: `\`\`\`${template}\`\`\`
-[Open template on gb.hlorenzi.com](${templateUrl})`,
-                },
-              });
-
-              m.pin();
-
-              sendAlertMessage(roomChannel, `Report any rule violations to ranked staff by sending a DM to <@!${config.bot_user_id}>.`, 'info');
-              sendAlertMessage(roomChannel, 'Select a scorekeeper. The scorekeeper can react to this message to make others aware that he is keeping scores. If nobody reacts to this message within 5 minutes the lobby will be ended automatically.', 'info').then((m) => {
-                m.react('✅');
-
-                const filter = (r, u) => ['✅'].includes(r.emoji.name) && doc.players.includes(u.id);
-                const options = { max: 1, time: 300000, errors: ['time'] };
-
-                m.awaitReactions(filter, options).then((collected) => {
-                  const reaction = collected.first();
-                  const user = reaction.users.cache.last();
-
-                  m.delete();
-                  sendAlertMessage(roomChannel, `<@!${user.id}> has volunteered to do scores. Please make sure you keep the lobby updated about mid-match scores.`, 'success');
-                }).catch(() => {
-                  deleteLobby(doc);
-                  m.delete();
-                  sendAlertMessage(roomChannel, 'The lobby was ended automatically because nobody volunteered to keep scores.', 'warning');
-                });
-              });
-
-              if (doc.isBattle()) {
-                const embedFields = [];
-
-                modes.forEach((mode) => {
-                  battleModes.forEach((battleMode, i) => {
-                    const entry = battleMode.find((element) => element.name === mode);
-
-                    if (entry !== undefined) {
-                      embedFields.push({
-                        name: mode,
-                        value: entry.settings.join('\n'),
-                      });
-                    }
-                  });
-                });
+                m.pin();
 
                 roomChannel.send({
                   embed: {
                     color: embedColors[doc.type],
-                    description: '**Global Settings**\nTeams: None (4 for Steal The Bacon)\nAI: Disabled',
-                    author: {
-                      name: 'Battle Mode Settings',
-                    },
-                    image: {
-                      url: 'https://i.imgur.com/k56NKZc.jpg',
-                    },
-                    fields: embedFields,
+                    title: 'Scores Template',
+                    description: `\`\`\`${template}\`\`\`
+  [Open template on gb.hlorenzi.com](${templateUrl})`,
                   },
-                });
+                }).then(() => {
+                  if (doc.isBattle()) {
+                    const embedFields = [];
 
-                sendAlertMessage(roomChannel, 'Season 2 is using a new scoring system for tied placements. Use `!battleties` for more information.', 'info');
-              }
+                    modes.forEach((mode) => {
+                      battleModes.forEach((battleMode, i) => {
+                        const entry = battleMode.find((element) => element.name === mode);
 
-              if (doc.isWar() && doc.draftTracks) {
-                const teams = ['A', 'B'];
+                        if (entry !== undefined) {
+                          embedFields.push({
+                            name: mode,
+                            value: entry.settings.join('\n'),
+                          });
+                        }
+                      });
+                    });
 
-                const captainAPromise = client.guilds.cache.get(doc.guild).members.fetch(getRandomArrayElement(doc.teamList[0]));
-                const captainBPromise = client.guilds.cache.get(doc.guild).members.fetch(getRandomArrayElement(doc.teamList[1]));
-
-                Promise.all([captainAPromise, captainBPromise]).then((captains) => {
-                  if (doc.is3v3()) {
-                    createDraft(roomChannel, '1', teams, captains);
-                  } else {
-                    createDraft(roomChannel, '0', teams, captains);
+                    roomChannel.send({
+                      embed: {
+                        color: embedColors[doc.type],
+                        description: '**Global Settings**\nTeams: None (4 for Steal The Bacon)\nAI: Disabled',
+                        author: {
+                          name: 'Battle Mode Settings',
+                        },
+                        image: {
+                          url: 'https://i.imgur.com/k56NKZc.jpg',
+                        },
+                        fields: embedFields,
+                      },
+                    });
                   }
-                });
-              }
 
-              Player.find({ discordId: { $in: players } }).then((playerModels) => {
-                let hasPs5 = false;
-                let hasPs4 = false;
+                  const info = [`Report any rule violations to ranked staff by sending a DM to <@!${config.bot_user_id}>.`];
 
-                playerModels.forEach((p) => {
-                  if (p.consoles.includes('PS5')) {
-                    hasPs5 = true;
+                  if (consoles.includes('PS5') && consoles.includes('PS4')) {
+                    info.push('This lobby has players on PS4 as well as PS5. Please remember to turn on cutscenes and not start the next race too quickly to avoid lobby crashes!');
                   }
 
-                  if (p.consoles.includes('PS4')) {
-                    hasPs4 = true;
-                  }
-                });
+                  sendAlertMessage(roomChannel, info.map((i) => `• ${i}`).join('\n'), 'info').then(() => {
+                    if (doc.isWar() && doc.draftTracks) {
+                      const teams = ['A', 'B'];
 
-                if (hasPs5 && hasPs4) {
-                  sendAlertMessage(roomChannel, 'This lobby has players on PS4 as well as PS5. Please remember to turn on cutscenes and not start the next race too quickly to avoid lobby crashes!', 'info');
-                }
+                      const captainAPromise = client.guilds.cache.get(doc.guild).members.fetch(getRandomArrayElement(doc.teamList[0]));
+                      const captainBPromise = client.guilds.cache.get(doc.guild).members.fetch(getRandomArrayElement(doc.teamList[1]));
+
+                      Promise.all([captainAPromise, captainBPromise]).then((captains) => {
+                        if (doc.is3v3()) {
+                          createDraft(roomChannel, '1', teams, captains);
+                        } else {
+                          createDraft(roomChannel, '0', teams, captains);
+                        }
+                      });
+                    }
+
+                    sendAlertMessage(roomChannel, 'Select a scorekeeper. The scorekeeper can react to this message to make others aware that he is keeping scores. If nobody reacts to this message within 5 minutes the lobby will be ended automatically.', 'info').then((m) => {
+                      m.react('✅');
+
+                      const filter = (r, u) => ['✅'].includes(r.emoji.name) && doc.players.includes(u.id);
+                      const options = { max: 1, time: 300000, errors: ['time'] };
+
+                      m.awaitReactions(filter, options).then((collected) => {
+                        const reaction = collected.first();
+                        const user = reaction.users.cache.last();
+
+                        m.delete();
+                        sendAlertMessage(roomChannel, `<@!${user.id}> has volunteered to do scores. Please make sure you keep the lobby updated about mid-match scores.`, 'success');
+                      }).catch(() => {
+                        deleteLobby(doc);
+                        m.delete();
+                        sendAlertMessage(roomChannel, 'The lobby was ended automatically because nobody volunteered to keep scores.', 'warning');
+                      });
+                    });
+                  });
+                });
               });
             });
           });
@@ -1231,12 +1215,14 @@ The value should be in the range of \`${diffMin} to ${diffMax}\`. The value defa
 
                 const roomChannel = message.guild.channels.cache.find((c) => c.name === `ranked-room-${room.number}`);
                 if (roomChannel) {
-                  sendAlertMessage(roomChannel, `I need reactions from ${Math.ceil(doc.players.length * 0.75)} other people in the lobby to confirm.`, 'info', doc.players).then((voteMessage) => {
+                  const requiredReactions = Math.ceil((doc.players.length - 1) * 0.75);
+
+                  sendAlertMessage(roomChannel, `I need reactions from ${requiredReactions} other people in the lobby to confirm.`, 'info', doc.players).then((voteMessage) => {
                     voteMessage.react('✅');
 
                     const filter = (r, u) => ['✅'].includes(r.emoji.name) && doc.players.includes(u.id) && u.id !== message.author.id;
                     voteMessage.awaitReactions(filter, {
-                      max: Math.ceil(doc.players.length * 0.75),
+                      max: requiredReactions,
                       time: 60000,
                       errors: ['time'],
                     }).then((collected) => {

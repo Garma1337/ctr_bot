@@ -2,6 +2,7 @@ const {
   BATTLE, _4V4, _3V3, DUOS, ITEMLESS, ITEMS,
 } = require('../db/models/ranked_lobbies');
 const Player = require('../db/models/player');
+const Rank = require('../db/models/rank');
 
 const { flagToCode } = require('./regional_indicators');
 
@@ -82,11 +83,20 @@ async function generateTemplate(players, doc) {
   encodedData = encodedData.replace(/#/g, '%23');
 
   const PSNs = [];
-  playerDocs.forEach((p) => {
-    PSNs.push(p.psn.replace('_', '\\_'));
-  });
+  const consoles = [];
+  for (const x of playerDocs) {
+    const rank = await Rank.findOne({ name: x.psn });
 
-  return [PSNs, `https://gb.hlorenzi.com/table?data=${encodedData}`, template];
+    let mmr = 1200;
+    if (rank[doc.type] && rank[doc.type].rank) {
+      mmr = parseInt(rank[doc.type].rank, 10);
+    }
+
+    PSNs.push(`${x.psn.replace('_', '\\_')} [${mmr}]`);
+    consoles.push(...x.consoles);
+  }
+
+  return [PSNs, `https://gb.hlorenzi.com/table?data=${encodedData}`, template, consoles];
 }
 
 module.exports = generateTemplate;
