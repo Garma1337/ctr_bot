@@ -205,8 +205,19 @@ client.on('messageReactionAdd', (reaction) => {
 
   if (message.channel.name.toLowerCase() === config.channels.suggestions_channel.toLowerCase() && !message.author.bot) {
     if (['✅', '❌'].includes(reaction.emoji.name)) {
-      const upvoteReaction = message.reactions.cache.find((r) => r.emoji.name === '👍');
-      const downvoteReaction = message.reactions.cache.find((r) => r.emoji.name === '👎');
+      const likeReaction = message.reactions.cache.find((r) => r.emoji.name === '👍');
+      const dislikeReaction = message.reactions.cache.find((r) => r.emoji.name === '👎');
+
+      let likes = 0;
+      if (likeReaction) {
+        likes = likeReaction.users.cache.size - 1;
+      }
+
+      let dislikes = 0;
+      if (dislikeReaction) {
+        dislikes = dislikeReaction.users.cache.size - 1;
+      }
+
       const user = reaction.users.cache.last();
 
       let avatarUrl;
@@ -233,7 +244,7 @@ client.on('messageReactionAdd', (reaction) => {
           name: title,
           icon_url: avatarUrl,
         },
-        description: `\`\`\`${message.content}\`\`\`\n**Likes**: ${upvoteReaction.users.cache.size - 1}\n**Dislikes**: ${downvoteReaction.users.cache.size - 1}`,
+        description: `\`\`\`${message.content}\`\`\`\n**Likes**: ${likes}\n**Dislikes**: ${dislikes}`,
       };
 
       message.delete().then(() => {
