@@ -1633,9 +1633,7 @@ async function mogi(reaction, user, removed = false) {
           if (doc.region) {
             if (!player || !player.region) {
               errors.push('You need to set your region because the lobby you are trying to join is region locked. Use `!set_region` and then follow the bot instructions.');
-            }
-
-            if (player && player.region !== doc.region) {
+            } else if (player.region !== doc.region) {
               const lobbyRegion = regions.find((r) => r.uid === doc.region);
               const playerRegion = regions.find((r) => r.uid === player.region);
 
@@ -1726,9 +1724,7 @@ async function mogi(reaction, user, removed = false) {
                 if (doc.region) {
                   if (!partner || !partner.region) {
                     errors.push('Your partner needs to set their region. Use `!set_region` and then follow the bot instructions.');
-                  }
-
-                  if (partner && partner.region !== doc.region) {
+                  } else if (partner.region !== doc.region) {
                     const lobbyRegion = regions.find((r) => r.uid === doc.region);
                     const partnerRegion = regions.find((r) => r.uid === partner.region);
 
@@ -1845,9 +1841,7 @@ async function mogi(reaction, user, removed = false) {
                   if (doc.region) {
                     if (!teammate.region) {
                       errors.push(`Your teammate ${teammate.psn} needs to set their region. Use \`!set_region\` and then follow the bot instructions.`);
-                    }
-
-                    if (teammate.region && teammate.region !== doc.region) {
+                    } else if (teammate.region !== doc.region) {
                       const lobbyRegion = regions.find((r) => r.uid === doc.region);
                       const teammateRegion = regions.find((r) => r.uid === teammate.region);
 

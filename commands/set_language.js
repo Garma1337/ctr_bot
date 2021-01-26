@@ -27,21 +27,14 @@ module.exports = {
       return;
     }
 
-    const emoteChars = [];
-    const languageList = [];
-
-    serverLanguages.forEach((l) => {
-      emoteChars.push(l.char);
-      languageList.push(`${l.emote} - ${l.name}`);
-    });
-
+    const languageList = serverLanguages.map((l) => `${l.emote} - ${l.name}`);
     const column1 = languageList.slice(0, 10);
     const column2 = languageList.slice(10, 20);
     const column3 = languageList.slice(20, 30);
 
     const embed = {
       author: {
-        name: 'React with the appropriate language flag!',
+        name: 'You can specify a list of flags when using the command',
       },
       fields: [
         {
@@ -62,62 +55,31 @@ module.exports = {
       ],
     };
 
-    return message.channel.send({ embed }).then((confirmMessage) => {
-      const filter = (r, u) => emoteChars.includes(r.emoji.name) && u.id === message.author.id;
-      const options = {
-        max: serverLanguages.length,
-        time: 300000,
-        errors: ['time'],
-        dispose: true,
-      };
+    if (args.length <= 0) {
+      return message.channel.send({ embed });
+    }
 
-      const collector = confirmMessage.createReactionCollector(filter, options);
-      collector.on('collect', (reaction) => {
-        const language = serverLanguages.find((l) => l.char === reaction.emoji.name);
+    for (const i in args) {
+      const language = serverLanguages.find((l) => l.char === args[i]);
 
-        if (language) {
-          Player.findOne({ discordId: message.author.id }).then((player) => {
-            if (!player) {
-              player = new Player();
-              player.discordId = message.author.id;
-              player.languages = [];
-            }
+      if (!language) {
+        return sendAlertMessage(message.channel, `${args[i]} is not a valid language flag.`, 'warning');
+      }
+    }
 
-            const { languages } = player;
+    Player.findOne({ discordId: message.author.id }).then((player) => {
+      if (!player) {
+        player = new Player();
+        player.discordId = message.author.id;
+        player.languages = [];
+      }
 
-            if (!languages.includes(language.emote)) {
-              languages.push(language.emote);
-            }
-
-            player.languages = languages;
-            player.save().then(() => {
-              sendAlertMessage(message.channel, `${language.name} has been added to your languages.`, 'success');
-            }).catch((error) => {
-              sendAlertMessage(message.channel, `Unable to update player. Error: ${error}`, 'error');
-            });
-          });
-        }
+      player.languages = args;
+      player.save().then(() => {
+        sendAlertMessage(message.channel, `Your languages have been set to ${args.join(', ')}.`, 'success');
+      }).catch((error) => {
+        sendAlertMessage(message.channel, `Unable to update player. Error: ${error}`, 'error');
       });
-
-      collector.on('remove', ((reaction) => {
-        const language = serverLanguages.find((l) => l.char === reaction.emoji.name);
-
-        if (language) {
-          Player.findOne({ discordId: message.author.id }).then((player) => {
-            const { languages } = player;
-
-            if (languages.includes(language.emote)) {
-              const index = languages.indexOf(language.emote);
-              languages.splice(index, 1);
-            }
-
-            player.languages = languages;
-            player.save();
-
-            sendAlertMessage(message.channel, `${language.name} has been removed from your languages.`, 'success');
-          });
-        }
-      }));
-    }).catch(() => sendAlertMessage(message.channel, 'Command cancelled.', 'error'));
+    });
   },
 };

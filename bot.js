@@ -203,6 +203,47 @@ client.on('messageUpdate', (oldMessage, message) => {
 client.on('messageReactionAdd', (reaction) => {
   const { message } = reaction;
 
+  if (message.channel.name.toLowerCase() === config.channels.suggestions_channel.toLowerCase() && !message.author.bot) {
+    if (['✅', '❌'].includes(reaction.emoji.name)) {
+      const upvoteReaction = message.reactions.cache.find((r) => r.emoji.name === '👍');
+      const downvoteReaction = message.reactions.cache.find((r) => r.emoji.name === '👎');
+      const user = reaction.users.cache.last();
+
+      let avatarUrl;
+      let color;
+      let title;
+
+      if (user.avatar) {
+        avatarUrl = `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`;
+      } else {
+        avatarUrl = user.defaultAvatarURL;
+      }
+
+      if (reaction.emoji.name === '✅') {
+        title = `${user.username}#${user.discriminator} approved a suggestion by ${message.author.username}#${message.author.discriminator}`;
+        color = 7844437;
+      } else {
+        title = `${user.username}#${user.discriminator} denied a suggestion by ${message.author.username}#${message.author.discriminator}`;
+        color = 12458289;
+      }
+
+      const embed = {
+        color,
+        author: {
+          name: title,
+          icon_url: avatarUrl,
+        },
+        description: `\`\`\`${message.content}\`\`\`\n**Likes**: ${upvoteReaction.users.cache.size - 1}\n**Dislikes**: ${downvoteReaction.users.cache.size - 1}`,
+      };
+
+      message.delete().then(() => {
+        message.channel.send({ embed });
+      });
+    }
+
+    return;
+  }
+
   if (!message.channel.name.includes('signups')) {
     return;
   }
@@ -213,7 +254,9 @@ client.on('messageReactionAdd', (reaction) => {
       r.users.fetch({ limit: 100 }).then((users) => {
         users.forEach((reactionUser) => {
           if (reactionUser.id !== client.user.id) {
-            r.users.remove(reactionUser).then().catch(console.error);
+            r.users.remove(reactionUser)
+              .then()
+              .catch(console.log('error removing reaction'));
           }
         });
       });
@@ -320,6 +363,11 @@ client.on('message', (message) => {
 
   const { prefix } = client;
 
+  if (message.channel.name.toLowerCase() === config.channels.suggestions_channel.toLowerCase() && !message.author.bot) {
+    message.react('👍');
+    message.react('👎');
+  }
+
   if (!message.content.startsWith(prefix)) {
     return;
   }
@@ -353,7 +401,7 @@ client.on('message', (message) => {
       }
 
       if (!isStaff && !allowedChannels.find((c) => c.name === message.channel.name)) {
-        return sendAlertMessage(message.channel, 'You cannot use commands in this channel.', 'warning');
+        return sendAlertMessage(message.channel, 'You cannot use commands in this channel. Please head over to #bot-spam and use the command there.', 'warning');
       }
 
       message.channel.send(cmd.message);
@@ -432,6 +480,15 @@ client.on('message', (message) => {
     commandUsage.save().then(() => {});
   } catch (error) {
     catchExecutionError(error);
+  }
+});
+
+client.on('messageUpdate', (oldMessage, newMessage) => {
+  if (newMessage.channel.name.toLowerCase() === config.channels.suggestions_channel.toLowerCase() && !newMessage.author.bot) {
+    newMessage.reactions.removeAll().then(() => {
+      newMessage.react('👍');
+      newMessage.react('👎');
+    });
   }
 });
 

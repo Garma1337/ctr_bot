@@ -11,6 +11,7 @@ module.exports = {
   wc_signup_message: 'Thank you for signing up for the World Cup!',
   draft_tool_url: '',
   channels: {
+    suggestions_channel: 'suggestions',
     tourney_log_channel: 'tourney-bot-log',
     tourney_dm_channel: 'tourney-bot-dm',
     main_channel: 'general',

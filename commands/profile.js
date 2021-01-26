@@ -94,10 +94,11 @@ function getEmbed(guildMember, fields, url) {
   if (guildMember.user.avatar) {
     avatarUrl = `https://cdn.discordapp.com/avatars/${guildMember.user.id}/${guildMember.user.avatar}.png`;
   } else {
-    avatarUrl = 'https://discordapp.com/assets/322c936a8c8be1b803cd94861bdfa868.png';
+    avatarUrl = guildMember.user.defaultAvatarURL;
   }
 
   const embed = {
+    color: guildMember.displayColor,
     timestamp: new Date(),
     thumbnail: {
       url: avatarUrl,
@@ -114,33 +115,6 @@ function getEmbed(guildMember, fields, url) {
 
   if (url !== null) {
     embed.author.url = url;
-  }
-
-  const colorRoles = [
-    config.roles.admin_role,
-    config.roles.staff_role,
-    config.roles.bot_developer_role,
-    config.roles.ctr_staff_role,
-    config.roles.media_staff_role,
-    config.roles.ranked_updater_role,
-    config.roles.champion_role,
-    config.roles.donator_role,
-    config.roles.captain_role,
-    config.roles.nitro_booster_role,
-  ];
-
-  let colorRole;
-
-  colorRoles.some((colorRoleName) => {
-    const r = guildMember.roles.cache.find((role) => role.name.toLowerCase() === colorRoleName.toLowerCase());
-    if (r) {
-      colorRole = r;
-      return true;
-    }
-  });
-
-  if (colorRole) {
-    embed.color = colorRole.color;
   }
 
   return embed;
@@ -401,7 +375,7 @@ module.exports = {
               achievements.push('Member for over 1 year');
             }
 
-            if (player.psn && player.flag && player.nat && player.timeZone && player.birthday && (player.discordVc || player.ps4Vc) && player.favCharacter && player.favCharacter && player.languages.length > 0 && player.consoles.length > 0) {
+            if (player && player.psn && player.flag && player.nat && player.timeZone && player.birthday && (player.discordVc || player.ps4Vc) && player.favCharacter && player.favCharacter && player.languages.length > 0 && player.consoles.length > 0) {
               achievements.push('Complete Profile');
             }
 
@@ -417,7 +391,7 @@ module.exports = {
             });
 
             let url = null;
-            if (player.psn) {
+            if (player && player.psn) {
               url = `https://my.playstation.com/profile/${player.psn}`;
             }
 
