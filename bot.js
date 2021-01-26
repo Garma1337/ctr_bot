@@ -211,11 +211,19 @@ client.on('messageReactionAdd', (reaction) => {
       let likes = 0;
       if (likeReaction) {
         likes = likeReaction.users.cache.size - 1;
+
+        if (likes < 0) {
+          likes = 0;
+        }
       }
 
       let dislikes = 0;
       if (dislikeReaction) {
         dislikes = dislikeReaction.users.cache.size - 1;
+
+        if (dislikes < 0) {
+          dislikes = 0;
+        }
       }
 
       const user = reaction.users.cache.last();
