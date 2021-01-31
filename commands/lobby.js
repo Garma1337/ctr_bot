@@ -37,7 +37,7 @@ const rngPools = require('../utils/rngPools');
 const rngModeBattle = require('../utils/rngModeBattle');
 const sendAlertMessage = require('../utils/sendAlertMessage');
 const sendLogMessage = require('../utils/sendLogMessage');
-const { battleModes } = require('../utils/modes_battle');
+const { battleModesFFA, battleModes4v4 } = require('../utils/modes_battle');
 const { regions } = require('../utils/regions');
 
 const lock = new AsyncLock();
@@ -580,7 +580,7 @@ function startLobby(docId) {
 
             let modes = [];
             if (doc.isBattle()) {
-              modes = await rngModeBattle(tracks.split('\n'));
+              modes = await rngModeBattle(doc.type, tracks.split('\n'));
 
               fields.push({
                 name: 'Modes',
@@ -613,17 +613,29 @@ ${playersText}`,
                   },
                 }).then(() => {
                   if (doc.isBattle()) {
+                    let list;
+                    if (doc.isFFA()) {
+                      list = battleModesFFA;
+                    } else if (doc.isWar()) {
+                      list = battleModes4v4;
+                    } else {
+                      list = battleModesFFA;
+                    }
+
                     const embedFields = [];
+                    const entries = [];
 
                     modes.forEach((mode) => {
-                      battleModes.forEach((battleMode, i) => {
+                      list.forEach((battleMode) => {
                         const entry = battleMode.find((element) => element.name === mode);
 
-                        if (entry !== undefined) {
+                        if (entry !== undefined && !entries.find((e) => e === mode)) {
                           embedFields.push({
                             name: mode,
                             value: entry.settings.join('\n'),
                           });
+
+                          entries.push(mode);
                         }
                       });
                     });
@@ -979,11 +991,6 @@ module.exports = {
                   break;
                 default:
                   break;
-              }
-
-              if (type === BATTLE_4V4) {
-                // Ping Zamu
-                return sendAlertMessage(message.channel, 'Sorry, Battle Mode 4 vs. 4 is still under construction :)', 'info', [163765142587310080]);
               }
 
               const trackOptions = [
