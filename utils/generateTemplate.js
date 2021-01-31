@@ -45,7 +45,7 @@ async function generateTemplate(players, doc) {
       numberOfMaps = 8;
       break;
     case RACE_ITEMLESS:
-      title += 'Match # - Itemless\n';
+      title += 'Match # - Itemless FFA\n';
       numberOfMaps = 5;
       break;
     case RACE_DUOS:
