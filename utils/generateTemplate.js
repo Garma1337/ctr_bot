@@ -36,7 +36,7 @@ async function generateTemplate(players, doc) {
     playerDocs.push(player);
   }
 
-  let title = '';
+  let title = '#title ';
   let numberOfMaps = 0;
 
   switch (doc.type) {
