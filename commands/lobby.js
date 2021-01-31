@@ -1427,13 +1427,13 @@ The value should be in the range of \`${diffMin} to ${diffMax}\`. The value defa
           doc.players = doc.players.filter((p) => p !== message.author.id);
           doc.save().then(() => {
             sendAlertMessage(message.channel, 'You were removed from the lobby.', 'success');
+
+            if (doc.players.length <= 1) {
+              deleteLobby(doc, message);
+            }
           }).catch(() => {
             sendAlertMessage(message.channel, 'Something went wrong when removing you from the lobby.', 'error');
           });
-
-          if (doc.players.length <= 1) {
-            deleteLobby(doc, message);
-          }
         });
       default:
         break;
