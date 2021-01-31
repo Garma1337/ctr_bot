@@ -59,22 +59,25 @@ module.exports = {
       return message.channel.send({ embed });
     }
 
+    const emotes = [];
+
     for (const i in args) {
       const language = serverLanguages.find((l) => l.char === args[i]);
 
       if (!language) {
         return sendAlertMessage(message.channel, `${args[i]} is not a valid language flag.`, 'warning');
       }
+
+      emotes.push(language.emote);
     }
 
     Player.findOne({ discordId: message.author.id }).then((player) => {
       if (!player) {
         player = new Player();
         player.discordId = message.author.id;
-        player.languages = [];
       }
 
-      player.languages = args;
+      player.languages = emotes;
       player.save().then(() => {
         sendAlertMessage(message.channel, `Your languages have been set to ${args.join(', ')}.`, 'success');
       }).catch((error) => {
