@@ -377,7 +377,7 @@ client.on('message', (message) => {
 
   const { prefix } = client;
 
-  if (message.channel.name.toLowerCase() === config.channels.suggestions_channel.toLowerCase() && !message.author.bot) {
+  if (message.channel.type === 'text' && message.channel.name.toLowerCase() === config.channels.suggestions_channel.toLowerCase() && !message.author.bot) {
     message.react('👍');
     message.react('👎');
   }
