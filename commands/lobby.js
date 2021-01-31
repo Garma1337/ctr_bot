@@ -1224,7 +1224,7 @@ The value should be in the range of \`${diffMin} to ${diffMax}\`. The value defa
                     doc.message = m.id;
                     doc.save().then(() => {
                       m.react('✅');
-                      sendAlertMessage(message.channel, `${getTitle(doc)} has been created. ID: \`${doc._id}\`. Don't forget to press ✅.`, 'success');
+                      sendAlertMessage(message.channel, `${getTitle(doc)} has been created. Don't forget to press ✅.`, 'success');
                     });
                   });
               });
