@@ -41,39 +41,39 @@ async function generateTemplate(players, doc) {
 
   switch (doc.type) {
     case RACE_FFA:
-      title = 'Match # - FFA\n';
+      title += 'Match # - FFA\n';
       numberOfMaps = 8;
       break;
     case RACE_ITEMLESS:
-      title = 'Match # - Itemless\n';
+      title += 'Match # - Itemless\n';
       numberOfMaps = 5;
       break;
     case RACE_DUOS:
-      title = 'Match # - Duos\n';
+      title += 'Match # - Duos\n';
       numberOfMaps = 8;
       break;
     case RACE_3V3:
-      title = 'Match # - 3 vs. 3\n';
+      title += 'Match # - 3 vs. 3\n';
       numberOfMaps = 8;
       break;
     case RACE_4V4:
-      title = 'Match # - 4 vs. 4\n';
+      title += 'Match # - 4 vs. 4\n';
       numberOfMaps = 10;
       break;
     case RACE_SURVIVAL:
-      title = 'Match # - Survival\n';
+      title += 'Match # - Survival\n';
       numberOfMaps = 7;
       break;
     case RACE_ITEMLESS_DUOS:
-      title = 'Match # - Itemless Duos\n';
+      title += 'Match # - Itemless Duos\n';
       numberOfMaps = 8;
       break;
     case BATTLE_FFA:
-      title = 'Match # - Battle FFA\n';
+      title += 'Match # - Battle FFA\n';
       numberOfMaps = 5;
       break;
     case BATTLE_4V4:
-      title = 'Match # - Battle 4 vs. 4\n';
+      title += 'Match # - Battle 4 vs. 4\n';
       numberOfMaps = 6;
       break;
     default:
