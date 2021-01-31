@@ -4,7 +4,7 @@ const RankedLobby = require('../db/models/ranked_lobbies').default;
 const Player = require('../db/models/player');
 const RankedBan = require('../db/models/ranked_bans');
 const sendAlertMessage = require('../utils/sendAlertMessage');
-const { _4V4, _3V3 } = require('../db/models/ranked_lobbies');
+const { RACE_3V3, RACE_4V4 } = require('../db/models/ranked_lobbies');
 
 module.exports = {
   name: 'team_set',
@@ -58,7 +58,7 @@ module.exports = {
       return sendAlertMessage(message.channel, 'You are already in a team.', 'warning');
     }
 
-    const lobby = await RankedLobby.findOne({ type: { $in: [_3V3, _4V4] }, players: { $in: [author.id, ...teammateIds] } });
+    const lobby = await RankedLobby.findOne({ type: { $in: [RACE_3V3, RACE_4V4] }, players: { $in: [author.id, ...teammateIds] } });
     if (lobby) {
       return sendAlertMessage(message.channel, 'You can\'t set a team while one of you is playing a ranked match.', 'warning');
     }
@@ -101,7 +101,7 @@ module.exports = {
         confirmMessage.delete();
 
         // eslint-disable-next-line no-shadow
-        const lobby = await RankedLobby.findOne({ guild: guild.id, type: { $in: [_3V3, _4V4] }, players: author.id });
+        const lobby = await RankedLobby.findOne({ guild: guild.id, type: { $in: [RACE_3V3, RACE_4V4] }, players: author.id });
         if (lobby) {
           return sendAlertMessage(message.channel, `Command cancelled: ${author} joined another ranked lobby.`, 'warning');
         }

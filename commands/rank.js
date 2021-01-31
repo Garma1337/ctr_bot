@@ -6,16 +6,27 @@ const getConfigValue = require('../utils/getConfigValue');
 const sendAlertMessage = require('../utils/sendAlertMessage');
 
 const {
-  BATTLE, _4V4, _3V3, DUOS, ITEMLESS, ITEMS,
+  RACE_FFA,
+  RACE_ITEMLESS,
+  RACE_DUOS,
+  RACE_3V3,
+  RACE_4V4,
+  RACE_SURVIVAL,
+  RACE_ITEMLESS_DUOS,
+  BATTLE_FFA,
+  BATTLE_4V4,
 } = require('../db/models/ranked_lobbies');
 
 const ranks = {
-  [ITEMS]: 'FFA',
-  [ITEMLESS]: 'Itemless',
-  [DUOS]: 'Duos',
-  [_3V3]: '3 vs. 3',
-  [_4V4]: '4 vs. 4',
-  [BATTLE]: 'Battle',
+  [RACE_FFA]: 'FFA',
+  [RACE_ITEMLESS]: 'Itemless',
+  [RACE_DUOS]: 'Duos',
+  [RACE_3V3]: '3 vs. 3',
+  [RACE_4V4]: '4 vs. 4',
+  [RACE_SURVIVAL]: 'Survival',
+  [RACE_ITEMLESS_DUOS]: 'Itemless Duos',
+  [BATTLE_FFA]: 'Battle FFA',
+  [BATTLE_4V4]: 'Battle 4 vs. 4',
 };
 
 function sendMessage(message, rank) {

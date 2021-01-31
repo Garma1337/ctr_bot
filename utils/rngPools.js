@@ -1,7 +1,15 @@
 const getRandomArrayElement = require('./getRandomArrayElement');
 
 const {
-  BATTLE, _4V4, _3V3, DUOS, ITEMLESS, ITEMS,
+  RACE_FFA,
+  RACE_ITEMLESS,
+  RACE_DUOS,
+  RACE_3V3,
+  RACE_4V4,
+  RACE_SURVIVAL,
+  RACE_ITEMLESS_DUOS,
+  BATTLE_FFA,
+  BATTLE_4V4,
 } = require('../db/models/ranked_lobbies');
 
 const {
@@ -14,9 +22,11 @@ async function rngPools(doc) {
   let N;
 
   switch (doc.type) {
-    case ITEMS:
-    case DUOS:
-    case _3V3:
+    case RACE_FFA:
+    case RACE_DUOS:
+    case RACE_3V3:
+    case RACE_SURVIVAL:
+    case RACE_ITEMLESS_DUOS:
       N = 8;
 
       if (!doc.spicyTracks) {
@@ -26,12 +36,12 @@ async function rngPools(doc) {
       }
 
       break;
-    case ITEMLESS:
+    case RACE_ITEMLESS:
       N = 5;
       pools = _4v4Pools;
       pools[3].splice(7, 1); // Remove Megamix Mania
       break;
-    case _4V4:
+    case RACE_4V4:
       N = 10;
 
       if (!doc.spicyTracks) {
@@ -42,8 +52,12 @@ async function rngPools(doc) {
       }
 
       break;
-    case BATTLE:
+    case BATTLE_FFA:
       N = 5;
+      pools = battlePools;
+      break;
+    case BATTLE_4V4:
+      N = 6;
       pools = battlePools;
       break;
     default:

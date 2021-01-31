@@ -4,7 +4,7 @@ const RankedLobby = require('../db/models/ranked_lobbies').default;
 const Player = require('../db/models/player');
 const RankedBan = require('../db/models/ranked_bans');
 const sendAlertMessage = require('../utils/sendAlertMessage');
-const { DUOS } = require('../db/models/ranked_lobbies');
+const { RACE_DUOS } = require('../db/models/ranked_lobbies');
 
 module.exports = {
   name: 'partner_set',
@@ -66,7 +66,7 @@ module.exports = {
       return sendAlertMessage(message.channel, `${author}, ${partner} already has another partner.`, 'warning');
     }
 
-    const lobby = await RankedLobby.findOne({ type: DUOS, players: { $in: [author.id, partner.id] } });
+    const lobby = await RankedLobby.findOne({ type: RACE_DUOS, players: { $in: [author.id, partner.id] } });
     if (lobby) {
       return sendAlertMessage(message.channel, 'You can\'t set a partner while one of you is in a lobby.', 'warning');
     }
@@ -83,7 +83,7 @@ module.exports = {
         confirmMessage.delete();
 
         // eslint-disable-next-line no-shadow
-        const lobby = await RankedLobby.findOne({ type: DUOS, players: author.id });
+        const lobby = await RankedLobby.findOne({ type: RACE_DUOS, players: author.id });
         if (lobby) {
           return sendAlertMessage(message.channel, `Command cancelled: ${author} joined a lobby.`, 'error');
         }

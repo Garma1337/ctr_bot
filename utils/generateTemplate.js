@@ -1,6 +1,15 @@
 const {
-  BATTLE, _4V4, _3V3, DUOS, ITEMLESS, ITEMS,
+  RACE_FFA,
+  RACE_ITEMLESS,
+  RACE_DUOS,
+  RACE_3V3,
+  RACE_4V4,
+  RACE_SURVIVAL,
+  RACE_ITEMLESS_DUOS,
+  BATTLE_FFA,
+  BATTLE_4V4,
 } = require('../db/models/ranked_lobbies');
+
 const Player = require('../db/models/player');
 const Rank = require('../db/models/rank');
 
@@ -31,29 +40,41 @@ async function generateTemplate(players, doc) {
   let numberOfMaps = 0;
 
   switch (doc.type) {
-    case ITEMS:
-      title = 'Match # - Items FFA\n';
+    case RACE_FFA:
+      title = 'Match # - FFA\n';
       numberOfMaps = 8;
       break;
-    case ITEMLESS:
-      title = 'Match # - Itemless FFA\n';
+    case RACE_ITEMLESS:
+      title = 'Match # - Itemless\n';
       numberOfMaps = 5;
       break;
-    case DUOS:
-      title = '#title Match #\n';
+    case RACE_DUOS:
+      title = 'Match # - Duos\n';
       numberOfMaps = 8;
       break;
-    case _3V3:
-      title = '#title Match #\n';
+    case RACE_3V3:
+      title = 'Match # - 3 vs. 3\n';
       numberOfMaps = 8;
       break;
-    case _4V4:
-      title = '#title Match #\n';
+    case RACE_4V4:
+      title = 'Match # - 4 vs. 4\n';
       numberOfMaps = 10;
       break;
-    case BATTLE:
+    case RACE_SURVIVAL:
+      title = 'Match # - Survival\n';
+      numberOfMaps = 8;
+      break;
+    case RACE_ITEMLESS_DUOS:
+      title = 'Match # - Itemless Duos\n';
+      numberOfMaps = 8;
+      break;
+    case BATTLE_FFA:
       title = 'Match # - Battle FFA\n';
       numberOfMaps = 5;
+      break;
+    case BATTLE_4V4:
+      title = 'Match # - Battle 4 vs. 4\n';
+      numberOfMaps = 6;
       break;
     default:
       break;

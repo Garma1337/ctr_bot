@@ -9,17 +9,16 @@ const sendAlertMessage = require('../utils/sendAlertMessage');
 const { regions } = require('../utils/regions');
 
 const {
-  BATTLE, _4V4, _3V3, DUOS, ITEMLESS, ITEMS,
+  RACE_FFA,
+  RACE_ITEMLESS,
+  RACE_DUOS,
+  RACE_3V3,
+  RACE_4V4,
+  RACE_SURVIVAL,
+  RACE_ITEMLESS_DUOS,
+  BATTLE_FFA,
+  BATTLE_4V4,
 } = require('../db/models/ranked_lobbies');
-
-const ranks = {
-  [ITEMS]: 'Items',
-  [ITEMLESS]: 'Itemless',
-  [DUOS]: 'Duos',
-  [_3V3]: '3v3',
-  [_4V4]: '4v4',
-  [BATTLE]: 'Battle',
-};
 
 /**
  * Gets the ranking position for a given mode
@@ -285,24 +284,33 @@ module.exports = {
                 '**Duos**: -',
                 '**3 vs. 3**: -',
                 '**4 vs. 4**: -',
+                '**Survival**: -',
+                '**Itemless Duos**: -',
                 '**Battle**: -',
+                '**Battle 4 vs. 4**: -',
                 '**Super Score**: -',
               ];
             } else {
-              const itemsRanking = getRankingPosition(rank, ranks[ITEMS]);
-              const itemlessRanking = getRankingPosition(rank, ranks[ITEMLESS]);
-              const duosRanking = getRankingPosition(rank, ranks[DUOS]);
-              const _3v3Ranking = getRankingPosition(rank, ranks[_3V3]);
-              const _4v4Ranking = getRankingPosition(rank, ranks[_4V4]);
-              const battleRanking = getRankingPosition(rank, ranks[BATTLE]);
+              const itemsRanking = getRankingPosition(rank, RACE_FFA);
+              const itemlessRanking = getRankingPosition(rank, RACE_ITEMLESS);
+              const duosRanking = getRankingPosition(rank, RACE_DUOS);
+              const _3v3Ranking = getRankingPosition(rank, RACE_3V3);
+              const _4v4Ranking = getRankingPosition(rank, RACE_4V4);
+              const survivalRanking = getRankingPosition(rank, RACE_SURVIVAL);
+              const itemlessDuosRanking = getRankingPosition(rank, RACE_ITEMLESS_DUOS);
+              const battleFFARanking = getRankingPosition(rank, BATTLE_FFA);
+              const battle4v4Ranking = getRankingPosition(rank, BATTLE_4V4);
 
               playerRanks = [
-                `**FFA**: ${itemsRanking !== '-' ? `#${itemsRanking} - ${getRankingRating(rank, ranks[ITEMS])}` : '-'}`,
-                `**Itemless**: ${itemlessRanking !== '-' ? `#${itemlessRanking} - ${getRankingRating(rank, ranks[ITEMLESS])}` : '-'}`,
-                `**Duos**: ${duosRanking !== '-' ? `#${duosRanking} - ${getRankingRating(rank, ranks[DUOS])}` : '-'}`,
-                `**3 vs. 3**: ${_3v3Ranking !== '-' ? `#${_3v3Ranking} - ${getRankingRating(rank, ranks[_3V3])}` : '-'}`,
-                `**4 vs. 4**: ${_4v4Ranking !== '-' ? `#${_4v4Ranking} - ${getRankingRating(rank, ranks[_4V4])}` : '-'}`,
-                `**Battle**: ${battleRanking !== '-' ? `#${battleRanking} - ${getRankingRating(rank, ranks[BATTLE])}` : '-'}`,
+                `**FFA**: ${itemsRanking !== '-' ? `#${itemsRanking} - ${getRankingRating(rank, RACE_FFA)}` : '-'}`,
+                `**Itemless**: ${itemlessRanking !== '-' ? `#${itemlessRanking} - ${getRankingRating(rank, RACE_ITEMLESS)}` : '-'}`,
+                `**Duos**: ${duosRanking !== '-' ? `#${duosRanking} - ${getRankingRating(rank, RACE_DUOS)}` : '-'}`,
+                `**3 vs. 3**: ${_3v3Ranking !== '-' ? `#${_3v3Ranking} - ${getRankingRating(rank, RACE_3V3)}` : '-'}`,
+                `**4 vs. 4**: ${_4v4Ranking !== '-' ? `#${_4v4Ranking} - ${getRankingRating(rank, RACE_4V4)}` : '-'}`,
+                `**Survival**: ${survivalRanking !== '-' ? `#${survivalRanking} - ${getRankingRating(rank, RACE_SURVIVAL)}` : '-'}`,
+                `**Itemless Duos**: ${itemlessDuosRanking !== '-' ? `#${itemlessDuosRanking} - ${getRankingRating(rank, RACE_ITEMLESS_DUOS)}` : '-'}`,
+                `**Battle FFA**: ${battleFFARanking !== '-' ? `#${battleFFARanking} - ${getRankingRating(rank, BATTLE_FFA)}` : '-'}`,
+                `**Battle 4 vs. 4**: ${battle4v4Ranking !== '-' ? `#${battle4v4Ranking} - ${getRankingRating(rank, BATTLE_4V4)}` : '-'}`,
                 `**Super Score**: ${calculateSuperScore(rank, baseRank)}`,
               ];
             }
@@ -316,7 +324,7 @@ module.exports = {
             /* Achievements */
             const achievements = [];
 
-            if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === config.roles.admin_role.toLowerCase())) {
+            if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === config.roles.admin_role.toLowerCase()) || guildMember.hasPermission(['ADMINISTRATOR'])) {
               achievements.push('Administrator');
             }
 
@@ -333,7 +341,7 @@ module.exports = {
             }
 
             if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === config.roles.ctr_staff_role.toLowerCase())) {
-              achievements.push('CTRanking Staff');
+              achievements.push('CrashTeamRanking Staff');
             }
 
             if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === config.roles.donator_role.toLowerCase())) {

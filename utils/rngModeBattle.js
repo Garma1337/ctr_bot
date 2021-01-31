@@ -11,7 +11,7 @@ async function rngModeBattle(tracks) {
     });
   });
 
-  const N = 5;
+  const N = tracks.length;
 
   const randomModes = [];
 

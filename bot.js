@@ -113,7 +113,7 @@ async function reactOnSignUp(message, oldMessage = null) {
       return;
     }
 
-    const signupsChannel = await SignupsChannel.findOne({ guild: message.guild.id, channel: message.channel.id });
+    const signupsChannel = await SignupsChannel.findOne({ guild: message.channel.guild.id, channel: message.channel.id });
     if (!signupsChannel) {
       return;
     }
@@ -194,12 +194,6 @@ ${message.content}`;
   }
 }
 
-client.on('messageUpdate', (oldMessage, message) => {
-  if (!message) return;
-
-  reactOnSignUp(message, oldMessage);
-});
-
 client.on('messageReactionAdd', (reaction) => {
   client.channels.cache.get(reaction.message.channel.id).messages.fetch(reaction.message.id).then((message) => {
     if (message.channel.name.toLowerCase() === config.channels.suggestions_channel.toLowerCase() && !message.author.bot) {
@@ -207,55 +201,54 @@ client.on('messageReactionAdd', (reaction) => {
         const likeReaction = message.reactions.cache.find((r) => r.emoji.name === '👍');
         const dislikeReaction = message.reactions.cache.find((r) => r.emoji.name === '👎');
 
-        let likes = 0;
-        if (likeReaction) {
-          likes = likeReaction.users.cache.size - 1;
-
+        likeReaction.users.fetch({ limit: 100 }).then((likeUsers) => {
+          let likes = likeUsers.size - 1;
           if (likes < 0) {
             likes = 0;
           }
-        }
 
-        let dislikes = 0;
-        if (dislikeReaction) {
-          dislikes = dislikeReaction.users.cache.size - 1;
+          dislikeReaction.users.fetch({ limit: 100 }).then((dislikeUsers) => {
+            let dislikes = dislikeUsers.size - 1;
 
-          if (dislikes < 0) {
-            dislikes = 0;
-          }
-        }
+            if (dislikes < 0) {
+              dislikes = 0;
+            }
 
-        const user = reaction.users.cache.last();
+            reaction.users.fetch({ limit: 100 }).then((reactionUsers) => {
+              const user = reactionUsers.first();
 
-        let avatarUrl;
-        let color;
-        let title;
+              let avatarUrl;
+              let color;
+              let title;
 
-        if (user.avatar) {
-          avatarUrl = `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`;
-        } else {
-          avatarUrl = user.defaultAvatarURL;
-        }
+              if (user.avatar) {
+                avatarUrl = `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`;
+              } else {
+                avatarUrl = user.defaultAvatarURL;
+              }
 
-        if (reaction.emoji.name === '✅') {
-          title = `${user.username}#${user.discriminator} approved a suggestion by ${message.author.username}#${message.author.discriminator}`;
-          color = 7844437;
-        } else {
-          title = `${user.username}#${user.discriminator} denied a suggestion by ${message.author.username}#${message.author.discriminator}`;
-          color = 12458289;
-        }
+              if (reaction.emoji.name === '✅') {
+                title = `${user.username}#${user.discriminator} approved a suggestion by ${message.author.username}#${message.author.discriminator}`;
+                color = 7844437;
+              } else {
+                title = `${user.username}#${user.discriminator} denied a suggestion by ${message.author.username}#${message.author.discriminator}`;
+                color = 12458289;
+              }
 
-        const embed = {
-          color,
-          author: {
-            name: title,
-            icon_url: avatarUrl,
-          },
-          description: `\`\`\`${message.content}\`\`\`\n**Likes**: ${likes}\n**Dislikes**: ${dislikes}`,
-        };
+              const embed = {
+                color,
+                author: {
+                  name: title,
+                  icon_url: avatarUrl,
+                },
+                description: `\`\`\`${message.content}\`\`\`\n**Likes**: ${likes}\n**Dislikes**: ${dislikes}`,
+              };
 
-        message.delete().then(() => {
-          message.channel.send({ embed });
+              message.delete().then(() => {
+                message.channel.send({ embed });
+              });
+            });
+          });
         });
       }
 
@@ -268,13 +261,13 @@ client.on('messageReactionAdd', (reaction) => {
 
     const { reactions } = message;
     reactions.cache.forEach((r) => {
-      if (r.emoji.name === '✅' || r.emoji.name === '❌') {
+      if (['✅', '❌'].includes(r.emoji.name)) {
         r.users.fetch({ limit: 100 }).then((users) => {
           users.forEach((reactionUser) => {
-            if (reactionUser.id !== client.user.id) {
+            if (reactionUser.id !== config.bot_user_id) {
               r.users.remove(reactionUser)
                 .then()
-                .catch(console.log('error removing reaction'));
+                .catch(() => {});
             }
           });
         });
@@ -367,7 +360,9 @@ function checkPings(message) {
 }
 
 client.on('message', (message) => {
-  if (message.author.bot) return;
+  if (!message || message.author.bot) {
+    return;
+  }
 
   if (message.channel.type === 'text') {
     checkPings(message);
@@ -503,11 +498,15 @@ client.on('message', (message) => {
 });
 
 client.on('messageUpdate', (oldMessage, newMessage) => {
-  if (newMessage.channel.name.toLowerCase() === config.channels.suggestions_channel.toLowerCase() && !newMessage.author.bot) {
-    newMessage.reactions.removeAll().then(() => {
-      newMessage.react('👍');
-      newMessage.react('👎');
-    });
+  if (newMessage && newMessage.channel.type === 'text') {
+    reactOnSignUp(newMessage, oldMessage);
+
+    if (newMessage.channel.name.toLowerCase() === config.channels.suggestions_channel.toLowerCase() && !newMessage.author.bot) {
+      newMessage.reactions.removeAll().then(() => {
+        newMessage.react('👍');
+        newMessage.react('👎');
+      });
+    }
   }
 });
 
