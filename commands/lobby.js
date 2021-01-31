@@ -259,6 +259,7 @@ async function getEmbed(doc, players, tracks, roomChannel) {
   }
 
   const iconUrl = getIcon(doc);
+  const creator = await Player.findOne({ discordId: doc.creator });
   const timestamp = doc.started ? doc.startedAt : doc.date;
   const region = regions.find((r) => r.uid === doc.region);
 
@@ -286,7 +287,7 @@ async function getEmbed(doc, players, tracks, roomChannel) {
       },
       {
         name: 'Creator',
-        value: `<@${doc.creator}>`,
+        value: `${creator.flag} <@${doc.creator}>`,
         inline: true,
       },
       {
@@ -334,7 +335,7 @@ async function getEmbed(doc, players, tracks, roomChannel) {
       },
       {
         name: 'Creator',
-        value: `<@${doc.creator}>`,
+        value: `${creator.flag} <@${doc.creator}>`,
         inline: !!lockedRank,
       },
       {
@@ -371,7 +372,7 @@ async function getEmbed(doc, players, tracks, roomChannel) {
   fields = [
     {
       name: 'Creator',
-      value: `<@${doc.creator}>`,
+      value: `${creator.flag} <@${doc.creator}>`,
       inline: true,
     },
   ];
