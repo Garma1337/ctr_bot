@@ -112,7 +112,7 @@ async function rngPools(doc) {
   });
 
   // Survival is only 7 races, so we just remove one Track
-  if (doc.isSurvival()) {
+  if (doc.type === RACE_SURVIVAL) {
     maps.pop();
   }
 
