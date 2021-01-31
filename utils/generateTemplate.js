@@ -62,7 +62,7 @@ async function generateTemplate(players, doc) {
       break;
     case RACE_SURVIVAL:
       title = 'Match # - Survival\n';
-      numberOfMaps = 8;
+      numberOfMaps = 7;
       break;
     case RACE_ITEMLESS_DUOS:
       title = 'Match # - Itemless Duos\n';
