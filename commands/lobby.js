@@ -678,6 +678,10 @@ ${playersText}`,
                     }
 
                     sendAlertMessage(roomChannel, 'Select a scorekeeper. The scorekeeper can react to this message to make others aware that he is keeping scores. If nobody reacts to this message within 5 minutes the lobby will be ended automatically.', 'info').then((m) => {
+                      setTimeout(() => {
+                        sendAlertMessage(roomChannel, 'Don\'t forget to select your scorekeeper because otherwise the lobby will be ended soon.', 'info');
+                      }, 240000);
+
                       m.react('✅');
 
                       const filter = (r, u) => ['✅'].includes(r.emoji.name) && doc.players.includes(u.id);
