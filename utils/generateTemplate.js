@@ -36,7 +36,7 @@ async function generateTemplate(players, doc) {
     playerDocs.push(player);
   }
 
-  let title = '#title ';
+  let title = '';
   let numberOfMaps = 0;
 
   switch (doc.type) {
@@ -49,15 +49,15 @@ async function generateTemplate(players, doc) {
       numberOfMaps = 5;
       break;
     case RACE_DUOS:
-      title += 'Match # - Duos\n';
+      title += '#title Match # - Duos\n';
       numberOfMaps = 8;
       break;
     case RACE_3V3:
-      title += 'Match # - 3 vs. 3\n';
+      title += '#title Match # - 3 vs. 3\n';
       numberOfMaps = 8;
       break;
     case RACE_4V4:
-      title += 'Match # - 4 vs. 4\n';
+      title += '#title Match # - 4 vs. 4\n';
       numberOfMaps = 10;
       break;
     case RACE_SURVIVAL:
@@ -65,7 +65,7 @@ async function generateTemplate(players, doc) {
       numberOfMaps = 7;
       break;
     case RACE_ITEMLESS_DUOS:
-      title += 'Match # - Itemless Duos\n';
+      title += '#title Match # - Itemless Duos\n';
       numberOfMaps = 8;
       break;
     case BATTLE_FFA:
@@ -73,7 +73,7 @@ async function generateTemplate(players, doc) {
       numberOfMaps = 5;
       break;
     case BATTLE_4V4:
-      title += 'Match # - Battle 4 vs. 4\n';
+      title += '#title Match # - Battle 4 vs. 4\n';
       numberOfMaps = 6;
       break;
     default:
