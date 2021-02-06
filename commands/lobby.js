@@ -13,6 +13,7 @@ const {
   RACE_ITEMLESS_DUOS,
   BATTLE_FFA,
   BATTLE_4V4,
+  SURVIVAL_STYLES,
 } = require('../db/models/ranked_lobbies');
 const config = require('../config.js');
 const Cooldown = require('../db/models/cooldowns');
@@ -39,6 +40,7 @@ const sendAlertMessage = require('../utils/sendAlertMessage');
 const sendLogMessage = require('../utils/sendLogMessage');
 const { battleModesFFA, battleModes4v4 } = require('../utils/modes_battle');
 const { regions } = require('../utils/regions');
+const { engineStyles } = require('../utils/engineStyles');
 
 const lock = new AsyncLock();
 
@@ -56,7 +58,7 @@ function getTitle(doc) {
   if (doc.isFFA() && !doc.isBattle()) {
     title += 'FFA';
   } else if (doc.isItemless() && !doc.isDuos()) {
-    title += 'Itemless';
+    title += 'Itemless FFA';
   } else if (doc.isDuos() && !doc.isItemless()) {
     title += 'Duos';
   } else if (doc.is3v3()) {
@@ -262,6 +264,8 @@ async function getEmbed(doc, players, tracks, roomChannel) {
   const creator = await Player.findOne({ discordId: doc.creator });
   const timestamp = doc.started ? doc.startedAt : doc.date;
   const region = regions.find((r) => r.uid === doc.region);
+  const engineRestriction = engineStyles.find((e) => e.uid === doc.engineRestriction);
+  const survivalStyle = SURVIVAL_STYLES.find((s, i) => i === doc.survivalStyle);
 
   if (tracks) {
     fields = [
@@ -295,6 +299,11 @@ async function getEmbed(doc, players, tracks, roomChannel) {
         value: avgRank,
         inline: true,
       },
+      {
+        name: 'Lap Count',
+        value: doc.lapCount,
+        inline: true,
+      },
     ];
 
     if (lockedRank) {
@@ -305,6 +314,22 @@ async function getEmbed(doc, players, tracks, roomChannel) {
       fields.push({
         name: 'Region Lock',
         value: region.description,
+        inline: true,
+      });
+    }
+
+    if (engineRestriction) {
+      fields.push({
+        name: 'Engine Style',
+        value: engineRestriction.icon,
+        inline: true,
+      });
+    }
+
+    if (doc.isSurvival() && survivalStyle) {
+      fields.push({
+        name: 'Survival Style',
+        value: survivalStyle,
         inline: true,
       });
     }
@@ -343,6 +368,11 @@ async function getEmbed(doc, players, tracks, roomChannel) {
         value: avgRank,
         inline: true,
       },
+      {
+        name: 'Lap Count',
+        value: doc.lapCount,
+        inline: true,
+      },
     ];
 
     if (lockedRank) {
@@ -353,6 +383,22 @@ async function getEmbed(doc, players, tracks, roomChannel) {
       fields.push({
         name: 'Region Lock',
         value: region.description,
+        inline: true,
+      });
+    }
+
+    if (engineRestriction) {
+      fields.push({
+        name: 'Engine Style',
+        value: engineRestriction.icon,
+        inline: true,
+      });
+    }
+
+    if (doc.isSurvival() && survivalStyle) {
+      fields.push({
+        name: 'Survival Style',
+        value: survivalStyle,
         inline: true,
       });
     }
@@ -375,6 +421,11 @@ async function getEmbed(doc, players, tracks, roomChannel) {
       value: `${creator.flag} <@${doc.creator}>`,
       inline: true,
     },
+    {
+      name: 'Lap Count',
+      value: doc.lapCount,
+      inline: true,
+    },
   ];
 
   if (lockedRank) {
@@ -385,6 +436,22 @@ async function getEmbed(doc, players, tracks, roomChannel) {
     fields.push({
       name: 'Region Lock',
       value: region.description,
+      inline: true,
+    });
+  }
+
+  if (engineRestriction) {
+    fields.push({
+      name: 'Engine Restriction',
+      value: engineRestriction.icon,
+      inline: true,
+    });
+  }
+
+  if (doc.isSurvival() && survivalStyle) {
+    fields.push({
+      name: 'Survival Style',
+      value: survivalStyle,
       inline: true,
     });
   }
@@ -926,12 +993,6 @@ module.exports = {
     action = action && action.toLowerCase();
     switch (action) {
       case 'new':
-        // eslint-disable-next-line no-case-declarations
-        const creatorsLobby = await RankedLobby.findOne({ creator: message.author.id });
-        if (creatorsLobby && !isStaff) {
-          return sendAlertMessage(message.channel, 'You have already created a lobby.', 'warning');
-        }
-
         const cooldown = await Cooldown.findOne({ guildId: guild.id, discordId: message.author.id, name: 'lobby' });
         if (!isStaff && cooldown && cooldown.count >= 1) {
           const updatedAt = moment(cooldown.updatedAt);
@@ -1052,7 +1113,7 @@ module.exports = {
               if (custom) {
                 sentMessage = await sendAlertMessage(message.channel, `Select region lock. Waiting 1 minute.
 \`\`\`${regions.map((r, i) => `${i + 1} - ${r.description}`).join('\n')}
-4 - No region lock\`\`\``, 'info');
+${regions.length + 1} - No region lock\`\`\``, 'info');
 
                 region = await message.channel.awaitMessages(filter, options).then(async (collected) => {
                   sentMessage.delete();
@@ -1063,6 +1124,76 @@ module.exports = {
                   choice = parseInt(content, 10);
                   if (choice < 4) {
                     return `region${choice}`;
+                  }
+
+                  return null;
+                }).catch(() => {
+                  sentMessage.delete();
+                  return null;
+                });
+              }
+
+              let engineRestriction = null;
+              const engineUids = engineStyles.map((e) => e.uid);
+              if (![BATTLE_FFA, BATTLE_4V4].includes(type) && custom) {
+                sentMessage = await sendAlertMessage(message.channel, `Select an engine restriction. Waiting 1 minute.
+\`\`\`${engineStyles.map((e, i) => `${i + 1} - ${e.name}`).join('\n')}
+${engineStyles.length + 1} - No engine restriction\`\`\``, 'info');
+
+                engineRestriction = await message.channel.awaitMessages(filter, options).then(async (collected) => {
+                  sentMessage.delete();
+
+                  collectedMessage = collected.first();
+                  const { content } = collectedMessage;
+
+                  choice = parseInt(content, 10);
+                  if (choice > 0 && choice < 6) {
+                    return engineUids[choice - 1];
+                  }
+
+                  return null;
+                }).catch(() => {
+                  sentMessage.delete();
+                  return null;
+                });
+              }
+
+              let lapCount = 5;
+              if (![BATTLE_FFA, BATTLE_4V4].includes(type) && custom) {
+                sentMessage = await sendAlertMessage(message.channel, 'Select the number of laps. The number has to be `3`, `5` or `7`. Every other input will be counted as `5`.', 'info');
+
+                lapCount = await message.channel.awaitMessages(filter, options).then(async (collected) => {
+                  sentMessage.delete();
+
+                  collectedMessage = collected.first();
+                  const { content } = collectedMessage;
+
+                  choice = parseInt(content, 10);
+                  if ([3, 5, 7].includes(choice)) {
+                    return choice;
+                  }
+
+                  return 5;
+                }).catch(() => {
+                  sentMessage.delete();
+                  return null;
+                });
+              }
+
+              let survivalStyle = null;
+              if (type === RACE_SURVIVAL && custom) {
+                sentMessage = await sendAlertMessage(message.channel, `Select a play style. Waiting 1 minute.
+\`\`\`${SURVIVAL_STYLES.map((s, i) => `${i + 1} - ${s}`).join('\n')}\`\`\``, 'info');
+
+                survivalStyle = await message.channel.awaitMessages(filter, options).then(async (collected) => {
+                  sentMessage.delete();
+
+                  collectedMessage = collected.first();
+                  const { content } = collectedMessage;
+
+                  choice = parseInt(content, 10) - 1;
+                  if (SURVIVAL_STYLES[choice]) {
+                    return choice;
                   }
 
                   return null;
@@ -1119,7 +1250,7 @@ The value should be in the range of \`${diffMin} to ${diffMax}\`. The value defa
                   const rank = await Rank.findOne({ name: player.psn });
                   playerRank = PLAYER_DEFAULT_RANK;
 
-                  if (rank && rank[type]) {
+                  if (rank && rank[type] && rank[type].rank) {
                     playerRank = rank[type].rank;
                   }
                 }
@@ -1197,6 +1328,7 @@ The value should be in the range of \`${diffMin} to ${diffMax}\`. The value defa
               lobby.allowPremadeTeams = allowPremadeTeams;
               lobby.draftTracks = draftTracks;
               lobby.spicyTracks = spicyTracks;
+              lobby.lapCount = lapCount;
 
               if (region) {
                 lobby.region = region;
@@ -1213,6 +1345,14 @@ The value should be in the range of \`${diffMin} to ${diffMax}\`. The value defa
                 lobby.reservedTeam = reservedTeam;
               }
 
+              if (engineRestriction) {
+                lobby.engineRestriction = engineRestriction;
+              }
+
+              if (survivalStyle) {
+                lobby.survivalStyle = survivalStyle;
+              }
+
               lobby.save().then(async (doc) => {
                 const role = await createAndFindRole(guild, getRoleName(type));
 
@@ -1225,7 +1365,7 @@ The value should be in the range of \`${diffMin} to ${diffMax}\`. The value defa
                     doc.message = m.id;
                     doc.save().then(() => {
                       m.react('✅');
-                      sendAlertMessage(message.channel, `${getTitle(doc)} has been created. Don't forget to press ✅.`, 'success');
+                      sendAlertMessage(message.channel, `${getTitle(doc)} has been created. Don't forget to press ✅`, 'success');
                     });
                   });
               });
@@ -1332,6 +1472,9 @@ The value should be in the range of \`${diffMin} to ${diffMax}\`. The value defa
                       relobby.allowPremadeTeams = doc.allowPremadeTeams;
                       relobby.draftTracks = doc.draftTracks;
                       relobby.reservedTeam = doc.reservedTeam;
+                      relobby.engineRestriction = doc.engineRestriction;
+                      relobby.lapCount = doc.lapCount;
+                      relobby.survivalStyle = doc.survivalStyle;
 
                       deleteLobby(doc, msg);
 

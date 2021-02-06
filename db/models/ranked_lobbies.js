@@ -1,6 +1,9 @@
 const mongoose = require('mongoose');
 
 const { Schema, model } = mongoose;
+const { engineStyles } = require('../../utils/engineStyles');
+
+const engineUids = engineStyles.map((e) => e.uid);
 
 const RACE_FFA = 'race_ffa';
 const RACE_ITEMLESS = 'race_itemless';
@@ -11,6 +14,11 @@ const RACE_SURVIVAL = 'race_survival';
 const RACE_ITEMLESS_DUOS = 'race_itemless_duos';
 const BATTLE_FFA = 'battle_ffa';
 const BATTLE_4V4 = 'battle_4v4';
+const SURVIVAL_STYLES = [
+  'Items only',
+  'Mixed',
+  'Itemless',
+];
 
 module.exports.RACE_FFA = RACE_FFA;
 module.exports.RACE_ITEMLESS = RACE_ITEMLESS;
@@ -21,6 +29,7 @@ module.exports.RACE_SURVIVAL = RACE_SURVIVAL;
 module.exports.RACE_ITEMLESS_DUOS = RACE_ITEMLESS_DUOS;
 module.exports.BATTLE_FFA = BATTLE_FFA;
 module.exports.BATTLE_4V4 = BATTLE_4V4;
+module.exports.SURVIVAL_STYLES = SURVIVAL_STYLES;
 
 const RankedLobby = new Schema({
   date: { type: Date, default: Date.now },
@@ -41,6 +50,9 @@ const RankedLobby = new Schema({
   draftTracks: { type: Boolean, default: false },
   spicyTracks: { type: Boolean, default: false },
   reservedTeam: String,
+  lapCount: { type: Number, enum: [1, 3, 5, 7], default: 5 },
+  engineRestriction: { type: String, enum: engineUids },
+  survivalStyle: { type: Number, enum: [0, 1, 2], default: 1 },
 });
 
 RankedLobby.methods = {
