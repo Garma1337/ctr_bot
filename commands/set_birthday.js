@@ -57,6 +57,8 @@ module.exports = {
           sendAlertMessage(message.channel, `Unable to update player. Error: ${error}`, 'error');
         });
       });
+
+      return;
     }
 
     const currentDate = new Date();
