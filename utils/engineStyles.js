@@ -22,6 +22,6 @@ module.exports.engineStyles = [
   {
     name: 'Speed',
     uid: 'speed',
-    icon: '<:speed:805879737992871966>',
+    icon: '<:speed:806873115975614515>',
   },
 ];
