@@ -51,18 +51,20 @@ module.exports.battlePools = [
     'Skull Rock',
     'Rocky Road',
     'Rampage Ruins',
-    'Temple Turmoil',
   ],
   [
     'Nitro Court',
     'Lab Basement',
-    'Frozen Frenzy',
-    'Magnetic Mayhem',
+    'Temple Turmoil',
   ],
   [
     'Parking Lot',
-    'The North Bowl',
+    'North Bowl',
     'Desert Storm',
+  ],
+  [
+    'Frozen Frenzy',
+    'Magnetic Mayhem',
     'Terra Drome',
   ],
 ];

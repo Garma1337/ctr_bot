@@ -1,6 +1,5 @@
 const axios = require('axios');
 const moment = require('moment');
-const KarmakarKarp = require('karmarkar-karp');
 const { CronJob } = require('cron');
 const AsyncLock = require('async-lock');
 const {
@@ -608,7 +607,23 @@ function startLobby(docId) {
 
                 if ([3, 4].includes(teamSize)) {
                   if (teamCount > 1) {
-                    const result = KarmakarKarp.greedy(sorted, 'rank');
+                    /* custom greedy algorithm */
+                    const result = {
+                      A: [],
+                      B: [],
+                      sumA: 0,
+                      sumB: 0,
+                    };
+
+                    sorted.forEach((s) => {
+                      if ((result.sumA < result.sumB && result.A.length < teamSize) || result.B.length >= teamSize) {
+                        result.A.push(s);
+                        result.sumA += s.rank;
+                      } else {
+                        result.B.push(s);
+                        result.sumB += s.rank;
+                      }
+                    });
 
                     const playersA = result.A.map((a) => a.discordId);
                     const playersB = result.B.map((b) => b.discordId);
@@ -1561,6 +1576,7 @@ The value should be in the range of \`${diffMin} to ${diffMax}\`. The value defa
               users: null,
             };
 
+            // eslint-disable-next-line no-use-before-define
             mogi(reaction, message.author, true);
           });
         });
@@ -1599,6 +1615,33 @@ The value should be in the range of \`${diffMin} to ${diffMax}\`. The value defa
         // eslint-disable-next-line no-use-before-define
         getRanks().then(() => {
           sendAlertMessage(message.channel, 'All ranks have been updated.', 'success');
+        });
+        break;
+      case 'force_add':
+        findLobby(lobbyID, isStaff, message, (doc) => {
+          if (!doc) {
+            return sendAlertMessage(message.channel, 'There is no lobby with this ID.', 'warning');
+          }
+
+          const forced = message.mentions.users.first();
+
+          if (doc.started) {
+            return sendAlertMessage(message.channel, 'You cannot force a user into a lobby that has already been started.', 'warning');
+          }
+
+          if (doc.players.includes(forced.id)) {
+            return sendAlertMessage(message.channel, `<@!${forced.id}> already joined this lobby.`, 'warning');
+          }
+
+          client.guilds.cache.get(doc.guild).channels.cache.get(doc.channel).messages.fetch(doc.message).then((lobbyMessage) => {
+            const reaction = {
+              message: lobbyMessage,
+              users: null,
+            };
+
+            // eslint-disable-next-line no-use-before-define
+            mogi(reaction, forced);
+          });
         });
         break;
       default:
@@ -1686,76 +1729,78 @@ async function restrictSoloQueue(doc, user, soloQueue) {
     }
   }
 
-  if (!player || (!player.discordVc && !player.ps4Vc)) {
-    errors.push('You are unable to use voice chat. Please set your voice chat options first by using `!set_voice_chat`.');
-  }
-
-  let playerLanguages;
-  if (player) {
-    playerLanguages = player.languages || [];
-  } else {
-    playerLanguages = [];
-  }
-
-  if (playerLanguages.length <= 0) {
-    errors.push('You need to set your languages first. You can do so by using `!set_languages`.');
-  }
-
-  if (soloQueue.length >= 1) {
-    const soloQueuers = await Player.find({ discordId: { $in: soloQueue } });
-
-    const referenceLanguages = [];
-    const languages = [];
-    let compatibleLanguage = false;
-
-    // Check all languages of all players,
-    // find those languages that everyone speaks
-    // and check if the player who wants to join speaks any of those languages
-    soloQueuers.forEach((p) => {
-      const soloQueuerLanguages = p.languages || [];
-
-      soloQueuerLanguages.forEach((l) => {
-        if (languages[l]) {
-          languages[l].count += 1;
-        } else {
-          languages[l] = {
-            language: l,
-            count: 1,
-          };
-        }
-
-        if (languages[l].count === soloQueue.length) {
-          referenceLanguages.push(languages[l]);
-
-          referenceLanguages.forEach((r) => {
-            playerLanguages.forEach((pl) => {
-              if (r.language === pl) {
-                compatibleLanguage = true;
-              }
-            });
-          });
-        }
-      });
-    });
-
-    if (!compatibleLanguage) {
-      errors.push('You don\'t speak the same language as the other players. You can set your language by using `!set_languages`.');
+  if (!doc.isBattle()) {
+    if (!player || (!player.discordVc && !player.ps4Vc)) {
+      errors.push('You are unable to use voice chat. Please set your voice chat options first by using `!set_voice_chat`.');
     }
 
-    const soloQueuerVcs = { discord: 0, ps4: 0 };
-    let compatibleVc = false;
+    let playerLanguages;
+    if (player) {
+      playerLanguages = player.languages || [];
+    } else {
+      playerLanguages = [];
+    }
 
-    soloQueuers.forEach((p) => {
-      soloQueuerVcs.discord += p.discordVc ? 1 : 0;
-      soloQueuerVcs.ps4 += p.ps4Vc ? 1 : 0;
+    if (playerLanguages.length <= 0) {
+      errors.push('You need to set your languages first. You can do so by using `!set_languages`.');
+    }
 
-      if ((soloQueuerVcs.discord === soloQueue.length && player.discordVc) || (soloQueuerVcs.ps4 === soloQueue.length && player.ps4Vc)) {
-        compatibleVc = true;
+    if (soloQueue.length >= 1) {
+      const soloQueuers = await Player.find({ discordId: { $in: soloQueue } });
+
+      const referenceLanguages = [];
+      const languages = [];
+      let compatibleLanguage = false;
+
+      // Check all languages of all players,
+      // find those languages that everyone speaks
+      // and check if the player who wants to join speaks any of those languages
+      soloQueuers.forEach((p) => {
+        const soloQueuerLanguages = p.languages || [];
+
+        soloQueuerLanguages.forEach((l) => {
+          if (languages[l]) {
+            languages[l].count += 1;
+          } else {
+            languages[l] = {
+              language: l,
+              count: 1,
+            };
+          }
+
+          if (languages[l].count === soloQueue.length) {
+            referenceLanguages.push(languages[l]);
+
+            referenceLanguages.forEach((r) => {
+              playerLanguages.forEach((pl) => {
+                if (r.language === pl) {
+                  compatibleLanguage = true;
+                }
+              });
+            });
+          }
+        });
+      });
+
+      if (!compatibleLanguage) {
+        errors.push('You don\'t speak the same language as the other players. You can set your language by using `!set_languages`.');
       }
-    });
 
-    if (!compatibleVc) {
-      errors.push('You are unable to use the same voice chat as the other players. You can set your voice chat options by using `!set_voice_chat`.');
+      const soloQueuerVcs = { discord: 0, ps4: 0 };
+      let compatibleVc = false;
+
+      soloQueuers.forEach((p) => {
+        soloQueuerVcs.discord += p.discordVc ? 1 : 0;
+        soloQueuerVcs.ps4 += p.ps4Vc ? 1 : 0;
+
+        if ((soloQueuerVcs.discord === soloQueue.length && player.discordVc) || (soloQueuerVcs.ps4 === soloQueue.length && player.ps4Vc)) {
+          compatibleVc = true;
+        }
+      });
+
+      if (!compatibleVc) {
+        errors.push('You are unable to use the same voice chat as the other players. You can set your voice chat options by using `!set_voice_chat`.');
+      }
     }
   }
 
