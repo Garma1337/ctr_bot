@@ -599,7 +599,7 @@ function startLobby(docId) {
 
                 if ([3, 4].includes(teamSize)) {
                   if (teamCount > 1) {
-                    const result = KarmakarKarp.LDM(sorted, 'rank');
+                    const result = KarmakarKarp.greedy(sorted, 'rank');
 
                     const playersA = result.A.map((a) => a.discordId);
                     const playersB = result.B.map((b) => b.discordId);
@@ -2545,10 +2545,10 @@ async function getRanks() {
     [RACE_DUOS]: 'lxd_JN',
     [RACE_3V3]: 'V8s-GJ',
     [RACE_4V4]: 'oNvm3e',
-    [RACE_SURVIVAL]: 'zFzEJw',
-    [RACE_ITEMLESS_DUOS]: 'zFzEJw',
+    [RACE_SURVIVAL]: 'GlpVTZ',
+    [RACE_ITEMLESS_DUOS]: 'CS5KrM',
     [BATTLE_FFA]: 'ylWyts',
-    [BATTLE_4V4]: 'zFzEJw',
+    [BATTLE_4V4]: '3H76QB',
   };
 
   const ranks = {};
