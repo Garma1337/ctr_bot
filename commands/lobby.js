@@ -1206,7 +1206,7 @@ ${engineStyles.length + 1} - No engine restriction\`\`\``, 'info');
                 });
               }
 
-              let survivalStyle = null;
+              let survivalStyle = 1;
               if (type === RACE_SURVIVAL && custom) {
                 sentMessage = await sendAlertMessage(message.channel, `Select a play style. Waiting 1 minute.
 \`\`\`${SURVIVAL_STYLES.map((s, i) => `${i + 1} - ${s}`).join('\n')}\`\`\``, 'info');
@@ -1222,10 +1222,10 @@ ${engineStyles.length + 1} - No engine restriction\`\`\``, 'info');
                     return choice;
                   }
 
-                  return null;
+                  return 1;
                 }).catch(() => {
                   sentMessage.delete();
-                  return null;
+                  return 1;
                 });
               }
 
@@ -1355,6 +1355,7 @@ The value should be in the range of \`${diffMin} to ${diffMax}\`. The value defa
               lobby.draftTracks = draftTracks;
               lobby.spicyTracks = spicyTracks;
               lobby.lapCount = lapCount;
+              lobby.survivalStyle = survivalStyle;
 
               if (region) {
                 lobby.region = region;
@@ -1373,10 +1374,6 @@ The value should be in the range of \`${diffMin} to ${diffMax}\`. The value defa
 
               if (engineRestriction) {
                 lobby.engineRestriction = engineRestriction;
-              }
-
-              if (survivalStyle) {
-                lobby.survivalStyle = survivalStyle;
               }
 
               lobby.save().then(async (doc) => {
