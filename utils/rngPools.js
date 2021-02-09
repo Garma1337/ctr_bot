@@ -57,7 +57,7 @@ async function rngPools(doc) {
       pools = battlePools;
       break;
     case BATTLE_4V4:
-      N = 6;
+      N = 8;
       pools = battlePools;
       break;
     default:

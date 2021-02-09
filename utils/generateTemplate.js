@@ -74,7 +74,7 @@ async function generateTemplate(players, doc) {
       break;
     case BATTLE_4V4:
       title += '#title Match # - Battle 4 vs. 4\n';
-      numberOfMaps = 6;
+      numberOfMaps = 8;
       break;
     default:
       break;

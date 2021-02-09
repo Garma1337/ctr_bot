@@ -299,12 +299,15 @@ async function getEmbed(doc, players, tracks, roomChannel) {
         value: avgRank,
         inline: true,
       },
-      {
+    ];
+
+    if (doc.isRacing()) {
+      fields.push({
         name: 'Lap Count',
         value: doc.lapCount,
         inline: true,
-      },
-    ];
+      });
+    }
 
     if (lockedRank) {
       fields.push(lockedRank);
@@ -318,7 +321,7 @@ async function getEmbed(doc, players, tracks, roomChannel) {
       });
     }
 
-    if (engineRestriction) {
+    if (doc.isRacing() && engineRestriction) {
       fields.push({
         name: 'Engine Style',
         value: engineRestriction.icon,
@@ -368,12 +371,15 @@ async function getEmbed(doc, players, tracks, roomChannel) {
         value: avgRank,
         inline: true,
       },
-      {
+    ];
+
+    if (doc.isRacing()) {
+      fields.push({
         name: 'Lap Count',
         value: doc.lapCount,
         inline: true,
-      },
-    ];
+      });
+    }
 
     if (lockedRank) {
       fields.splice(2, 0, lockedRank);
@@ -387,7 +393,7 @@ async function getEmbed(doc, players, tracks, roomChannel) {
       });
     }
 
-    if (engineRestriction) {
+    if (doc.isRacing() && engineRestriction) {
       fields.push({
         name: 'Engine Style',
         value: engineRestriction.icon,
@@ -421,12 +427,15 @@ async function getEmbed(doc, players, tracks, roomChannel) {
       value: `${creator.flag} <@${doc.creator}>`,
       inline: true,
     },
-    {
+  ];
+
+  if (doc.isRacing()) {
+    fields.push({
       name: 'Lap Count',
       value: doc.lapCount,
       inline: true,
-    },
-  ];
+    });
+  }
 
   if (lockedRank) {
     fields.push(lockedRank);
@@ -440,7 +449,7 @@ async function getEmbed(doc, players, tracks, roomChannel) {
     });
   }
 
-  if (engineRestriction) {
+  if (doc.isRacing() && engineRestriction) {
     fields.push({
       name: 'Engine Restriction',
       value: engineRestriction.icon,

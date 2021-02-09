@@ -30,7 +30,7 @@ async function rngModeBattle(type, maps) {
       const mode = modes.find((m) => m.name === modeNames[rng]);
       const modeUsageCount = randomModes.filter((rm) => rm === modeNames[rng]).length;
 
-      if (type === BATTLE_FFA || (type === BATTLE_4V4 && modeUsageCount < 2)) {
+      if (type === BATTLE_FFA || (type === BATTLE_4V4 && modeUsageCount < 3)) {
         if (mode.maps.length < 1 || mode.maps.includes(maps[i])) {
           randomModes.push(modeNames[rng]);
 

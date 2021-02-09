@@ -11,6 +11,10 @@ const executeAction = (message, action, clan) => {
   const { channel } = message;
   const user = message.mentions.users.first();
 
+  if (!user) {
+    return sendAlertMessage(message.channel, 'Invalid user.', 'error');
+  }
+
   message.guild.members.fetch(user).then((member) => {
     if (!member) {
       return sendAlertMessage(channel, `Couldn't find the user ${member}.`, 'warning');
