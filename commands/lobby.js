@@ -986,8 +986,10 @@ module.exports = {
       return sendAlertMessage(message.channel, 'You don\'t have the `Ranked Verified` role to execute this command.', 'warning');
     }
 
-    if (!message.channel.parent || (message.channel.parent && message.channel.parent.name.toLowerCase() !== config.channels.ranked_lobbies_category.toLowerCase())) {
-      return sendAlertMessage(message.channel, 'You can use this command only in the `Ranked Lobbies` category.', 'warning');
+    if (!isStaff) {
+      if (!message.channel.parent || (message.channel.parent && message.channel.parent.name.toLowerCase() !== config.channels.ranked_lobbies_category.toLowerCase())) {
+        return sendAlertMessage(message.channel, 'You can use this command only in the `Ranked Lobbies` category.', 'warning');
+      }
     }
 
     action = action && action.toLowerCase();
@@ -1579,6 +1581,17 @@ The value should be in the range of \`${diffMin} to ${diffMax}\`. The value defa
             sendAlertMessage(message.channel, 'Something went wrong when removing you from the lobby.', 'error');
           });
         });
+        break;
+      case 'update_ranks':
+        if (!isStaff) {
+          return sendAlertMessage(message.channel, 'You need to be a staff member to use this command.', 'warning');
+        }
+
+        // eslint-disable-next-line no-use-before-define
+        getRanks().then(() => {
+          sendAlertMessage(message.channel, 'All ranks have been updated.', 'success');
+        });
+        break;
       default:
         break;
     }
