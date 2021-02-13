@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const config = require('../../config');
 
 const { Schema, model } = mongoose;
 const { engineStyles } = require('../../utils/engineStyles');
@@ -19,6 +20,17 @@ const SURVIVAL_STYLES = [
   'Mixed',
   'Itemless',
 ];
+const LEADERBOARDS = {
+  [RACE_FFA]: 'tJLAVi',
+  [RACE_ITEMLESS]: 'xgEBFt',
+  [RACE_DUOS]: 'lxd_JN',
+  [RACE_3V3]: 'V8s-GJ',
+  [RACE_4V4]: 'oNvm3e',
+  [RACE_SURVIVAL]: 'GlpVTZ',
+  [RACE_ITEMLESS_DUOS]: 'CS5KrM',
+  [BATTLE_FFA]: 'ylWyts',
+  [BATTLE_4V4]: '3H76QB',
+};
 
 module.exports.RACE_FFA = RACE_FFA;
 module.exports.RACE_ITEMLESS = RACE_ITEMLESS;
@@ -30,6 +42,7 @@ module.exports.RACE_ITEMLESS_DUOS = RACE_ITEMLESS_DUOS;
 module.exports.BATTLE_FFA = BATTLE_FFA;
 module.exports.BATTLE_4V4 = BATTLE_4V4;
 module.exports.SURVIVAL_STYLES = SURVIVAL_STYLES;
+module.exports.LEADERBOARDS = LEADERBOARDS;
 
 const RankedLobby = new Schema({
   date: { type: Date, default: Date.now },
@@ -53,6 +66,7 @@ const RankedLobby = new Schema({
   lapCount: { type: Number, enum: [1, 3, 5, 7], default: 5 },
   engineRestriction: { type: String, enum: engineUids },
   survivalStyle: { type: Number, enum: [0, 1, 2], default: 1 },
+  ruleset: { type: Number, enum: [0, 1, 2], default: 1 },
 });
 
 RankedLobby.methods = {
@@ -121,6 +135,158 @@ RankedLobby.methods = {
   },
   hasMaximumAllowedPlayers() {
     return this.players.length === this.getMaximumAllowedPlayers();
+  },
+  getTitle() {
+    let title = 'Ranked ';
+
+    if (this.region) {
+      title = 'Region Locked ';
+    }
+
+    if (!this.locked.$isEmpty()) {
+      title += 'Rank Locked ';
+    }
+
+    if (this.isFFA() && !this.isBattle()) {
+      title += 'FFA';
+    } else if (this.isItemless() && !this.isDuos()) {
+      title += 'Itemless FFA';
+    } else if (this.isDuos() && !this.isItemless()) {
+      title += 'Duos';
+    } else if (this.is3v3()) {
+      title += '3 vs. 3';
+    } else if (this.is4v4() && !this.isBattle()) {
+      title += '4 vs. 4';
+    } else if (this.isSurvival()) {
+      title += 'Survival';
+    } else if (this.isDuos() && this.isItemless()) {
+      title += 'Itemless Duos';
+    } else if (this.isFFA() && this.isBattle()) {
+      title += 'Battle FFA';
+    } else if (this.is4v4() && this.isBattle()) {
+      title += 'Battle 4 vs. 4';
+    } else {
+      title += 'Unknown';
+    }
+
+    title += ' Lobby';
+
+    if (this.isRacing()) {
+      if (this.draftTracks) {
+        title += ' (Track Drafting)';
+      } else if (this.spicyTracks) {
+        title += ' (Spicy Tracks)';
+      } else if (this.pools) {
+        title += ' (Track Pools)';
+      } else {
+        title += ' (Full RNG Tracks)';
+      }
+    } else if (this.isBattle()) {
+      if (this.draftTracks) {
+        title += ' (Map Drafting)';
+      } else if (this.spicyTracks) {
+        title += ' (Spicy Maps)';
+      } else if (this.pools) {
+        title += ' (Map Pools)';
+      } else {
+        title += ' (Full RNG Maps)';
+      }
+    }
+
+    return title;
+  },
+  getIcon() {
+    const icons = {
+      [RACE_FFA]: 'https://vignette.wikia.nocookie.net/crashban/images/3/32/CTRNF-BowlingBomb.png',
+      [RACE_ITEMLESS]: 'https://static.wikia.nocookie.net/crashban/images/b/b5/CTRNF-SuperEngine.png',
+      [RACE_DUOS]: 'https://vignette.wikia.nocookie.net/crashban/images/8/83/CTRNF-AkuUka.png',
+      [RACE_3V3]: 'https://static.wikia.nocookie.net/crashban/images/f/fd/CTRNF-TripleMissile.png',
+      [RACE_4V4]: 'https://i.imgur.com/3dvcaur.png',
+      [RACE_SURVIVAL]: 'https://static.wikia.nocookie.net/crashban/images/f/fb/CTRNF-WarpOrb.png',
+      [RACE_ITEMLESS_DUOS]: 'https://i.imgur.com/kTxPvij.png',
+      [BATTLE_FFA]: 'https://vignette.wikia.nocookie.net/crashban/images/9/97/CTRNF-Invisibility.png',
+      [BATTLE_4V4]: 'https://i.imgur.com/aLFsltt.png',
+    };
+
+    return icons[this.type];
+  },
+  getRoleName() {
+    const roleNames = {
+      [RACE_FFA]: config.roles.ranked_ffa_role,
+      [RACE_ITEMLESS]: config.roles.ranked_itemless_role,
+      [RACE_DUOS]: config.roles.ranked_duos_role,
+      [RACE_3V3]: config.roles.ranked_3v3_role,
+      [RACE_4V4]: config.roles.ranked_4v4_role,
+      [RACE_SURVIVAL]: config.roles.ranked_survival_role,
+      [RACE_ITEMLESS_DUOS]: config.roles.ranked_itemless_duos_role,
+      [BATTLE_FFA]: config.roles.ranked_battle_role,
+      [BATTLE_4V4]: config.roles.ranked_battle_4v4_role,
+    };
+
+    return roleNames[this.type];
+  },
+  getColor() {
+    const colors = {
+      [RACE_FFA]: 3707391,
+      [RACE_ITEMLESS]: 16747320,
+      [RACE_DUOS]: 16732141,
+      [RACE_3V3]: 16724019,
+      [RACE_4V4]: 9568066,
+      [RACE_SURVIVAL]: 7204341,
+      [RACE_ITEMLESS_DUOS]: 0,
+      [BATTLE_FFA]: 15856113,
+      [BATTLE_4V4]: 11299064,
+    };
+
+    return colors[this.type];
+  },
+  getLobbyEndCooldown() {
+    const lobbyEndCooldowns = {
+      [RACE_FFA]: 50,
+      [RACE_ITEMLESS]: 30,
+      [RACE_DUOS]: 50,
+      [RACE_3V3]: 50,
+      [RACE_4V4]: 60,
+      [RACE_SURVIVAL]: 50,
+      [RACE_ITEMLESS_DUOS]: 50,
+      [BATTLE_FFA]: 30,
+      [BATTLE_4V4]: 60,
+    };
+
+    return lobbyEndCooldowns[this.type];
+  },
+  getLeaderboard() {
+    return LEADERBOARDS[this.type];
+  },
+  getRemindMinutes() {
+    const remindMinutes = {
+      [RACE_FFA]: [45, 60],
+      [RACE_ITEMLESS]: [30, 45],
+      [RACE_DUOS]: [45, 60],
+      [RACE_3V3]: [45, 60],
+      [RACE_4V4]: [60, 75],
+      [RACE_SURVIVAL]: [45, 60],
+      [RACE_ITEMLESS_DUOS]: [45, 60],
+      [BATTLE_FFA]: [30, 45],
+      [BATTLE_4V4]: [40, 55],
+    };
+
+    return remindMinutes[this.type];
+  },
+  getPingMinutes() {
+    const pingMinutes = {
+      [RACE_FFA]: [75, 90, 105, 120],
+      [RACE_ITEMLESS]: [60, 75, 90, 105, 120],
+      [RACE_DUOS]: [75, 90, 105, 120],
+      [RACE_3V3]: [75, 90, 105, 120],
+      [RACE_4V4]: [90, 105, 120, 135],
+      [RACE_SURVIVAL]: [75, 90, 105, 120],
+      [RACE_ITEMLESS_DUOS]: [75, 90, 105, 120],
+      [BATTLE_FFA]: [60, 75, 90, 105, 120],
+      [BATTLE_4V4]: [70, 85, 100, 115, 130],
+    };
+
+    return pingMinutes[this.type];
   },
 };
 

@@ -338,7 +338,8 @@ function checkPings(message) {
 
   // war & private lobby pings
   const socialRoles = [
-    config.roles.war_search_role.toLowerCase(),
+    config.roles.race_war_search_role.toLowerCase(),
+    config.roles.battle_war_search_role.toLowerCase(),
     config.roles.private_lobby_role.toLowerCase(),
     config.roles.instateam_role.toLowerCase(),
   ];
@@ -576,7 +577,14 @@ client.on('guildMemberRemove', (member) => {
 function checkDeletedPings(message) {
   if (message && message.author && !message.author.bot) {
     const { roles } = message.mentions;
-    if (roles.find((r) => [config.roles.war_search_role.toLowerCase(), config.roles.private_lobby_role.toLowerCase(), config.roles.instateam_role.toLowerCase()].includes(r.name.toLowerCase()))) {
+    const socialRoles = [
+      config.roles.race_war_search_role.toLowerCase(),
+      config.roles.battle_war_search_role.toLowerCase(),
+      config.roles.private_lobby_role.toLowerCase(),
+      config.roles.instateam_role.toLowerCase(),
+    ];
+
+    if (roles.find((r) => socialRoles.includes(r.name.toLowerCase()))) {
       sendAlertMessage(message.channel, 'Don\'t ghost ping this role please.', 'warning', [message.author.id]);
     }
   }

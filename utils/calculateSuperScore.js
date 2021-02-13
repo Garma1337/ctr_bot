@@ -17,35 +17,27 @@ const {
  * @returns {number}
  */
 function calculateSuperScore(rank, baseRank = 500) {
-  const itemsRank = rank[RACE_FFA].rank || baseRank;
-  const itemlessRank = rank[RACE_ITEMLESS].rank || baseRank;
+  const itemsFFARank = rank[RACE_FFA].rank || baseRank;
+  const itemlessFFARank = rank[RACE_ITEMLESS].rank || baseRank;
   const duosRank = rank[RACE_DUOS].rank || baseRank;
   const _3v3Rank = rank[RACE_3V3].rank || baseRank;
   const _4v4Rank = rank[RACE_4V4].rank || baseRank;
-  const survivalRank = rank[RACE_SURVIVAL].rank || baseRank;
   const itemlessDuosRank = rank[RACE_ITEMLESS_DUOS].rank || baseRank;
   const battleFFARank = rank[BATTLE_FFA].rank || baseRank;
   const battle4v4Rank = rank[BATTLE_4V4].rank || baseRank;
 
-  const itemsRankFraction = itemsRank * 0.15;
-  const itemlessRankFraction = itemlessRank * 0.25;
+  const itemsFFARankFraction = itemsFFARank * 0.15;
+  const itemlessFFARankFraction = itemlessFFARank * 0.25;
   const duosRankFraction = duosRank * 0.2;
   const warRankFraction = (_3v3Rank * 0.25 + _4v4Rank * 0.75) * 0.35;
-  const survivalRankFraction = 0; // survivalRank * 0.01;
-  const itemlessDuosRankFraction = 0; // itemlessDuosRank * 0.01;
-  const battleFFARankFraction = battleFFARank * 0.05;
-  const battle4v4RankFraction = 0; // battle4v4Rank * 0.01;
+  const itemlessDuosRankFraction = itemlessDuosRank * 0.05;
+  const battleFFARankFraction = battleFFARank * 0.25;
+  const battle4v4RankFraction = battle4v4Rank * 0.75;
 
-  return Math.floor(
-    itemsRankFraction
-    + itemlessRankFraction
-    + duosRankFraction
-    + warRankFraction
-    + survivalRankFraction
-    + itemlessDuosRankFraction
-    + battleFFARankFraction
-    + battle4v4RankFraction,
-  );
+  const raceFraction = (itemsFFARankFraction + itemlessFFARankFraction + duosRankFraction + warRankFraction + itemlessDuosRankFraction) * 0.8;
+  const battleFraction = (battleFFARankFraction + battle4v4RankFraction) * 0.2;
+
+  return Math.floor(raceFraction + battleFraction);
 }
 
 module.exports = calculateSuperScore;

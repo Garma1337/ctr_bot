@@ -9,7 +9,7 @@ module.exports = {
   aliases: ['unsubmitted_results', 'missing_results', 'duplicate_results'],
   execute(message, args) {
     if (!isStaffMember(message.member) && !message.member.roles.cache.find((r) => r.name.toLowerCase() === config.roles.ranked_updater_role.toLowerCase())) {
-      return sendAlertMessage(message.channel, 'You are not allowed to use this command.');
+      return sendAlertMessage(message.channel, 'You are not allowed to use this command.', 'warning');
     }
 
     const limit = args[0] || 100;
@@ -20,7 +20,7 @@ module.exports = {
 
     const channel = message.guild.channels.cache.find((c) => c.name.toLowerCase() === config.channels.ranked_results_submissions_channel.toLowerCase());
     if (!channel) {
-      return sendAlertMessage(message.channel, `The channel "${config.channels.ranked_results_submissions_channel}" does not exist.`);
+      return sendAlertMessage(message.channel, `The channel "${config.channels.ranked_results_submissions_channel}" does not exist.`, 'warning');
     }
 
     channel.messages.fetch({ limit }).then((messages) => {

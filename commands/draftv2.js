@@ -1,5 +1,4 @@
-const axios = require('axios');
-const config = require('../config');
+const createDraftv2 = require('../utils/createDraftv2');
 const isStaffMember = require('../utils/isStaffMember');
 const sendAlertMessage = require('../utils/sendAlertMessage');
 
@@ -31,50 +30,6 @@ module.exports = {
       return sendAlertMessage(message.channel, 'You should be one of the players doing the draft.', 'warning');
     }
 
-    const post = {
-      mode,
-      teamA: 'Team A',
-      teamB: 'Team B',
-      bans,
-      picks,
-      timeout,
-    };
-
-    sendAlertMessage(message.channel, `Connecting to ${config.draft_tool_url} ...`, 'info');
-
-    axios({
-      url: `${config.draft_tool_url}index.php?action=createDraft`,
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      params: post,
-    }).then((r) => {
-      const { data } = r;
-      const errors = data.errors || [];
-
-      if (errors.length > 0) {
-        return message.channel.send(`\`\`\`${errors.join('\n')}\`\`\``);
-      }
-      const { draftData } = data;
-      const spectatorUrl = `${config.draft_tool_url}index.php?action=show&id=${draftData.id}`;
-      const teamALink = `${spectatorUrl}&accessKey=${draftData.accessKeyA}`;
-      const teamBLink = `${spectatorUrl}&accessKey=${draftData.accessKeyB}`;
-
-      const promise1 = mentionedUsers[0].createDM()
-        .then((dm) => dm.send(`Here is your draft link for the war with ${post.teamB}:\n${teamALink}`))
-        .catch(() => sendAlertMessage(message.channel, `Couldn't send a DM to ${mentions[0]}.\n${post.teamA} link:\n${teamALink}`, 'error'));
-
-      const promise2 = mentionedUsers[1].createDM()
-        .then((dm) => dm.send(`Here is your draft link for the war with ${post.teamA}:\n${teamBLink}`))
-        .catch(() => sendAlertMessage(message.channel, `Couldn't send a DM to ${mentions[1]}.\n${post.teamB} link:\n${teamBLink}`, 'error'));
-
-      Promise.all([promise1, promise2]).then(() => {
-        sendAlertMessage(message.channel, `I've messaged both captains: ${mentionedUsers.join(', ')} with team links.
-Spectator link: <${spectatorUrl}>`, 'success');
-      });
-    }).catch(() => {
-      sendAlertMessage(message.channel, `Could not connect to ${config.draft_tool_url} D:`, 'error');
-    });
+    createDraftv2(message.channel, mode, bans, picks, timeout, mentions);
   },
 };

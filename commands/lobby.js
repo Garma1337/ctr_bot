@@ -13,6 +13,7 @@ const {
   BATTLE_FFA,
   BATTLE_4V4,
   SURVIVAL_STYLES,
+  LEADERBOARDS,
 } = require('../db/models/ranked_lobbies');
 const config = require('../config.js');
 const Cooldown = require('../db/models/cooldowns');
@@ -28,6 +29,7 @@ const Team = require('../db/models/teams');
 const { client } = require('../bot');
 const { parseData } = require('../table');
 const createDraft = require('../utils/createDraft');
+const createDraftv2 = require('../utils/createDraftv2');
 const createAndFindRole = require('../utils/createAndFindRole');
 const generateTemplate = require('../utils/generateTemplate');
 const getConfigValue = require('../utils/getConfigValue');
@@ -38,94 +40,11 @@ const rngModeBattle = require('../utils/rngModeBattle');
 const sendAlertMessage = require('../utils/sendAlertMessage');
 const sendLogMessage = require('../utils/sendLogMessage');
 const { battleModesFFA, battleModes4v4 } = require('../utils/modes_battle');
-const { regions } = require('../utils/regions');
 const { engineStyles } = require('../utils/engineStyles');
+const { regions } = require('../utils/regions');
+const { rulesets } = require('../utils/rulesets');
 
 const lock = new AsyncLock();
-
-function getTitle(doc) {
-  let title = 'Ranked ';
-
-  if (doc.region) {
-    title = 'Region Locked ';
-  }
-
-  if (!doc.locked.$isEmpty()) {
-    title += 'Rank Locked ';
-  }
-
-  if (doc.isFFA() && !doc.isBattle()) {
-    title += 'FFA';
-  } else if (doc.isItemless() && !doc.isDuos()) {
-    title += 'Itemless FFA';
-  } else if (doc.isDuos() && !doc.isItemless()) {
-    title += 'Duos';
-  } else if (doc.is3v3()) {
-    title += '3 vs. 3';
-  } else if (doc.is4v4() && !doc.isBattle()) {
-    title += '4 vs. 4';
-  } else if (doc.isSurvival()) {
-    title += 'Survival';
-  } else if (doc.isDuos() && doc.isItemless()) {
-    title += 'Itemless Duos';
-  } else if (doc.isFFA() && doc.isBattle()) {
-    title += 'Battle FFA';
-  } else if (doc.is4v4() && doc.isBattle()) {
-    title += 'Battle 4 vs. 4';
-  } else {
-    title += 'Unknown';
-  }
-
-  title += ' Lobby';
-
-  if (doc.draftTracks) {
-    title += ' (Track Drafting)';
-  } else if (doc.spicyTracks) {
-    title += ' (Spicy Tracks)';
-  } else if (doc.pools) {
-    title += ' (Track Pools)';
-  } else {
-    title += ' (Full RNG Tracks)';
-  }
-
-  return title;
-}
-
-const icons = {
-  [RACE_FFA]: 'https://vignette.wikia.nocookie.net/crashban/images/3/32/CTRNF-BowlingBomb.png',
-  [RACE_ITEMLESS]: 'https://static.wikia.nocookie.net/crashban/images/b/b5/CTRNF-SuperEngine.png',
-  [RACE_DUOS]: 'https://vignette.wikia.nocookie.net/crashban/images/8/83/CTRNF-AkuUka.png',
-  [RACE_3V3]: 'https://static.wikia.nocookie.net/crashban/images/f/fd/CTRNF-TripleMissile.png',
-  [RACE_4V4]: 'https://i.imgur.com/3dvcaur.png',
-  [RACE_SURVIVAL]: 'https://static.wikia.nocookie.net/crashban/images/f/fb/CTRNF-WarpOrb.png',
-  [RACE_ITEMLESS_DUOS]: 'https://i.imgur.com/kTxPvij.png',
-  [BATTLE_FFA]: 'https://vignette.wikia.nocookie.net/crashban/images/9/97/CTRNF-Invisibility.png',
-  [BATTLE_4V4]: 'https://i.imgur.com/aLFsltt.png',
-};
-
-const roleNames = {
-  [RACE_FFA]: config.roles.ranked_ffa_role,
-  [RACE_ITEMLESS]: config.roles.ranked_itemless_role,
-  [RACE_DUOS]: config.roles.ranked_duos_role,
-  [RACE_3V3]: config.roles.ranked_3v3_role,
-  [RACE_4V4]: config.roles.ranked_4v4_role,
-  [RACE_SURVIVAL]: config.roles.ranked_survival_role,
-  [RACE_ITEMLESS_DUOS]: config.roles.ranked_itemless_duos_role,
-  [BATTLE_FFA]: config.roles.ranked_battle_role,
-  [BATTLE_4V4]: config.roles.ranked_battle_4v4_role,
-};
-
-const embedColors = {
-  [RACE_FFA]: 3707391,
-  [RACE_ITEMLESS]: 16747320,
-  [RACE_DUOS]: 16732141,
-  [RACE_3V3]: 16724019,
-  [RACE_4V4]: 9568066,
-  [RACE_SURVIVAL]: 7204341,
-  [RACE_ITEMLESS_DUOS]: 0,
-  [BATTLE_FFA]: 15856113,
-  [BATTLE_4V4]: 11299064,
-};
 
 const TRACK_OPTION_RNG = 'Full RNG';
 const TRACK_OPTION_POOLS = 'Pools';
@@ -138,29 +57,10 @@ const NAT1 = 'NAT 1';
 const NAT2O = 'NAT 2 Open';
 const NAT3 = 'NAT 3';
 const FORCE_START_COOLDOWN = 5;
-const LOBBY_END_COOLDOWNS = {
-  [RACE_FFA]: 50,
-  [RACE_ITEMLESS]: 30,
-  [RACE_DUOS]: 50,
-  [RACE_3V3]: 50,
-  [RACE_4V4]: 60,
-  [RACE_SURVIVAL]: 50,
-  [RACE_ITEMLESS_DUOS]: 50,
-  [BATTLE_FFA]: 30,
-  [BATTLE_4V4]: 40,
-};
-
-function getIcon(doc) {
-  return icons[doc.type];
-}
-
-function getRoleName(type) {
-  return roleNames[type];
-}
 
 function getFooter(doc) {
   return {
-    icon_url: getIcon(doc),
+    icon_url: doc.getIcon(),
     text: `id: ${doc._id}`,
   };
 }
@@ -259,12 +159,13 @@ async function getEmbed(doc, players, tracks, roomChannel) {
     };
   }
 
-  const iconUrl = getIcon(doc);
+  const iconUrl = doc.getIcon();
   const creator = await Player.findOne({ discordId: doc.creator });
   const timestamp = doc.started ? doc.startedAt : doc.date;
   const region = regions.find((r) => r.uid === doc.region);
   const engineRestriction = engineStyles.find((e) => e.uid === doc.engineRestriction);
   const survivalStyle = SURVIVAL_STYLES.find((s, i) => i === doc.survivalStyle);
+  const ruleset = rulesets.find((r, i) => i === doc.ruleset);
 
   if (tracks) {
     fields = [
@@ -302,6 +203,12 @@ async function getEmbed(doc, players, tracks, roomChannel) {
 
     if (doc.isRacing()) {
       fields.push({
+        name: 'Ruleset',
+        value: ruleset.name,
+        inline: true,
+      });
+
+      fields.push({
         name: 'Lap Count',
         value: doc.lapCount,
         inline: true,
@@ -337,9 +244,9 @@ async function getEmbed(doc, players, tracks, roomChannel) {
     }
 
     return {
-      color: embedColors[doc.type],
+      color: doc.getColor(),
       author: {
-        name: `${getTitle(doc)} has started`,
+        name: `${doc.getTitle()} has started`,
         icon_url: iconUrl,
       },
       fields,
@@ -373,6 +280,12 @@ async function getEmbed(doc, players, tracks, roomChannel) {
     ];
 
     if (doc.isRacing()) {
+      fields.push({
+        name: 'Ruleset',
+        value: ruleset.name,
+        inline: true,
+      });
+
       fields.push({
         name: 'Lap Count',
         value: doc.lapCount,
@@ -409,9 +322,9 @@ async function getEmbed(doc, players, tracks, roomChannel) {
     }
 
     return {
-      color: embedColors[doc.type],
+      color: doc.getColor(),
       author: {
-        name: `Gathering ${getTitle(doc)}`,
+        name: `Gathering ${doc.getTitle()}`,
         icon_url: iconUrl,
       },
       fields,
@@ -429,6 +342,12 @@ async function getEmbed(doc, players, tracks, roomChannel) {
   ];
 
   if (doc.isRacing()) {
+    fields.push({
+      name: 'Ruleset',
+      value: ruleset.name,
+      inline: true,
+    });
+
     fields.push({
       name: 'Lap Count',
       value: doc.lapCount,
@@ -450,7 +369,7 @@ async function getEmbed(doc, players, tracks, roomChannel) {
 
   if (doc.isRacing() && engineRestriction) {
     fields.push({
-      name: 'Engine Restriction',
+      name: 'Engine Style',
       value: engineRestriction.icon,
       inline: true,
     });
@@ -465,9 +384,9 @@ async function getEmbed(doc, players, tracks, roomChannel) {
   }
 
   return {
-    color: embedColors[doc.type],
+    color: doc.getColor(),
     author: {
-      name: `${getTitle(doc)}`,
+      name: `${doc.getTitle()}`,
       icon_url: iconUrl,
     },
     description: 'React with ✅ to participate',
@@ -478,22 +397,21 @@ async function getEmbed(doc, players, tracks, roomChannel) {
 }
 
 function findRoom(lobby) {
-  // todo findOneAndUpdate
   return Room.findOne({ lobby: null, guild: lobby.guild }).sort({ number: 1 }).then((doc) => {
     if (!doc) {
       return Sequence.findOneAndUpdate(
         { guild: lobby.guild, name: 'rooms' },
         { $inc: { number: 1 } },
         { upsert: true, new: true },
-      )
-        .then((seq) => {
-          const room = new Room();
-          room.lobby = lobby.id;
-          room.guild = lobby.guild;
-          room.number = seq.number;
-          return room.save();
-        });
+      ).then((seq) => {
+        const room = new Room();
+        room.lobby = lobby.id;
+        room.guild = lobby.guild;
+        room.number = seq.number;
+        return room.save();
+      });
     }
+
     doc.lobby = lobby.id;
     return doc.save();
   });
@@ -682,13 +600,13 @@ function startLobby(docId) {
             }
 
             roomChannel.send({
-              content: `**The ${getTitle(doc)} has started**
+              content: `**The ${doc.getTitle()} has started**
 Your room is ${roomChannel}.
 Use \`!lobby end\` when your match is done.
 ${playersText}`,
               embed: {
-                color: embedColors[doc.type],
-                title: `The ${getTitle(doc)} has started`,
+                color: doc.getColor(),
+                title: `The ${doc.getTitle()} has started`,
                 fields,
               },
             }).then((m) => {
@@ -698,7 +616,7 @@ ${playersText}`,
 
                 roomChannel.send({
                   embed: {
-                    color: embedColors[doc.type],
+                    color: doc.getColor(),
                     title: 'Scores Template',
                     description: `\`\`\`${template}\`\`\`
   [Open template on gb.hlorenzi.com](${templateUrl})`,
@@ -734,7 +652,7 @@ ${playersText}`,
 
                     roomChannel.send({
                       embed: {
-                        color: embedColors[doc.type],
+                        color: doc.getColor(),
                         description: '**Global Settings**\nTeams: None (4 for Steal The Bacon)\nAI: Disabled',
                         author: {
                           name: 'Battle Mode Settings',
@@ -761,10 +679,18 @@ ${playersText}`,
                       const captainBPromise = client.guilds.cache.get(doc.guild).members.fetch(getRandomArrayElement(doc.teamList[1]));
 
                       Promise.all([captainAPromise, captainBPromise]).then((captains) => {
-                        if (doc.is3v3()) {
-                          createDraft(roomChannel, '1', teams, captains);
-                        } else {
-                          createDraft(roomChannel, '0', teams, captains);
+                        switch (doc.type) {
+                          case RACE_3V3:
+                            createDraft(roomChannel, '1', teams, captains);
+                            break;
+                          case RACE_4V4:
+                            createDraft(roomChannel, '0', teams, captains);
+                            break;
+                          case BATTLE_4V4:
+                            createDraftv2(roomChannel, 2, 0, 4, 30, captains);
+                            break;
+                          default:
+                            break;
                         }
                       });
                     }
@@ -1094,7 +1020,7 @@ module.exports = {
                 trackOptions.push(TRACK_OPTION_SPICY);
               }
 
-              if ([RACE_3V3, RACE_4V4].includes(type)) {
+              if ([RACE_3V3, RACE_4V4, BATTLE_4V4].includes(type)) {
                 trackOptions.push(TRACK_OPTION_DRAFT);
               }
 
@@ -1133,6 +1059,26 @@ module.exports = {
                   pools = false;
                   draftTracks = true;
                 }
+              }
+
+              let ruleset = 1;
+              if (![BATTLE_FFA, BATTLE_4V4].includes(type) && custom) {
+                sentMessage = await sendAlertMessage(message.channel, `Select the ruleset. Waiting 1 minute.
+\`\`\`${rulesets.map((r, i) => `${i + 1} - ${r.name}`).join('\n')}\`\`\``, 'info');
+
+                ruleset = await message.channel.awaitMessages(filter, options).then(async (collected) => {
+                  sentMessage.delete();
+
+                  collectedMessage = collected.first();
+                  const { content } = collectedMessage;
+
+                  choice = parseInt(content, 10) - 1;
+                  if (rulesets[choice]) {
+                    return choice;
+                  }
+
+                  return 1;
+                });
               }
 
               let region = null;
@@ -1202,7 +1148,7 @@ ${engineStyles.length + 1} - No engine restriction\`\`\``, 'info');
                   return 5;
                 }).catch(() => {
                   sentMessage.delete();
-                  return null;
+                  return 5;
                 });
               }
 
@@ -1356,6 +1302,7 @@ The value should be in the range of \`${diffMin} to ${diffMax}\`. The value defa
               lobby.spicyTracks = spicyTracks;
               lobby.lapCount = lapCount;
               lobby.survivalStyle = survivalStyle;
+              lobby.ruleset = ruleset;
 
               if (region) {
                 lobby.region = region;
@@ -1377,7 +1324,7 @@ The value should be in the range of \`${diffMin} to ${diffMax}\`. The value defa
               }
 
               lobby.save().then(async (doc) => {
-                const role = await createAndFindRole(guild, getRoleName(type));
+                const role = await createAndFindRole(guild, doc.getRoleName());
 
                 guild.channels.cache.find((c) => c.name === config.channels.ranked_lobbies_channel)
                   .send({
@@ -1388,7 +1335,7 @@ The value should be in the range of \`${diffMin} to ${diffMax}\`. The value defa
                     doc.message = m.id;
                     doc.save().then(() => {
                       m.react('✅');
-                      sendAlertMessage(message.channel, `${getTitle(doc)} has been created. Don't forget to press ✅`, 'success');
+                      sendAlertMessage(message.channel, `${doc.getTitle()} has been created. Don't forget to press ✅`, 'success');
                     });
                   });
               });
@@ -1415,7 +1362,7 @@ The value should be in the range of \`${diffMin} to ${diffMax}\`. The value defa
         findLobby(lobbyID, isStaff, message, (doc, msg) => {
           if (doc.started) {
             const minutes = diffMinutes(new Date(), doc.startedAt);
-            const confirmationMinutes = LOBBY_END_COOLDOWNS[doc.type];
+            const confirmationMinutes = doc.getLobbyEndCooldown();
             if (minutes < confirmationMinutes) {
               Room.findOne({ lobby: doc.id }).then((room) => {
                 if (!room) {
@@ -1458,7 +1405,7 @@ The value should be in the range of \`${diffMin} to ${diffMax}\`. The value defa
         findLobby(lobbyID, isStaff, message, (doc, msg) => {
           if (doc.started) {
             const minutes = diffMinutes(new Date(), doc.startedAt);
-            const confirmationMinutes = LOBBY_END_COOLDOWNS[doc.type];
+            const confirmationMinutes = doc.getLobbyEndCooldown();
 
             if (minutes >= confirmationMinutes) {
               Room.findOne({ lobby: doc.id }).then((room) => {
@@ -1498,18 +1445,19 @@ The value should be in the range of \`${diffMin} to ${diffMax}\`. The value defa
                       relobby.engineRestriction = doc.engineRestriction;
                       relobby.lapCount = doc.lapCount;
                       relobby.survivalStyle = doc.survivalStyle;
+                      relobby.ruleset = doc.ruleset;
 
                       deleteLobby(doc, msg);
 
                       relobby.save().then(async (savedRelobby) => {
-                        const role = await createAndFindRole(guild, getRoleName(relobby.type));
+                        const role = await createAndFindRole(guild, savedRelobby.getRoleName());
                         const channel = guild.channels.cache.find((c) => c.name === config.channels.ranked_lobbies_channel);
                         channel.send({ content: role, embed: await getEmbed(savedRelobby) }).then((m) => {
                           savedRelobby.channel = m.channel.id;
                           savedRelobby.message = m.id;
                           savedRelobby.save().then((document) => {
                             m.react('✅');
-                            sendAlertMessage(message.channel, `${getTitle(savedRelobby)} has been recreated.`, 'success');
+                            sendAlertMessage(message.channel, `${savedRelobby.getTitle()} has been recreated.`, 'success');
 
                             startLobby(document._id);
                           });
@@ -1726,7 +1674,7 @@ async function restrictSoloQueue(doc, user, soloQueue) {
     }
   }
 
-  if (!doc.isBattle()) {
+  if (!doc.isBattle() && !doc.isItemless()) {
     if (!player || (!player.discordVc && !player.ps4Vc)) {
       errors.push('You are unable to use voice chat. Please set your voice chat options first by using `!set_voice_chat`.');
     }
@@ -2327,33 +2275,9 @@ const checkOldLobbies = () => {
     docs.forEach((doc) => {
       const minutes = diffMinutes(new Date(), doc.startedAt);
 
-      const remindMinutes = {
-        [RACE_FFA]: [45, 60],
-        [RACE_ITEMLESS]: [30, 45],
-        [RACE_DUOS]: [45, 60],
-        [RACE_3V3]: [45, 60],
-        [RACE_4V4]: [60, 75],
-        [RACE_SURVIVAL]: [45, 60],
-        [RACE_ITEMLESS_DUOS]: [45, 60],
-        [BATTLE_FFA]: [30, 45],
-        [BATTLE_4V4]: [40, 55],
-      };
-
-      const pingMinutes = {
-        [RACE_FFA]: [75, 90, 105, 120],
-        [RACE_ITEMLESS]: [60, 75, 90, 105, 120],
-        [RACE_DUOS]: [75, 90, 105, 120],
-        [RACE_3V3]: [75, 90, 105, 120],
-        [RACE_4V4]: [90, 105, 120, 135],
-        [RACE_SURVIVAL]: [75, 90, 105, 120],
-        [RACE_ITEMLESS_DUOS]: [75, 90, 105, 120],
-        [BATTLE_FFA]: [60, 75, 90, 105, 120],
-        [BATTLE_4V4]: [70, 85, 100, 115, 130],
-      };
-
-      if (remindMinutes[doc.type].includes(minutes)) {
+      if (doc.getRemindMinutes().includes(minutes)) {
         findRoomAndSendMessage(doc);
-      } else if (pingMinutes[doc.type].includes(minutes)) {
+      } else if (doc.getPingMinutes().includes(minutes)) {
         findRoomAndSendMessage(doc, true);
       }
     });
@@ -2566,8 +2490,6 @@ client.on('message', (message) => {
 });
 
 client.on('ready', () => {
-  // todo fetch downtime reactions?
-
   RankedLobby.find().then((docs) => {
     docs.forEach(async (doc) => {
       const guild = client.guilds.cache.get(doc.guild);
@@ -2603,22 +2525,10 @@ function getBoardRequestData(teamId) {
 async function getRanks() {
   const url = 'https://gb.hlorenzi.com/api/v1/graphql';
 
-  const types = {
-    [RACE_FFA]: 'tJLAVi',
-    [RACE_ITEMLESS]: 'xgEBFt',
-    [RACE_DUOS]: 'lxd_JN',
-    [RACE_3V3]: 'V8s-GJ',
-    [RACE_4V4]: 'oNvm3e',
-    [RACE_SURVIVAL]: 'GlpVTZ',
-    [RACE_ITEMLESS_DUOS]: 'CS5KrM',
-    [BATTLE_FFA]: 'ylWyts',
-    [BATTLE_4V4]: '3H76QB',
-  };
-
   const ranks = {};
 
-  for (const key in types) {
-    const id = types[key];
+  for (const key in LEADERBOARDS) {
+    const id = LEADERBOARDS[key];
     const response = await axios.post(url, getBoardRequestData(id), { headers: { 'Content-Type': 'text/plain' } });
     const { players } = response.data.data.team;
     players.forEach((p) => {

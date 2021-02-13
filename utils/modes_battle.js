@@ -96,7 +96,7 @@ module.exports.battleModes4v4 = [
       settings: [
         'Game Mode: Last Kart Driving',
         'Life Limit: 9 lives',
-        'Time Limit: 9 minutes',
+        'Time Limit: 6 minutes',
         'Power-ups: **DISABLED**: Shield, Triple Missile and Triple Bomb',
       ],
       maps: [],
@@ -106,7 +106,7 @@ module.exports.battleModes4v4 = [
       settings: [
         'Game Mode: Last Kart Driving',
         'Life Limit: 9 lives',
-        'Time Limit: 9 minutes',
+        'Time Limit: 6 minutes',
         'Power-ups: **DISABLED**: Beaker, Shield, Mask, Invisibility, Super Engine, Triple Missile and Triple Bomb',
       ],
       maps: [],
@@ -116,8 +116,34 @@ module.exports.battleModes4v4 = [
       settings: [
         'Game Mode: Last Kart Driving',
         'Life Limit: 9 lives',
-        'Time Limit: 9 minutes',
+        'Time Limit: 6 minutes',
         'Power-ups: **ENABLED ONLY**: Single Bomb and Turbo Canister',
+      ],
+      maps: [],
+    },
+    {
+      name: 'Minefield',
+      settings: [
+        'Game Mode: Last Kart Driving',
+        'Life Limit: 9 lives',
+        'Time Limit: 6 minutes',
+        'Power-ups: **ENABLED ONLY**: Beaker, TNT, Turbo Canister',
+      ],
+      maps: [
+        'Nitro Court',
+        'Parking Lot',
+        'Lab Basement',
+        'Frozen Frenzy',
+      ],
+    },
+  ],
+  [
+    {
+      name: 'Crystal Grab',
+      settings: [
+        'Game Mode: Crystal Grab',
+        'Time Limit: 6 minutes',
+        'Power-ups: **DISABLED**: Shield, Mask, Invisibility, Triple Missile and Triple Bomb',
       ],
       maps: [],
     },

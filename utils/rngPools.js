@@ -31,6 +31,10 @@ async function rngPools(doc) {
 
       if (!doc.spicyTracks) {
         pools = itemPools;
+
+        if (doc.isSurvival()) {
+          pools[1].push('Spyro Circuit'); // Make Spyro Circuit appear in Survival
+        }
       } else {
         pools = [getRandomArrayElement(spicyPools)];
       }

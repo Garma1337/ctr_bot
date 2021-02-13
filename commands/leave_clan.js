@@ -2,7 +2,7 @@ const Clan = require('../db/models/clans').default;
 const sendAlertMessage = require('../utils/sendAlertMessage');
 
 const executeAction = (message, clan) => {
-  message.channel.send(`Are you sure you want to leave "${clan.shortName}"? (yes / no)`).then(() => {
+  sendAlertMessage(message.channel, `Are you sure you want to leave "${clan.shortName}"? (yes / no)`, 'info').then(() => {
     message.channel.awaitMessages((m) => m.author.id === message.author.id, { max: 1, time: 60000, errors: ['time'] }).then((collected) => {
       const { content } = collected.first();
 
