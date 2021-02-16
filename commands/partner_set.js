@@ -1,10 +1,10 @@
 const config = require('../config');
-const Duo = require('../db/models/duos');
-const RankedLobby = require('../db/models/ranked_lobbies').default;
-const Player = require('../db/models/player');
-const RankedBan = require('../db/models/ranked_bans');
+const { Duo } = require('../db/models/duo');
+const { RankedLobby } = require('../db/models/ranked_lobby');
+const { Player } = require('../db/models/player');
+const { RankedBan } = require('../db/models/ranked_ban');
 const sendAlertMessage = require('../utils/sendAlertMessage');
-const { RACE_DUOS } = require('../db/models/ranked_lobbies');
+const { RACE_DUOS } = require('../db/models/ranked_lobby');
 
 module.exports = {
   name: 'partner_set',

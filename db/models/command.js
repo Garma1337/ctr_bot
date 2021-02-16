@@ -7,4 +7,4 @@ const Command = new Schema({
   message: String,
 });
 
-module.exports = model('commands', Command);
+module.exports.Command = model('commands', Command);

@@ -19,18 +19,18 @@ const {
   TRACK_OPTION_SPICY,
   TRACK_OPTION_DRAFT,
   TRACK_OPTION_IRON_MAN,
-} = require('../db/models/ranked_lobbies');
+} = require('../db/models/ranked_lobby');
 const config = require('../config.js');
-const Cooldown = require('../db/models/cooldowns');
-const Counter = require('../db/models/counters');
-const Duo = require('../db/models/duos');
-const Player = require('../db/models/player');
-const Rank = require('../db/models/rank');
-const RankedBan = require('../db/models/ranked_bans');
-const RankedLobby = require('../db/models/ranked_lobbies').default;
-const Room = require('../db/models/rooms');
-const Sequence = require('../db/models/sequences');
-const Team = require('../db/models/teams');
+const { Cooldown } = require('../db/models/cooldown');
+const { Counter } = require('../db/models/counter');
+const { Duo } = require('../db/models/duo');
+const { Player } = require('../db/models/player');
+const { Rank } = require('../db/models/rank');
+const { RankedBan } = require('../db/models/ranked_ban');
+const { RankedLobby } = require('../db/models/ranked_lobby');
+const { Room } = require('../db/models/room');
+const { Sequence } = require('../db/models/sequence');
+const { Team } = require('../db/models/team');
 const { client } = require('../bot');
 const createDraft = require('../utils/createDraft');
 const createDraftv2 = require('../utils/createDraftv2');
@@ -1039,7 +1039,7 @@ module.exports = {
 
               const trackOptions = lobby.getTrackOptions();
 
-              let trackOption;
+              let trackOption = ![RACE_FFA, BATTLE_FFA].includes(type) ? TRACK_OPTION_POOLS : TRACK_OPTION_RNG;
               let pools = ![RACE_FFA, BATTLE_FFA].includes(type);
               let draftTracks = false;
               let spicyTracks = false;
@@ -1048,7 +1048,7 @@ module.exports = {
                 sentMessage = await sendAlertMessage(message.channel, `Select track option. Waiting 1 minute.
 \`\`\`${trackOptions.map((t, i) => `${i + 1} - ${t}`).join('\n')}\`\`\``, 'info');
 
-                trackOption = await message.channel.awaitMessages(filter, options).then(async (collected) => {
+                const trackOptionSelection = await message.channel.awaitMessages(filter, options).then(async (collected) => {
                   sentMessage.delete();
 
                   collectedMessage = collected.first();
@@ -1060,7 +1060,7 @@ module.exports = {
                   return 1;
                 });
 
-                const index = trackOption - 1;
+                const index = trackOptionSelection - 1;
 
                 if (trackOptions[index] === TRACK_OPTION_RNG) {
                   pools = false;
@@ -1075,6 +1075,8 @@ module.exports = {
                 } else if (trackOptions[index] === TRACK_OPTION_IRON_MAN) {
                   pools = false;
                 }
+
+                trackOption = trackOptions[index];
               }
 
               lobby.pools = pools;
@@ -1082,7 +1084,8 @@ module.exports = {
               lobby.spicyTracks = spicyTracks;
 
               let trackCount = (trackOption === TRACK_OPTION_IRON_MAN ? lobby.getMaxTrackCount() : lobby.getDefaultTrackCount());
-              if (trackOption !== TRACK_OPTION_IRON_MAN && !draftTracks && !spicyTracks && ![RACE_SURVIVAL, BATTLE_FFA, BATTLE_4V4].includes(type) && custom) {
+
+              if (trackOption !== TRACK_OPTION_IRON_MAN && !draftTracks && !spicyTracks && type !== RACE_SURVIVAL && custom) {
                 const text = lobby.getTrackCountOptions().map((o) => `\`${o}\``).join(', ');
                 sentMessage = await sendAlertMessage(message.channel, `Select the number of tracks. The number has to be any of ${text}.`, 'info');
 
@@ -1299,7 +1302,7 @@ ${engineStyles.length + 1} - No engine restriction\`\`\``, 'info');
                 lobby.reservedTeam = reservedTeam;
               }
 
-              let ranked = true;
+              let ranked = lobby.canBeRanked();
               if (custom && lobby.canBeRanked()) {
                 sentMessage = await sendAlertMessage(message.channel, 'Do you want to create a ranked lobby? (yes / no)', 'info');
                 ranked = await message.channel.awaitMessages(filter, options).then(async (collected) => {

@@ -1,4 +1,4 @@
-const Player = require('../db/models/player');
+const { Player } = require('../db/models/player');
 const { consoles } = require('../db/consoles');
 const { regions } = require('../db/regions');
 const { serverLanguages } = require('../db/serverLanguages');

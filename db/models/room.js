@@ -8,4 +8,4 @@ const Room = new Schema({
   lobby: { type: Schema.Types.ObjectId, ref: 'lobbies', default: null },
 });
 
-module.exports = model('rooms', Room);
+module.exports.Room = model('room', Room);

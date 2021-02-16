@@ -1,7 +1,7 @@
-const Duo = require('../db/models/duos');
-const RankedLobby = require('../db/models/ranked_lobbies').default;
+const { Duo } = require('../db/models/duo');
+const { RankedLobby } = require('../db/models/ranked_lobby');
 const sendAlertMessage = require('../utils/sendAlertMessage');
-const { DUOS } = require('../db/models/ranked_lobbies');
+const { RACE_DUOS } = require('../db/models/ranked_lobby');
 
 module.exports = {
   name: 'partner_unset',
@@ -14,9 +14,10 @@ module.exports = {
     const authorSavedDuo = await Duo.findOne({ guild: guild.id, $or: [{ discord1: author.id }, { discord2: author.id }] });
     if (authorSavedDuo) {
       const lobby = await RankedLobby.findOne({
-        type: DUOS,
+        type: RACE_DUOS,
         players: { $in: [authorSavedDuo.discord1, authorSavedDuo.discord2] },
       });
+
       if (lobby) {
         return sendAlertMessage(message.channel, 'You can\'t unset your partner while being in the lobby with them.', 'warning');
       }

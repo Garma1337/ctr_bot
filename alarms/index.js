@@ -1,10 +1,10 @@
 const { CronJob } = require('cron');
-const sendLogMessage = require('../utils/sendLogMessage');
-const Schedule = require('../db/models/scheduled_messages');
-const SignupsChannel = require('../db/models/signups_channels');
+const { ScheduledMessage } = require('../db/models/scheduled_message');
+const { SignupsChannel } = require('../db/models/signups_channel');
 const { parsers } = require('../utils/SignupParsers');
-const getSignupsData = require('../utils/getSignupsData');
 const formatRolePings = require('../utils/formatRolePings');
+const getSignupsData = require('../utils/getSignupsData');
+const sendLogMessage = require('../utils/sendLogMessage');
 
 /* eslint-disable no-unused-vars,no-console */
 const timer = (client, targetDate, callback) => {
@@ -94,7 +94,7 @@ const areDatesEqualsToMinutes = (date, now) => date.getUTCFullYear() === now.get
 // scheduled messages
 const scheduler = async (client) => {
   const now = new Date();
-  await Schedule.find({ sent: false }).then((docs) => {
+  await ScheduledMessage.find({ sent: false }).then((docs) => {
     docs.forEach((doc) => {
       const { date } = doc;
       if (areDatesEqualsToMinutes(date, now)) {

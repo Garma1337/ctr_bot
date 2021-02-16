@@ -6,15 +6,15 @@ const fs = require('fs');
 const Discord = require('discord.js');
 const moment = require('moment');
 const { CronJob } = require('cron');
-const Clan = require('./db/models/clans').default;
-const Command = require('./db/models/command');
-const CommandUsage = require('./db/models/command_usage');
-const Config = require('./db/models/config');
-const Cooldown = require('./db/models/cooldowns');
 const config = require('./config.js');
-const Mute = require('./db/models/mutes');
-const Player = require('./db/models/player');
-const SignupsChannel = require('./db/models/signups_channels');
+const { Clan } = require('./db/models/clan');
+const { Command } = require('./db/models/command');
+const { CommandUsage } = require('./db/models/command_usage');
+const { Config } = require('./db/models/config');
+const { Cooldown } = require('./db/models/cooldown');
+const { Mute } = require('./db/models/mute');
+const { Player } = require('./db/models/player');
+const { SignupsChannel } = require('./db/models/signups_channel');
 const alarms = require('./alarms');
 const getConfigValue = require('./utils/getConfigValue');
 const getSignupsCount = require('./utils/getSignupsCount');
@@ -29,7 +29,6 @@ const { flags } = require('./db/flags');
 const client = new Discord.Client({ partials: ['MESSAGE', 'CHANNEL', 'REACTION'] });
 module.exports.client = client;
 
-// todo use prefix everywhere in help messages
 client.prefix = config.prefix;
 client.flags = flags;
 client.commands = new Discord.Collection();
@@ -167,17 +166,15 @@ async function reactOnSignUp(message, oldMessage = null) {
       message.author.send(`Your signup is wrong. Please, be sure to follow the template (pinned message)!
 You can edit your message, and I will check it again.`).then((m) => DMCallback(m, data)).catch(DMCatchCallback);
     } else {
-      checkRepetitions(message, data, parser.fields, (m) => parse(m, parser.fields))
-        .then((result) => {
-          if (result && result.errors && !result.errors.length) {
-            message.react('✅').then().catch(reactionCatchCallback);
-            message.author.send(signupsChannel.message).then((m) => DMCallback(m, result)).catch(DMCatchCallback);
-          } else {
-            message.react('❌').then().catch(reactionCatchCallback);
-            message.author.send('Your signup is wrong. Please, contact Staff members.')
-              .then((m) => DMCallback(m, result)).catch(DMCatchCallback);
-          }
-        });
+      checkRepetitions(message, data, parser.fields, (m) => parse(m, parser.fields)).then((result) => {
+        if (result && result.errors && !result.errors.length) {
+          message.react('✅').then().catch(reactionCatchCallback);
+          message.author.send(signupsChannel.message).then((m) => DMCallback(m, result)).catch(DMCatchCallback);
+        } else {
+          message.react('❌').then().catch(reactionCatchCallback);
+          message.author.send('Your signup is wrong. Please, contact Staff members.').then((m) => DMCallback(m, result)).catch(DMCatchCallback);
+        }
+      });
     }
 
     if (oldMessage) {

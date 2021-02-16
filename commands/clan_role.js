@@ -1,7 +1,7 @@
-const Clan = require('../db/models/clans').default;
+const { Clan } = require('../db/models/clan');
 const isStaffMember = require('../utils/isStaffMember');
 const sendAlertMessage = require('../utils/sendAlertMessage');
-const { MEMBER_ROLES } = require('../db/models/clans');
+const { MEMBER_ROLES } = require('../db/models/clan');
 
 module.exports = {
   name: 'clan_role',

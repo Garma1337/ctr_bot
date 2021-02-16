@@ -9,4 +9,4 @@ const CommandUsage = new Schema({
   date: Date,
 });
 
-module.exports = model('command_usage', CommandUsage);
+module.exports.CommandUsage = model('command_usage', CommandUsage);

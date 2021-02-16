@@ -1,5 +1,5 @@
 const moment = require('moment');
-const Player = require('../db/models/player');
+const { Player } = require('../db/models/player');
 const createPageableContent = require('../utils/createPageableContent');
 const sendAlertMessage = require('../utils/sendAlertMessage');
 const sortObject = require('../utils/sortObject');

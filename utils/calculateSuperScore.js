@@ -4,11 +4,10 @@ const {
   RACE_DUOS,
   RACE_3V3,
   RACE_4V4,
-  RACE_SURVIVAL,
   RACE_ITEMLESS_DUOS,
   BATTLE_FFA,
   BATTLE_4V4,
-} = require('../db/models/ranked_lobbies');
+} = require('../db/models/ranked_lobby');
 
 /**
  * Returns a player's superscore

@@ -11,4 +11,4 @@ const SignupsChannel = new Schema({
   close: Date,
 });
 
-module.exports = model('signups_channels', SignupsChannel);
+module.exports.SignupsChannel = model('signups_channel', SignupsChannel);

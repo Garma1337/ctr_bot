@@ -54,7 +54,7 @@ module.exports.TRACK_OPTION_SPICY = TRACK_OPTION_SPICY;
 module.exports.TRACK_OPTION_DRAFT = TRACK_OPTION_DRAFT;
 module.exports.TRACK_OPTION_IRON_MAN = TRACK_OPTION_IRON_MAN;
 
-const RankedLobby = new Schema({
+const Lobby = new Schema({
   date: { type: Date, default: Date.now },
   guild: String,
   channel: String,
@@ -81,7 +81,7 @@ const RankedLobby = new Schema({
   locked: { rank: Number, shift: Number },
 });
 
-RankedLobby.methods = {
+Lobby.methods = {
   isRacing() {
     return ![BATTLE_FFA, BATTLE_4V4].includes(this.type);
   },
@@ -172,7 +172,7 @@ RankedLobby.methods = {
     }
 
     if (this.region) {
-      title = 'Region Locked ';
+      title += 'Region Locked ';
     }
 
     if (!this.locked.$isEmpty()) {
@@ -424,4 +424,4 @@ RankedLobby.methods = {
   },
 };
 
-module.exports.default = model('ranked_lobbies', RankedLobby);
+module.exports.RankedLobby = model('lobby', Lobby);

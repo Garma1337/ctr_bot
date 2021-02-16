@@ -8,4 +8,4 @@ const Config = new Schema({
   editable: Boolean,
 });
 
-module.exports = model('config', Config);
+module.exports.Config = model('config', Config);

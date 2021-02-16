@@ -10,4 +10,4 @@ const ScheduledMessage = new Schema({
   sent: { type: Boolean, default: false },
 });
 
-module.exports = model('scheduled_messages', ScheduledMessage);
+module.exports.ScheduledMessage = model('scheduled_message', ScheduledMessage);

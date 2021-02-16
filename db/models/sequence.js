@@ -8,4 +8,4 @@ const Sequence = new Schema({
   number: { type: Number, default: 0 },
 });
 
-module.exports = model('sequences', Sequence);
+module.exports.Sequence = model('sequence', Sequence);

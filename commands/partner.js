@@ -1,4 +1,4 @@
-const Duo = require('../db/models/duos');
+const { Duo } = require('../db/models/duo');
 const sendAlertMessage = require('../utils/sendAlertMessage');
 
 module.exports = {

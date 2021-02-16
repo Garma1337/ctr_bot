@@ -1,4 +1,4 @@
-const Command = require('../db/models/command');
+const { Command } = require('../db/models/command');
 const sendAlertMessage = require('../utils/sendAlertMessage');
 
 module.exports = {

@@ -10,7 +10,7 @@ const {
   RACE_ITEMLESS_DUOS,
   BATTLE_FFA,
   BATTLE_4V4,
-} = require('../db/models/ranked_lobbies');
+} = require('../db/models/ranked_lobby');
 
 const {
   itemPools,

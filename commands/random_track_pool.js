@@ -7,7 +7,7 @@ const {
   RACE_4V4,
   BATTLE_FFA,
   BATTLE_4V4,
-} = require('../db/models/ranked_lobbies');
+} = require('../db/models/ranked_lobby');
 
 module.exports = {
   name: 'rng_ffa',

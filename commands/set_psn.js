@@ -1,4 +1,4 @@
-const Player = require('../db/models/player');
+const { Player } = require('../db/models/player');
 const isStaffMember = require('../utils/isStaffMember');
 const sendLogMessage = require('../utils/sendLogMessage');
 const sendAlertMessage = require('../utils/sendAlertMessage');

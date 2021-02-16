@@ -9,7 +9,7 @@ const {
   RACE_ITEMLESS_DUOS,
   BATTLE_FFA,
   BATTLE_4V4,
-} = require('./ranked_lobbies');
+} = require('./ranked_lobby');
 
 const { Schema, model } = mongoose;
 
@@ -26,4 +26,4 @@ const Rank = new Schema({
   [BATTLE_4V4]: { rank: Number, position: Number },
 });
 
-module.exports = model('ranks', Rank);
+module.exports.Rank = model('rank', Rank);

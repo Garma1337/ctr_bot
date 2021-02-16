@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 const { Schema, model } = mongoose;
 
-const Cooldowns = new Schema({
+const Cooldown = new Schema({
   guildId: String,
   discordId: String,
   name: String,
@@ -10,4 +10,4 @@ const Cooldowns = new Schema({
   updatedAt: Date,
 });
 
-module.exports = model('cooldowns', Cooldowns);
+module.exports.Cooldown = model('cooldown', Cooldown);

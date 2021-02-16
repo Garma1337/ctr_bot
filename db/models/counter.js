@@ -11,4 +11,4 @@ const Counter = new Schema({
   pingUpdatedAt: Date,
 });
 
-module.exports = model('counter', Counter);
+module.exports.Counter = model('counter', Counter);

@@ -2,12 +2,13 @@ const mongoose = require('mongoose');
 
 const { Schema, model } = mongoose;
 
-const Ban = new Schema({
+const RankedBan = new Schema({
   guildId: String,
   discordId: String,
   bannedAt: Date,
   bannedTill: Date,
   bannedBy: String,
+  reason: String,
 });
 
-module.exports = model('bans', Ban);
+module.exports.RankedBan = model('ranked_ban', RankedBan);

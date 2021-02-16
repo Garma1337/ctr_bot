@@ -1,8 +1,8 @@
 const Discord = require('discord.js');
-const Clan = require('../db/models/clans').default;
+const { Clan } = require('../db/models/clan');
 const isStaffMember = require('../utils/isStaffMember');
 const sendAlertMessage = require('../utils/sendAlertMessage');
-const { ROLE_MEMBER } = require('../db/models/clans');
+const { ROLE_MEMBER } = require('../db/models/clan');
 
 const ADD = 'add';
 const REMOVE = 'remove';

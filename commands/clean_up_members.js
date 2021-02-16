@@ -1,6 +1,6 @@
-const Clan = require('../db/models/clans').default;
-const Player = require('../db/models/player');
-const Rank = require('../db/models/rank');
+const { Clan } = require('../db/models/clan');
+const { Player } = require('../db/models/player');
+const { Rank } = require('../db/models/rank');
 const sendAlertMessage = require('../utils/sendAlertMessage');
 
 module.exports = {

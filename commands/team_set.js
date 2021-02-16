@@ -1,10 +1,10 @@
 const config = require('../config');
-const Team = require('../db/models/teams');
-const RankedLobby = require('../db/models/ranked_lobbies').default;
-const Player = require('../db/models/player');
-const RankedBan = require('../db/models/ranked_bans');
+const { Team } = require('../db/models/team');
+const { RankedLobby } = require('../db/models/ranked_lobby');
+const { Player } = require('../db/models/player');
+const { RankedBan } = require('../db/models/ranked_ban');
 const sendAlertMessage = require('../utils/sendAlertMessage');
-const { RACE_3V3, RACE_4V4 } = require('../db/models/ranked_lobbies');
+const { RACE_3V3, RACE_4V4 } = require('../db/models/ranked_lobby');
 
 module.exports = {
   name: 'team_set',

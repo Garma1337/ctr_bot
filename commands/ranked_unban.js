@@ -1,5 +1,5 @@
 const config = require('../config');
-const RankedBan = require('../db/models/ranked_bans');
+const { RankedBan } = require('../db/models/ranked_ban');
 const findMember = require('../utils/findMember');
 const sendAlertMessage = require('../utils/sendAlertMessage');
 

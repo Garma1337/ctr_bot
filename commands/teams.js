@@ -1,6 +1,6 @@
 const moment = require('moment');
-const Duo = require('../db/models/duos');
-const Team = require('../db/models/teams');
+const { Duo } = require('../db/models/duo');
+const { Team } = require('../db/models/team');
 
 /**
  * Returns the embed

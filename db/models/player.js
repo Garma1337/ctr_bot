@@ -21,4 +21,4 @@ const Player = new Schema({
   translation: String,
 });
 
-module.exports = model('players', Player);
+module.exports.Player = model('player', Player);

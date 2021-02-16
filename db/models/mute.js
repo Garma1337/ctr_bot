@@ -9,4 +9,4 @@ const Mute = new Schema({
   mutedTill: Date,
 });
 
-module.exports = model('mutes', Mute);
+module.exports.Mute = model('mute', Mute);

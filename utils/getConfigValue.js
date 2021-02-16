@@ -1,4 +1,4 @@
-const Config = require('../db/models/config');
+const { Config } = require('../db/models/config');
 
 /**
  * Returns a config value from the database

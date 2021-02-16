@@ -1,4 +1,4 @@
-const SignupsChannel = require('../db/models/signups_channels');
+const { SignupsChannel } = require('../db/models/signups_channel');
 const fetchMessages = require('../utils/fetchMessages');
 const sendAlertMessage = require('../utils/sendAlertMessage');
 

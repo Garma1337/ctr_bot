@@ -1,4 +1,4 @@
-const Room = require('../db/models/rooms');
+const { Room } = require('../db/models/room');
 const isStaffMember = require('../utils/isStaffMember');
 const sendAlertMessage = require('../utils/sendAlertMessage');
 

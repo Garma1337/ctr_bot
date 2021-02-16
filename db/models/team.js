@@ -2,11 +2,10 @@ const mongoose = require('mongoose');
 
 const { Schema, model } = mongoose;
 
-const Duo = new Schema({
+const Team = new Schema({
   guild: String,
-  discord1: String,
-  discord2: String,
+  players: [String],
   date: Date,
 });
 
-module.exports = model('duos', Duo);
+module.exports.Team = model('team', Team);

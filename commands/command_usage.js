@@ -1,6 +1,6 @@
 const moment = require('moment');
 const config = require('../config');
-const CommandUsage = require('../db/models/command_usage');
+const { CommandUsage } = require('../db/models/command_usage');
 const createPageableContent = require('../utils/createPageableContent');
 
 module.exports = {

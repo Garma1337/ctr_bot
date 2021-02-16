@@ -52,4 +52,4 @@ Clan.methods = {
   },
 };
 
-module.exports.default = model('clans', Clan);
+module.exports.Clan = model('clan', Clan);

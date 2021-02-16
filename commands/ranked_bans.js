@@ -1,7 +1,7 @@
 const moment = require('moment');
 const config = require('../config');
-const RankedLobby = require('../db/models/ranked_lobbies').default;
-const RankedBan = require('../db/models/ranked_bans');
+const { RankedLobby } = require('../db/models/ranked_lobby');
+const { RankedBan } = require('../db/models/ranked_ban');
 const createPageableContent = require('../utils/createPageableContent');
 const findMember = require('../utils/findMember');
 const sendLogMessage = require('../utils/sendLogMessage');

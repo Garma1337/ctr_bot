@@ -1,5 +1,5 @@
 const moment = require('moment-timezone');
-const Config = require('../db/models/config');
+const { Config } = require('../db/models/config');
 const sendAlertMessage = require('../utils/sendAlertMessage');
 
 Config.findOne({ name: 'signups_schedule' }).then((doc) => {

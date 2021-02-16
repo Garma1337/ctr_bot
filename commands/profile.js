@@ -1,8 +1,8 @@
 const moment = require('moment');
 const config = require('../config');
-const Clan = require('../db/models/clans').default;
-const Player = require('../db/models/player');
-const Rank = require('../db/models/rank');
+const { Clan } = require('../db/models/clan');
+const { Player } = require('../db/models/player');
+const { Rank } = require('../db/models/rank');
 const calculateSuperScore = require('../utils/calculateSuperScore');
 const getConfigValue = require('../utils/getConfigValue');
 const sendAlertMessage = require('../utils/sendAlertMessage');
@@ -18,7 +18,7 @@ const {
   RACE_ITEMLESS_DUOS,
   BATTLE_FFA,
   BATTLE_4V4,
-} = require('../db/models/ranked_lobbies');
+} = require('../db/models/ranked_lobby');
 
 /**
  * Gets the ranking position for a given mode

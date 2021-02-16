@@ -1,5 +1,5 @@
 const fs = require('fs');
-const Player = require('../db/models/player');
+const { Player } = require('../db/models/player');
 const sendAlertMessage = require('../utils/sendAlertMessage');
 
 module.exports = {

@@ -1,5 +1,5 @@
-const Player = require('../db/models/player');
-const Rank = require('../db/models/rank');
+const { Player } = require('../db/models/player');
+const { Rank } = require('../db/models/rank');
 const calculateSuperScore = require('../utils/calculateSuperScore');
 const createPageableContent = require('../utils/createPageableContent');
 const getConfigValue = require('../utils/getConfigValue');
@@ -15,7 +15,7 @@ const {
   RACE_ITEMLESS_DUOS,
   BATTLE_FFA,
   BATTLE_4V4,
-} = require('../db/models/ranked_lobbies');
+} = require('../db/models/ranked_lobby');
 
 const ranks = {
   [RACE_FFA]: 'FFA',

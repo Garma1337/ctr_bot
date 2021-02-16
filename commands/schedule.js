@@ -1,6 +1,6 @@
 const Discord = require('discord.js');
 const moment = require('moment-timezone');
-const Schedule = require('../db/models/scheduled_messages');
+const { Schedule } = require('../db/models/scheduled_message');
 const sendAlertMessage = require('../utils/sendAlertMessage');
 
 module.exports = {
