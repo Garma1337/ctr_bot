@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const config = require('../../config');
 
 const { Schema, model } = mongoose;
-const { engineStyles } = require('../../utils/engineStyles');
+const { engineStyles } = require('../engineStyles');
 
 const engineUids = engineStyles.map((e) => e.uid);
 
@@ -31,6 +31,11 @@ const LEADERBOARDS = {
   [BATTLE_FFA]: 'ylWyts',
   [BATTLE_4V4]: '3H76QB',
 };
+const TRACK_OPTION_RNG = 'Full RNG';
+const TRACK_OPTION_POOLS = 'Pools';
+const TRACK_OPTION_SPICY = 'Spicy';
+const TRACK_OPTION_DRAFT = 'Draft';
+const TRACK_OPTION_IRON_MAN = 'Iron Man';
 
 module.exports.RACE_FFA = RACE_FFA;
 module.exports.RACE_ITEMLESS = RACE_ITEMLESS;
@@ -43,6 +48,11 @@ module.exports.BATTLE_FFA = BATTLE_FFA;
 module.exports.BATTLE_4V4 = BATTLE_4V4;
 module.exports.SURVIVAL_STYLES = SURVIVAL_STYLES;
 module.exports.LEADERBOARDS = LEADERBOARDS;
+module.exports.TRACK_OPTION_RNG = TRACK_OPTION_RNG;
+module.exports.TRACK_OPTION_POOLS = TRACK_OPTION_POOLS;
+module.exports.TRACK_OPTION_SPICY = TRACK_OPTION_SPICY;
+module.exports.TRACK_OPTION_DRAFT = TRACK_OPTION_DRAFT;
+module.exports.TRACK_OPTION_IRON_MAN = TRACK_OPTION_IRON_MAN;
 
 const RankedLobby = new Schema({
   date: { type: Date, default: Date.now },
@@ -50,23 +60,25 @@ const RankedLobby = new Schema({
   channel: String,
   message: String,
   creator: String,
-  pools: { type: Boolean, default: true },
   started: { type: Boolean, default: false },
   startedAt: { type: Date, default: null },
-  closed: { type: Boolean, default: false },
   players: [String],
-  locked: { rank: Number, shift: Number },
-  region: String,
   teamList: Array,
+  closed: { type: Boolean, default: false },
   type: { type: String, enum: [RACE_FFA, RACE_ITEMLESS, RACE_DUOS, RACE_3V3, RACE_4V4, RACE_SURVIVAL, RACE_ITEMLESS_DUOS, BATTLE_FFA, BATTLE_4V4] },
-  allowPremadeTeams: { type: Boolean, default: true },
-  draftTracks: { type: Boolean, default: false },
+  pools: { type: Boolean, default: true },
   spicyTracks: { type: Boolean, default: false },
-  reservedTeam: String,
-  lapCount: { type: Number, enum: [1, 3, 5, 7], default: 5 },
-  engineRestriction: { type: String, enum: engineUids },
-  survivalStyle: { type: Number, enum: [0, 1, 2], default: 1 },
+  draftTracks: { type: Boolean, default: false },
+  trackCount: { type: Number, enum: [4, 5, 8, 10, 12, 15, 16, 20, 37] },
   ruleset: { type: Number, enum: [0, 1, 2], default: 1 },
+  region: String,
+  engineRestriction: { type: String, enum: engineUids },
+  lapCount: { type: Number, enum: [1, 3, 5, 7], default: 5 },
+  survivalStyle: { type: Number, enum: [0, 1, 2], default: 1 },
+  allowPremadeTeams: { type: Boolean, default: true },
+  reservedTeam: String,
+  ranked: { type: Boolean, default: false },
+  locked: { rank: Number, shift: Number },
 });
 
 RankedLobby.methods = {
@@ -102,7 +114,7 @@ RankedLobby.methods = {
   },
   getMinimumRequiredPlayers() {
     const requirements = {
-      [RACE_FFA]: 6,
+      [RACE_FFA]: 2,
       [RACE_ITEMLESS]: 4,
       [RACE_DUOS]: 6,
       [RACE_3V3]: 6,
@@ -136,8 +148,28 @@ RankedLobby.methods = {
   hasMaximumAllowedPlayers() {
     return this.players.length === this.getMaximumAllowedPlayers();
   },
+  getDefaultTrackCount() {
+    const trackCounts = {
+      [RACE_FFA]: 8,
+      [RACE_ITEMLESS]: 5,
+      [RACE_DUOS]: 8,
+      [RACE_3V3]: 8,
+      [RACE_4V4]: 10,
+      [RACE_SURVIVAL]: 7,
+      [RACE_ITEMLESS_DUOS]: 8,
+      [BATTLE_FFA]: 5,
+      [BATTLE_4V4]: 8,
+    };
+
+    return trackCounts[this.type];
+  },
   getTitle() {
-    let title = 'Ranked ';
+    let title;
+    if (this.ranked) {
+      title = 'Ranked ';
+    } else {
+      title = 'Unranked ';
+    }
 
     if (this.region) {
       title = 'Region Locked ';
@@ -178,6 +210,8 @@ RankedLobby.methods = {
         title += ' (Spicy Tracks)';
       } else if (this.pools) {
         title += ' (Track Pools)';
+      } else if (this.isIronMan()) {
+        title += ' (Iron Man)';
       } else {
         title += ' (Full RNG Tracks)';
       }
@@ -188,6 +222,8 @@ RankedLobby.methods = {
         title += ' (Spicy Maps)';
       } else if (this.pools) {
         title += ' (Map Pools)';
+      } else if (this.isIronMan()) {
+        title += ' (Iron Man)';
       } else {
         title += ' (Full RNG Maps)';
       }
@@ -287,6 +323,104 @@ RankedLobby.methods = {
     };
 
     return pingMinutes[this.type];
+  },
+  getMaxTrackCount() {
+    const maxTrackCount = {
+      [RACE_FFA]: 37,
+      [RACE_ITEMLESS]: 37,
+      [RACE_DUOS]: 37,
+      [RACE_3V3]: 37,
+      [RACE_4V4]: 37,
+      [RACE_SURVIVAL]: 8,
+      [RACE_ITEMLESS_DUOS]: 37,
+      [BATTLE_FFA]: 12,
+      [BATTLE_4V4]: 12,
+    };
+
+    return maxTrackCount[this.type];
+  },
+  getTrackCountOptions() {
+    const trackCountOptions = {
+      [RACE_FFA]: [5, 8, 10, 12, 15, 16, 20, 37],
+      [RACE_ITEMLESS]: [5, 8, 10, 12, 15, 16, 20, 37],
+      [RACE_DUOS]: [5, 8, 10, 12, 15, 16, 20, 37],
+      [RACE_3V3]: [5, 8, 10, 12, 15, 16, 20, 37],
+      [RACE_4V4]: [5, 8, 10, 12, 15, 16, 20, 37],
+      [RACE_SURVIVAL]: [8],
+      [RACE_ITEMLESS_DUOS]: [5, 8, 10, 12, 15, 16, 20, 37],
+      [BATTLE_FFA]: [5, 8, 10, 12],
+      [BATTLE_4V4]: [5, 8, 10, 12],
+    };
+
+    return trackCountOptions[this.type];
+  },
+  isIronMan() {
+    return this.trackCount === this.getMaxTrackCount();
+  },
+  getTrackOptions() {
+    const trackOptions = {
+      [RACE_FFA]: [
+        TRACK_OPTION_RNG,
+        TRACK_OPTION_POOLS,
+        TRACK_OPTION_SPICY,
+        TRACK_OPTION_IRON_MAN,
+      ],
+      [RACE_ITEMLESS]: [
+        TRACK_OPTION_RNG,
+        TRACK_OPTION_POOLS,
+        TRACK_OPTION_SPICY,
+        TRACK_OPTION_IRON_MAN,
+      ],
+      [RACE_DUOS]: [
+        TRACK_OPTION_RNG,
+        TRACK_OPTION_POOLS,
+        TRACK_OPTION_SPICY,
+        TRACK_OPTION_IRON_MAN,
+      ],
+      [RACE_3V3]: [
+        TRACK_OPTION_RNG,
+        TRACK_OPTION_POOLS,
+        TRACK_OPTION_SPICY,
+        TRACK_OPTION_DRAFT,
+        TRACK_OPTION_IRON_MAN,
+      ],
+      [RACE_4V4]: [
+        TRACK_OPTION_RNG,
+        TRACK_OPTION_POOLS,
+        TRACK_OPTION_SPICY,
+        TRACK_OPTION_DRAFT,
+        TRACK_OPTION_IRON_MAN,
+      ],
+      [RACE_SURVIVAL]: [
+        TRACK_OPTION_RNG,
+        TRACK_OPTION_POOLS,
+        TRACK_OPTION_SPICY,
+      ],
+      [RACE_ITEMLESS_DUOS]: [
+        TRACK_OPTION_RNG,
+        TRACK_OPTION_POOLS,
+        TRACK_OPTION_SPICY,
+        TRACK_OPTION_IRON_MAN,
+      ],
+      [BATTLE_FFA]: [
+        TRACK_OPTION_RNG,
+        TRACK_OPTION_IRON_MAN,
+      ],
+      [BATTLE_4V4]: [
+        TRACK_OPTION_RNG,
+        TRACK_OPTION_POOLS,
+        TRACK_OPTION_DRAFT,
+        TRACK_OPTION_IRON_MAN,
+      ],
+    };
+
+    return trackOptions[this.type];
+  },
+  canBeRanked() {
+    return !(this.lapCount !== 5 || this.engineRestriction || this.trackCount > this.getDefaultTrackCount() || this.ruleset !== 1);
+  },
+  getStartedIcon() {
+    return 'https://i.imgur.com/cD0sLmQ.png';
   },
 };
 

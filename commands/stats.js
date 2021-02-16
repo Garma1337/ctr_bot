@@ -3,8 +3,8 @@ const Player = require('../db/models/player');
 const createPageableContent = require('../utils/createPageableContent');
 const sendAlertMessage = require('../utils/sendAlertMessage');
 const sortObject = require('../utils/sortObject');
-const { regions } = require('../utils/regions');
-const { consoles } = require('../utils/consoles');
+const { regions } = require('../db/regions');
+const { consoles } = require('../db/consoles');
 
 module.exports = {
   name: 'stats',

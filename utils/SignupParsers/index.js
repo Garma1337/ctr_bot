@@ -1,6 +1,6 @@
 /* eslint-disable no-param-reassign,no-case-declarations */
 const fetchMessages = require('../fetchMessages');
-const { flagName } = require('../flags');
+const { flagName } = require('../../db/flags');
 const ffa = require('./ffa');
 const _2v2 = require('./2v2');
 const _3v3 = require('./3v3');

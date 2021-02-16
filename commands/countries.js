@@ -6,7 +6,7 @@ const createPageableContent = require('../utils/createPageableContent');
 const createPagination = require('../utils/createPagination');
 const getConfigValue = require('../utils/getConfigValue');
 const sendAlertMessage = require('../utils/sendAlertMessage');
-const { flagName, flagToCode } = require('../utils/flags');
+const { flagName, flagToCode } = require('../db/flags');
 
 function getProfileEmbed(data) {
   const { name } = data;

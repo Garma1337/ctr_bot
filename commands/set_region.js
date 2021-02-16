@@ -1,7 +1,7 @@
 const Player = require('../db/models/player');
 const isStaffMember = require('../utils/isStaffMember');
 const sendAlertMessage = require('../utils/sendAlertMessage');
-const { regions } = require('../utils/regions');
+const { regions } = require('../db/regions');
 
 module.exports = {
   name: 'set_region',

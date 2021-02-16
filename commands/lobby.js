@@ -14,6 +14,11 @@ const {
   BATTLE_4V4,
   SURVIVAL_STYLES,
   LEADERBOARDS,
+  TRACK_OPTION_RNG,
+  TRACK_OPTION_POOLS,
+  TRACK_OPTION_SPICY,
+  TRACK_OPTION_DRAFT,
+  TRACK_OPTION_IRON_MAN,
 } = require('../db/models/ranked_lobbies');
 const config = require('../config.js');
 const Cooldown = require('../db/models/cooldowns');
@@ -27,7 +32,6 @@ const Room = require('../db/models/rooms');
 const Sequence = require('../db/models/sequences');
 const Team = require('../db/models/teams');
 const { client } = require('../bot');
-const { parseData } = require('../table');
 const createDraft = require('../utils/createDraft');
 const createDraftv2 = require('../utils/createDraftv2');
 const createAndFindRole = require('../utils/createAndFindRole');
@@ -39,17 +43,12 @@ const rngPools = require('../utils/rngPools');
 const rngModeBattle = require('../utils/rngModeBattle');
 const sendAlertMessage = require('../utils/sendAlertMessage');
 const sendLogMessage = require('../utils/sendLogMessage');
-const { battleModesFFA, battleModes4v4 } = require('../utils/modes_battle');
-const { engineStyles } = require('../utils/engineStyles');
-const { regions } = require('../utils/regions');
-const { rulesets } = require('../utils/rulesets');
+const { battleModesFFA, battleModes4v4 } = require('../db/modes_battle');
+const { engineStyles } = require('../db/engineStyles');
+const { regions } = require('../db/regions');
+const { rulesets } = require('../db/rulesets');
 
 const lock = new AsyncLock();
-
-const TRACK_OPTION_RNG = 'Full RNG';
-const TRACK_OPTION_POOLS = 'Pools';
-const TRACK_OPTION_SPICY = 'Spicy';
-const TRACK_OPTION_DRAFT = 'Draft';
 
 const PLAYER_DEFAULT_RANK = 1200;
 const DEFAULT_RANK = PLAYER_DEFAULT_RANK;
@@ -209,7 +208,13 @@ async function getEmbed(doc, players, tracks, roomChannel) {
       });
 
       fields.push({
-        name: 'Lap Count',
+        name: 'Tracks',
+        value: doc.trackCount,
+        inline: true,
+      });
+
+      fields.push({
+        name: 'Laps',
         value: doc.lapCount,
         inline: true,
       });
@@ -249,6 +254,9 @@ async function getEmbed(doc, players, tracks, roomChannel) {
         name: `${doc.getTitle()} has started`,
         icon_url: iconUrl,
       },
+      image: {
+        url: doc.getStartedIcon(),
+      },
       fields,
       footer: getFooter(doc),
       timestamp,
@@ -287,7 +295,13 @@ async function getEmbed(doc, players, tracks, roomChannel) {
       });
 
       fields.push({
-        name: 'Lap Count',
+        name: 'Tracks',
+        value: doc.trackCount,
+        inline: true,
+      });
+
+      fields.push({
+        name: 'Laps',
         value: doc.lapCount,
         inline: true,
       });
@@ -349,7 +363,13 @@ async function getEmbed(doc, players, tracks, roomChannel) {
     });
 
     fields.push({
-      name: 'Lap Count',
+      name: 'Tracks',
+      value: doc.trackCount,
+      inline: true,
+    });
+
+    fields.push({
+      name: 'Laps',
       value: doc.lapCount,
       inline: true,
     });
@@ -1011,26 +1031,20 @@ module.exports = {
                   break;
               }
 
-              const trackOptions = [
-                TRACK_OPTION_RNG,
-                TRACK_OPTION_POOLS,
-              ];
+              // Initialize lobby here to be able to use model functions
+              const lobby = new RankedLobby();
+              lobby.guild = guild.id;
+              lobby.creator = message.author.id;
+              lobby.type = type;
 
-              if (![RACE_ITEMLESS, RACE_ITEMLESS_DUOS, BATTLE_FFA, BATTLE_4V4].includes(type)) {
-                trackOptions.push(TRACK_OPTION_SPICY);
-              }
-
-              if ([RACE_3V3, RACE_4V4, BATTLE_4V4].includes(type)) {
-                trackOptions.push(TRACK_OPTION_DRAFT);
-              }
+              const trackOptions = lobby.getTrackOptions();
 
               let trackOption;
               let pools = ![RACE_FFA, BATTLE_FFA].includes(type);
               let draftTracks = false;
               let spicyTracks = false;
-              let reservedTeam = null;
 
-              if (![BATTLE_FFA].includes(type) && custom) {
+              if (trackOptions.length > 1 && custom) {
                 sentMessage = await sendAlertMessage(message.channel, `Select track option. Waiting 1 minute.
 \`\`\`${trackOptions.map((t, i) => `${i + 1} - ${t}`).join('\n')}\`\`\``, 'info');
 
@@ -1058,8 +1072,63 @@ module.exports = {
                 } else if (trackOptions[index] === TRACK_OPTION_DRAFT) {
                   pools = false;
                   draftTracks = true;
+                } else if (trackOptions[index] === TRACK_OPTION_IRON_MAN) {
+                  pools = false;
                 }
               }
+
+              lobby.pools = pools;
+              lobby.draftTracks = draftTracks;
+              lobby.spicyTracks = spicyTracks;
+
+              let trackCount = (trackOption === TRACK_OPTION_IRON_MAN ? lobby.getMaxTrackCount() : lobby.getDefaultTrackCount());
+              if (trackOption !== TRACK_OPTION_IRON_MAN && !draftTracks && !spicyTracks && ![RACE_SURVIVAL, BATTLE_FFA, BATTLE_4V4].includes(type) && custom) {
+                const text = lobby.getTrackCountOptions().map((o) => `\`${o}\``).join(', ');
+                sentMessage = await sendAlertMessage(message.channel, `Select the number of tracks. The number has to be any of ${text}.`, 'info');
+
+                trackCount = await message.channel.awaitMessages(filter, options).then(async (collected) => {
+                  sentMessage.delete();
+
+                  collectedMessage = collected.first();
+                  const { content } = collectedMessage;
+
+                  choice = parseInt(content, 10);
+                  if (lobby.getTrackCountOptions().includes(choice)) {
+                    return choice;
+                  }
+
+                  return lobby.getDefaultTrackCount();
+                }).catch(() => {
+                  sentMessage.delete();
+                  return lobby.getDefaultTrackCount();
+                });
+              }
+
+              lobby.trackCount = trackCount;
+
+              let lapCount = 5;
+              if (![BATTLE_FFA, BATTLE_4V4].includes(type) && custom) {
+                sentMessage = await sendAlertMessage(message.channel, 'Select the number of laps. The number has to be `3`, `5` or `7`. Every other input will be counted as `5`.', 'info');
+
+                lapCount = await message.channel.awaitMessages(filter, options).then(async (collected) => {
+                  sentMessage.delete();
+
+                  collectedMessage = collected.first();
+                  const { content } = collectedMessage;
+
+                  choice = parseInt(content, 10);
+                  if ([3, 5, 7].includes(choice)) {
+                    return choice;
+                  }
+
+                  return 5;
+                }).catch(() => {
+                  sentMessage.delete();
+                  return 5;
+                });
+              }
+
+              lobby.lapCount = lapCount;
 
               let ruleset = 1;
               if (![BATTLE_FFA, BATTLE_4V4].includes(type) && custom) {
@@ -1080,6 +1149,8 @@ module.exports = {
                   return 1;
                 });
               }
+
+              lobby.ruleset = ruleset;
 
               let region = null;
               if (custom) {
@@ -1103,6 +1174,10 @@ ${regions.length + 1} - No region lock\`\`\``, 'info');
                   sentMessage.delete();
                   return null;
                 });
+              }
+
+              if (region) {
+                lobby.region = region;
               }
 
               let engineRestriction = null;
@@ -1130,26 +1205,8 @@ ${engineStyles.length + 1} - No engine restriction\`\`\``, 'info');
                 });
               }
 
-              let lapCount = 5;
-              if (![BATTLE_FFA, BATTLE_4V4].includes(type) && custom) {
-                sentMessage = await sendAlertMessage(message.channel, 'Select the number of laps. The number has to be `3`, `5` or `7`. Every other input will be counted as `5`.', 'info');
-
-                lapCount = await message.channel.awaitMessages(filter, options).then(async (collected) => {
-                  sentMessage.delete();
-
-                  collectedMessage = collected.first();
-                  const { content } = collectedMessage;
-
-                  choice = parseInt(content, 10);
-                  if ([3, 5, 7].includes(choice)) {
-                    return choice;
-                  }
-
-                  return 5;
-                }).catch(() => {
-                  sentMessage.delete();
-                  return 5;
-                });
+              if (engineRestriction) {
+                lobby.engineRestriction = engineRestriction;
               }
 
               let survivalStyle = 1;
@@ -1175,11 +1232,100 @@ ${engineStyles.length + 1} - No engine restriction\`\`\``, 'info');
                 });
               }
 
+              lobby.survivalStyle = survivalStyle;
+
+              let allowPremadeTeams = true;
+              if (custom && [RACE_DUOS, RACE_3V3, RACE_4V4, RACE_ITEMLESS_DUOS, BATTLE_4V4].includes(type)) {
+                sentMessage = await sendAlertMessage(message.channel, 'Do you want to allow premade teams? (yes / no)', 'info');
+                allowPremadeTeams = await message.channel.awaitMessages(filter, options).then(async (collected) => {
+                  sentMessage.delete();
+
+                  collectedMessage = collected.first();
+                  const { content } = collectedMessage;
+
+                  return (content.toLowerCase() !== 'no');
+                }).catch(() => {
+                  sentMessage.delete();
+                  return true;
+                });
+              }
+
+              lobby.allowPremadeTeams = allowPremadeTeams;
+
+              let reservedTeam = null;
+              if (custom && allowPremadeTeams && [RACE_3V3, RACE_4V4, BATTLE_4V4].includes(type)) {
+                sentMessage = await sendAlertMessage(message.channel, 'Do you want to reserve the lobby for an existing team? (yes / no)', 'info');
+                const reserveLobby = await message.channel.awaitMessages(filter, options).then(async (collected) => {
+                  sentMessage.delete();
+
+                  collectedMessage = collected.first();
+                  const { content } = collectedMessage;
+
+                  return (content.toLowerCase() === 'yes');
+                }).catch(() => {
+                  sentMessage.delete();
+                  return false;
+                });
+
+                if (reserveLobby) {
+                  sentMessage = await sendAlertMessage(message.channel, 'Please mention one of the team members.', 'info');
+                  const discordId = await message.channel.awaitMessages(filter, options).then(async (collected) => {
+                    sentMessage.delete();
+
+                    collectedMessage = collected.first();
+                    const mentionedUser = collectedMessage.mentions.users.first();
+
+                    if (!mentionedUser) {
+                      return null;
+                    }
+
+                    return mentionedUser.id;
+                  }).catch(() => {
+                    sentMessage.delete();
+                    return null;
+                  });
+
+                  if (!discordId) {
+                    return sendAlertMessage(message.channel, 'You need to mention a user.', 'warning');
+                  } if (discordId === message.author.id) {
+                    return sendAlertMessage(message.channel, 'You cannot mention yourself', 'warning');
+                  }
+
+                  reservedTeam = discordId;
+                }
+              }
+
+              if (reservedTeam) {
+                lobby.reservedTeam = reservedTeam;
+              }
+
+              let ranked = true;
+              if (custom && lobby.canBeRanked()) {
+                sentMessage = await sendAlertMessage(message.channel, 'Do you want to create a ranked lobby? (yes / no)', 'info');
+                ranked = await message.channel.awaitMessages(filter, options).then(async (collected) => {
+                  sentMessage.delete();
+
+                  collectedMessage = collected.first();
+                  const { content } = collectedMessage;
+
+                  if (content.toLowerCase() === 'maybe') {
+                    return Boolean(Math.round(Math.random()));
+                  }
+
+                  return (content.toLowerCase() !== 'no');
+                }).catch(() => {
+                  sentMessage.delete();
+                  return true;
+                });
+              }
+
+              lobby.ranked = ranked;
+
               let mmrLock = false;
               let rankDiff = null;
               let playerRank = null;
 
-              if (custom) {
+              if (custom && ranked) {
                 sentMessage = await sendAlertMessage(message.channel, 'Do you want to put a rank restriction on your lobby? (yes / no)', 'info');
                 mmrLock = await message.channel.awaitMessages(filter, options).then(async (collected) => {
                   sentMessage.delete();
@@ -1228,62 +1374,11 @@ The value should be in the range of \`${diffMin} to ${diffMax}\`. The value defa
                 }
               }
 
-              let allowPremadeTeams = true;
-              if (custom && [RACE_DUOS, RACE_3V3, RACE_4V4, RACE_ITEMLESS_DUOS, BATTLE_4V4].includes(type)) {
-                sentMessage = await sendAlertMessage(message.channel, 'Do you want to allow premade teams? (yes / no)', 'info');
-                allowPremadeTeams = await message.channel.awaitMessages(filter, options).then(async (collected) => {
-                  sentMessage.delete();
-
-                  collectedMessage = collected.first();
-                  const { content } = collectedMessage;
-
-                  return (content.toLowerCase() !== 'no');
-                }).catch(() => {
-                  sentMessage.delete();
-                  return true;
-                });
-              }
-
-              if (custom && allowPremadeTeams && [RACE_3V3, RACE_4V4, BATTLE_4V4].includes(type)) {
-                sentMessage = await sendAlertMessage(message.channel, 'Do you want to reserve the lobby for an existing team? (yes / no)', 'info');
-                const reserveLobby = await message.channel.awaitMessages(filter, options).then(async (collected) => {
-                  sentMessage.delete();
-
-                  collectedMessage = collected.first();
-                  const { content } = collectedMessage;
-
-                  return (content.toLowerCase() === 'yes');
-                }).catch(() => {
-                  sentMessage.delete();
-                  return false;
-                });
-
-                if (reserveLobby) {
-                  sentMessage = await sendAlertMessage(message.channel, 'Please mention one of the team members.', 'info');
-                  const discordId = await message.channel.awaitMessages(filter, options).then(async (collected) => {
-                    sentMessage.delete();
-
-                    collectedMessage = collected.first();
-                    const mentionedUser = collectedMessage.mentions.users.first();
-
-                    if (!mentionedUser) {
-                      return null;
-                    }
-
-                    return mentionedUser.id;
-                  }).catch(() => {
-                    sentMessage.delete();
-                    return null;
-                  });
-
-                  if (!discordId) {
-                    return sendAlertMessage(message.channel, 'You need to mention a user.', 'warning');
-                  } if (discordId === message.author.id) {
-                    return sendAlertMessage(message.channel, 'You cannot mention yourself', 'warning');
-                  }
-
-                  reservedTeam = discordId;
-                }
+              if (mmrLock) {
+                lobby.locked = {
+                  rank: playerRank,
+                  shift: Number(rankDiff),
+                };
               }
 
               await Cooldown.findOneAndUpdate(
@@ -1292,52 +1387,29 @@ The value should be in the range of \`${diffMin} to ${diffMax}\`. The value defa
                 { upsert: true, new: true },
               );
 
-              const lobby = new RankedLobby();
-              lobby.guild = guild.id;
-              lobby.creator = message.author.id;
-              lobby.type = type;
-              lobby.pools = pools;
-              lobby.allowPremadeTeams = allowPremadeTeams;
-              lobby.draftTracks = draftTracks;
-              lobby.spicyTracks = spicyTracks;
-              lobby.lapCount = lapCount;
-              lobby.survivalStyle = survivalStyle;
-              lobby.ruleset = ruleset;
-
-              if (region) {
-                lobby.region = region;
-              }
-
-              if (mmrLock) {
-                lobby.locked = {
-                  rank: playerRank,
-                  shift: Number(rankDiff),
-                };
-              }
-
-              if (reservedTeam) {
-                lobby.reservedTeam = reservedTeam;
-              }
-
-              if (engineRestriction) {
-                lobby.engineRestriction = engineRestriction;
-              }
-
               lobby.save().then(async (doc) => {
                 const role = await createAndFindRole(guild, doc.getRoleName());
 
-                guild.channels.cache.find((c) => c.name === config.channels.ranked_lobbies_channel)
-                  .send({
-                    content: role,
-                    embed: await getEmbed(doc),
-                  }).then((m) => {
-                    doc.channel = m.channel.id;
-                    doc.message = m.id;
-                    doc.save().then(() => {
-                      m.react('✅');
-                      sendAlertMessage(message.channel, `${doc.getTitle()} has been created. Don't forget to press ✅`, 'success');
-                    });
+                let channel;
+                let ping = null;
+                if (lobby.ranked) {
+                  channel = guild.channels.cache.find((c) => c.name === config.channels.ranked_lobbies_channel);
+                  ping = role;
+                } else {
+                  channel = guild.channels.cache.find((c) => c.name === config.channels.unranked_lobbies_channel);
+                }
+
+                channel.send({
+                  content: ping,
+                  embed: await getEmbed(doc),
+                }).then((m) => {
+                  doc.channel = m.channel.id;
+                  doc.message = m.id;
+                  doc.save().then(() => {
+                    m.react('✅');
+                    sendAlertMessage(message.channel, `${doc.getTitle()} has been created. Don't forget to press ✅`, 'success');
                   });
+                });
               });
             } else {
               return sendAlertMessage(message.channel, 'Command cancelled.', 'error').then((m) => m.delete({ timeout: 5000 }));
@@ -1430,29 +1502,29 @@ The value should be in the range of \`${diffMin} to ${diffMax}\`. The value defa
                         return sendAlertMessage(message.channel, 'Command cancelled. Stop abusing staff powers.', 'error');
                       }
 
-                      const relobby = new RankedLobby();
-                      relobby.guild = guild.id;
-                      relobby.creator = message.author.id;
-                      relobby.type = doc.type;
-                      relobby.pools = doc.pools;
-                      relobby.region = doc.region;
-                      relobby.locked = doc.locked;
-                      relobby.players = doc.players;
-                      relobby.teamList = doc.teamList;
-                      relobby.allowPremadeTeams = doc.allowPremadeTeams;
-                      relobby.draftTracks = doc.draftTracks;
-                      relobby.reservedTeam = doc.reservedTeam;
-                      relobby.engineRestriction = doc.engineRestriction;
-                      relobby.lapCount = doc.lapCount;
-                      relobby.survivalStyle = doc.survivalStyle;
-                      relobby.ruleset = doc.ruleset;
+                      const relobby = doc;
+                      relobby._id = null;
+                      relobby.date = null;
+                      relobby.channel = null;
+                      relobby.message = null;
+                      relobby.started = null;
+                      relobby.startedAt = null;
+                      relobby.closed = false;
 
                       deleteLobby(doc, msg);
 
                       relobby.save().then(async (savedRelobby) => {
-                        const role = await createAndFindRole(guild, savedRelobby.getRoleName());
-                        const channel = guild.channels.cache.find((c) => c.name === config.channels.ranked_lobbies_channel);
-                        channel.send({ content: role, embed: await getEmbed(savedRelobby) }).then((m) => {
+                        let content = null;
+                        if (relobby.ranked) {
+                          content = await createAndFindRole(guild, savedRelobby.getRoleName());
+                        }
+
+                        const channel = guild.channels.cache.find((c) => c.id === doc.channel);
+
+                        channel.send({
+                          content,
+                          embed: await getEmbed(savedRelobby),
+                        }).then((m) => {
                           savedRelobby.channel = m.channel.id;
                           savedRelobby.message = m.id;
                           savedRelobby.save().then((document) => {
@@ -1832,7 +1904,7 @@ async function mogi(reaction, user, removed = false) {
           if (!member) return;
 
           const banned = await RankedBan.findOne({ discordId: member.id, guildId: guild.id });
-          if (banned) {
+          if (banned && doc.ranked) {
             const lobbiesChannel = guild.channels.cache.find((c) => c.name === config.channels.ranked_lobbies_channel);
             lobbiesChannel.createOverwrite(user, { VIEW_CHANNEL: false });
             errors.push('You are banned.');
@@ -2358,69 +2430,6 @@ function resetCounters() {
 
 new CronJob('* * * * *', resetCounters).start();
 
-const correctSumsByTeamsCount = {
-  1: {
-    8: 312,
-    7: 248,
-    6: 192,
-    5: 136,
-    4: 55,
-  },
-  2: {
-    8: 390,
-    6: 176,
-  },
-  3: {
-    6: 168,
-  },
-  4: {
-    8: 288,
-  },
-};
-
-function checkScoresSum(message) {
-  let text = message.content;
-
-  const match = text.match(/`([^`]+)`/);
-  if (match) {
-    text = match[1];
-  }
-
-  const data = parseData(text);
-
-  if (data) {
-    const players = [];
-    data.clans.forEach((clan) => {
-      players.push(...clan.players);
-    });
-
-    const sum = players.reduce((s, p) => s + p.totalScore, 0);
-
-    const rankedNotifications = message.guild.channels.cache.find((c) => c.name.toLowerCase() === config.channels.ranked_notifications_channel.toLowerCase());
-    if (!rankedNotifications) {
-      return;
-    }
-
-    const correctSums = correctSumsByTeamsCount[data.clans.length];
-    if (!correctSums) {
-      sendAlertMessage(rankedNotifications, 'Your scores are incorrect.', 'warning', [message.author.id]);
-      return;
-    }
-
-    const correctSum = correctSums[players.length];
-    if (correctSum && sum !== correctSum) {
-      if (sum > correctSum) {
-        sendAlertMessage(rankedNotifications, `The total number of points for your lobby is over ${correctSum} points.
-If there were 1 or multiple ties in your lobby, you can ignore this message. If not, please double check the results.`, 'warning', [message.author.id]);
-        return;
-      }
-
-      sendAlertMessage(rankedNotifications, `The total number of points for your lobby is under ${correctSum} points.
-Unless somebody left the lobby before all races were played or was penalized, please double check the results.`, 'warning', [message.author.id]);
-    }
-  }
-}
-
 function resetCooldowns() {
   const onHourAgo = moment().subtract(1, 'h');
   Cooldown.find({ updatedAt: { $lte: onHourAgo }, count: { $gt: 0 }, name: 'pings' })
@@ -2466,8 +2475,6 @@ client.on('message', (message) => {
         message.delete();
       });
     }
-
-    checkScoresSum(message);
   }
 
   if (isStaff) return;

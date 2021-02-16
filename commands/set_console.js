@@ -1,6 +1,6 @@
 const Player = require('../db/models/player');
 const sendAlertMessage = require('../utils/sendAlertMessage');
-const { consoles } = require('../utils/consoles');
+const { consoles } = require('../db/consoles');
 
 module.exports = {
   name: 'set_console',

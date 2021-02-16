@@ -6,7 +6,7 @@ const Rank = require('../db/models/rank');
 const calculateSuperScore = require('../utils/calculateSuperScore');
 const getConfigValue = require('../utils/getConfigValue');
 const sendAlertMessage = require('../utils/sendAlertMessage');
-const { regions } = require('../utils/regions');
+const { regions } = require('../db/regions');
 
 const {
   RACE_FFA,

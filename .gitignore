@@ -166,3 +166,4 @@ typings/
 /commands/audio/
 /commands/audio.js
 /commands/test.js
+/services/*

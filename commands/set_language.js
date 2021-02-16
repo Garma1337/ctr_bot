@@ -1,6 +1,6 @@
 const Player = require('../db/models/player');
 const sendAlertMessage = require('../utils/sendAlertMessage');
-const { serverLanguages } = require('../utils/serverLanguages');
+const { serverLanguages } = require('../db/serverLanguages');
 
 module.exports = {
   name: 'set_languages',

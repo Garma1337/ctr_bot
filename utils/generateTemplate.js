@@ -13,7 +13,7 @@ const {
 const Player = require('../db/models/player');
 const Rank = require('../db/models/rank');
 
-const { flagToCode } = require('./regional_indicators');
+const { flagToCode } = require('../db/regional_indicators');
 
 function getPlayerData(p) {
   let flag = '';

@@ -1,4 +1,4 @@
-const { battleModesFFA, battleModes4v4 } = require('./modes_battle');
+const { battleModesFFA, battleModes4v4 } = require('../db/modes_battle');
 const { BATTLE_FFA, BATTLE_4V4 } = require('../db/models/ranked_lobbies');
 
 async function rngModeBattle(type, maps) {
@@ -23,6 +23,7 @@ async function rngModeBattle(type, maps) {
 
   const N = maps.length;
   const randomModes = [];
+  const maxModeUsage = Math.ceil(N / modeNames.length);
 
   for (let i = 0; i < N; i++) {
     while (true) {
@@ -30,17 +31,10 @@ async function rngModeBattle(type, maps) {
       const mode = modes.find((m) => m.name === modeNames[rng]);
       const modeUsageCount = randomModes.filter((rm) => rm === modeNames[rng]).length;
 
-      if (type === BATTLE_FFA || (type === BATTLE_4V4 && modeUsageCount < 2)) {
-        if (mode.maps.length < 1 || mode.maps.includes(maps[i])) {
-          randomModes.push(modeNames[rng]);
+      if (modeUsageCount < maxModeUsage && (mode.maps.length < 1 || mode.maps.includes(maps[i]))) {
+        randomModes.push(modeNames[rng]);
 
-          // Allow repeated modes in Battle 4 vs. 4
-          if (type !== BATTLE_4V4) {
-            modeNames.splice(rng, 1);
-          }
-
-          break;
-        }
+        break;
       }
     }
   }

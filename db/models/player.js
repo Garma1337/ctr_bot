@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const { consoles } = require('../../utils/consoles');
+const { consoles } = require('../consoles');
 
 const { Schema, model } = mongoose;
 const consoleTags = consoles.map((c) => c.tag);

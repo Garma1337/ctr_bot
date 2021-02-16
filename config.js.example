@@ -25,6 +25,7 @@ module.exports = {
     ranked_guide_channel: 'ranked-guide',
     ranked_results_submissions_channel: 'results-submissions',
     ranked_lobbies_channel: 'ranked-lobbies',
+    unranked_lobbies_channel: 'unranked-lobbies',
     ranked_notifications_channel: 'ranked-notifications',
     ranked_general_channel: 'ranked-general',
     commands_allowed: [
