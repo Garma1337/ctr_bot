@@ -1,5 +1,5 @@
 /* eslint-disable consistent-return */
-const { parsers } = require('../utils/SignupParsers');
+const { parsers } = require('../utils/signups_parsers');
 const sendAlertMessage = require('../utils/sendAlertMessage');
 
 module.exports = {

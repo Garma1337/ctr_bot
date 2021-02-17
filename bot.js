@@ -23,7 +23,7 @@ const db = require('./db/models');
 const isStaffMember = require('./utils/isStaffMember');
 const sendAlertMessage = require('./utils/sendAlertMessage');
 const sendLogMessage = require('./utils/sendLogMessage');
-const { parsers, parse, checkRepetitions } = require('./utils/SignupParsers');
+const { parsers, parse, checkRepetitions } = require('./utils/signups_parsers');
 const { flags } = require('./db/flags');
 
 const client = new Discord.Client({ partials: ['MESSAGE', 'CHANNEL', 'REACTION'] });

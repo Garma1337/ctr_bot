@@ -1,7 +1,7 @@
 const { CronJob } = require('cron');
 const { ScheduledMessage } = require('../db/models/scheduled_message');
 const { SignupsChannel } = require('../db/models/signups_channel');
-const { parsers } = require('../utils/SignupParsers');
+const { parsers } = require('../utils/signups_parsers');
 const formatRolePings = require('../utils/formatRolePings');
 const getSignupsData = require('../utils/getSignupsData');
 const sendLogMessage = require('../utils/sendLogMessage');

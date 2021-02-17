@@ -185,17 +185,16 @@ function parse(message, fields) {
     data.errors.push('result false');
   }
 
-  const mentions = [];
-
   const checkRequired = fields.every((field) => {
     if (field.optional) return true;
     if (field.type === 'mention') {
-      mentions.push(data[`${field.name}Id`]);
       return data[`${field.name}Id`] && data[`${field.name}Tag`];
     }
+
     if (field.type === 'boolean') {
       return data[field.name] !== null;
     }
+
     return data[field.name];
   });
 

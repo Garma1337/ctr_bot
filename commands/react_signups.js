@@ -2,8 +2,8 @@ const fetchMessages = require('../utils/fetchMessages');
 const sendAlertMessage = require('../utils/sendAlertMessage');
 const sendLogMessage = require('../utils/sendLogMessage');
 const { SignupsChannel } = require('../db/models/signups_channel');
-const { parse } = require('../utils/SignupParsers');
-const { parsers } = require('../utils/SignupParsers');
+const { parse } = require('../utils/signups_parsers');
+const { parsers } = require('../utils/signups_parsers');
 
 module.exports = {
   name: 'react_signups',

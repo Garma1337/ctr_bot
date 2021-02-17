@@ -1,6 +1,6 @@
 const fetchMessages = require('./fetchMessages');
-const { parse } = require('./SignupParsers');
-const { parsers } = require('./SignupParsers');
+const { parse } = require('./signups_parsers');
+const { parsers } = require('./signups_parsers');
 
 module.exports = function getSignupsData(channel, doc) {
   const parser = parsers[doc.parser];
