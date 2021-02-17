@@ -8,6 +8,7 @@ module.exports = {
   description: 'Ranked unban',
   guildOnly: true,
   permissions: ['MANAGE_CHANNELS', 'MANAGE_ROLES'],
+  // eslint-disable-next-line consistent-return
   async execute(message, args) {
     if (args.length) {
       const argument = args.shift();
@@ -20,6 +21,7 @@ module.exports = {
         }
       }
 
+      // eslint-disable-next-line consistent-return
       RankedBan.findOne({ guildId: message.guild.id, discordId: member.id }).then((doc) => {
         if (!doc) {
           return sendAlertMessage(message.channel, 'Banned user not found.', 'warning');
@@ -30,6 +32,7 @@ module.exports = {
         const docDeletePromise = doc.delete();
         promises.push(docDeletePromise);
 
+        // eslint-disable-next-line max-len
         const channel = message.guild.channels.cache.find((c) => c.name === config.channels.ranked_lobbies_channel);
         const permissionOverwrites = channel.permissionOverwrites.get(doc.discordId);
         if (permissionOverwrites) {

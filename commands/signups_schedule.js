@@ -21,6 +21,7 @@ module.exports = {
   guildOnly: true,
   permissions: ['MANAGE_CHANNELS', 'MANAGE_ROLES'],
   aliases: ['signup_schedule'],
+  // eslint-disable-next-line consistent-return
   execute(message, args) {
     if (!args.length) {
       return Config.findOne({ name: 'signups_schedule' }).then((doc) => {

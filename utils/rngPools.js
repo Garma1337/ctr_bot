@@ -24,7 +24,7 @@ const {
  * @param array
  */
 function shuffle(array) {
-  for (let i = array.length - 1; i > 0; i--) {
+  for (let i = array.length - 1; i > 0; i -= 1) {
     const j = Math.floor(Math.random() * (i + 1));
     [array[i], array[j]] = [array[j], array[i]];
   }
@@ -110,9 +110,7 @@ async function rngPools(doc) {
     maps = maps.map((p, i) => {
       const rngNumber = sliceRng[i];
       return [p, rngNumber];
-    })
-      .sort((a, b) => a[1] - b[1])
-      .map((p) => p[0]);
+    }).sort((a, b) => a[1] - b[1]).map((p) => p[0]);
 
     // Survival is only 7 races, so we just remove one Track
     if (doc.type === RACE_SURVIVAL) {

@@ -9,6 +9,7 @@ module.exports = {
   description: 'Modify the role of a clan member. Example: `!clan_role @Garma GSC captain`.',
   guildOnly: true,
   aliases: ['cr'],
+  // eslint-disable-next-line consistent-return
   execute(message, args) {
     if (args.length < 3) {
       return sendAlertMessage(message.channel, 'Wrong command usage. Example: `!clan_role @Garma GSC captain`.', 'warning');
@@ -23,6 +24,7 @@ module.exports = {
     const clanName = args[1];
     const role = args[2].toLowerCase();
 
+    // eslint-disable-next-line consistent-return
     Clan.find().then((clans) => {
       const clan = clans.find((c) => c.shortName.toLowerCase() === clanName.toLowerCase());
       if (!clan) {

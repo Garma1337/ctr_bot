@@ -11,6 +11,7 @@ module.exports = {
   description: 'Set your team for Ranked 3 vs. 3 and ranked 4 vs. 4.',
   guildOnly: true,
   aliases: ['set_team', 'team_s'],
+  // eslint-disable-next-line consistent-return
   async execute(message) {
     const tagsCount = message.mentions.members.size;
     if (!tagsCount) {
@@ -38,6 +39,7 @@ module.exports = {
       return sendAlertMessage(message.channel, 'very funny :)', 'warning');
     }
 
+    // eslint-disable-next-line max-len
     const authorVerified = message.member.roles.cache.find((r) => r.name.toLowerCase() === config.roles.ranked_verified_role.toLowerCase());
     if (!authorVerified) {
       return sendAlertMessage(message.channel, 'you are not verified.', 'warning');
@@ -58,12 +60,14 @@ module.exports = {
       return sendAlertMessage(message.channel, 'You are already in a team.', 'warning');
     }
 
+    // eslint-disable-next-line max-len
     const lobby = await RankedLobby.findOne({ type: { $in: [RACE_3V3, RACE_4V4] }, players: { $in: [author.id, ...teammateIds] } });
     if (lobby) {
-      return sendAlertMessage(message.channel, 'You can\'t set a team while one of you is playing a ranked match.', 'warning');
+      return sendAlertMessage(message.channel, 'You can\'t set a team while one of you is playing in a lobby.', 'warning');
     }
 
     for (const teammate of teammates.array()) {
+      // eslint-disable-next-line max-len
       const partnerVerified = teammate.roles.cache.find((r) => r.name.toLowerCase() === config.roles.ranked_verified_role.toLowerCase());
       if (!partnerVerified) {
         return sendAlertMessage(message.channel, `${teammate} isn't verified.`, 'warning');
@@ -89,23 +93,25 @@ module.exports = {
     }
 
     const teammatesPing = teammates.map((t) => t.toString()).join(', ');
-    sendAlertMessage(message.channel, `${teammatesPing}, please confirm that you are teammates of ${author} for ranked ${mode}.`, 'info').then((confirmMessage) => {
+    sendAlertMessage(message.channel, `${teammatesPing}, please confirm that you are teammates of ${author} for ${mode} lobbies.`, 'info').then((confirmMessage) => {
       confirmMessage.react('✅');
 
       const filter = (r, u) => r.emoji.name === '✅' && teammateIds.includes(u.id);
-      confirmMessage.awaitReactions(filter, { max: tagsCount, time: tagsCount * 60000, errors: ['time'] }).then(async (collected) => {
+      // eslint-disable-next-line consistent-return
+      confirmMessage.awaitReactions(filter, { max: tagsCount, time: tagsCount * 60000, errors: ['time'] }).then(async () => {
         if (confirmMessage.deleted) {
           return sendAlertMessage(message.channel, 'Command cancelled. Stop abusing staff powers.', 'error');
         }
 
         confirmMessage.delete();
 
-        // eslint-disable-next-line no-shadow
+        // eslint-disable-next-line no-shadow,max-len
         const lobby = await RankedLobby.findOne({ guild: guild.id, type: { $in: [RACE_3V3, RACE_4V4] }, players: author.id });
         if (lobby) {
-          return sendAlertMessage(message.channel, `Command cancelled: ${author} joined another ranked lobby.`, 'warning');
+          return sendAlertMessage(message.channel, `Command cancelled: ${author} joined another lobby.`, 'warning');
         }
 
+        // eslint-disable-next-line max-len
         const teamExists = await Team.findOne({ guild: guild.id, players: { $in: [author.id, ...teammateIds] } });
         if (teamExists) {
           return sendAlertMessage(message.channel, 'Command cancelled: One of you has already set a team.', 'warning');

@@ -11,6 +11,7 @@ Team A: @CaptainA
 Team B: @CaptainB\``,
   guildOnly: true,
   cooldown: 10,
+  // eslint-disable-next-line consistent-return
   execute(message) {
     const wrongSyntax = `Wrong command usage. Example:
 \`!draft
@@ -29,6 +30,7 @@ Team B: @CaptainB\``;
       return sendAlertMessage(message.channel, 'You should mention two team captains.', 'warning');
     }
 
+    // eslint-disable-next-line max-len
     if (!isStaffMember(message.member) && !mentions.users.map((m) => m.id).includes(message.author.id)) {
       return sendAlertMessage(message.channel, 'You should be a captain of one of the teams.', 'warning');
     }

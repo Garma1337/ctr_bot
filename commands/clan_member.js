@@ -7,6 +7,7 @@ const { ROLE_MEMBER } = require('../db/models/clan');
 const ADD = 'add';
 const REMOVE = 'remove';
 
+// eslint-disable-next-line consistent-return
 const executeAction = (message, action, clan) => {
   const { channel } = message;
   const user = message.mentions.users.first();
@@ -15,6 +16,7 @@ const executeAction = (message, action, clan) => {
     return sendAlertMessage(message.channel, 'Invalid user.', 'error');
   }
 
+  // eslint-disable-next-line consistent-return
   message.guild.members.fetch(user).then((member) => {
     if (!member) {
       return sendAlertMessage(channel, `Couldn't find the user ${member}.`, 'warning');
@@ -47,6 +49,8 @@ const executeAction = (message, action, clan) => {
         });
 
         break;
+      default:
+        break;
     }
   });
 };
@@ -65,10 +69,8 @@ module.exports = {
 !clan_member remove @user\``;
   },
   guildOnly: true,
+  // eslint-disable-next-line consistent-return
   execute(message, args) {
-    //  !clan_member add [CTR] @tag
-    //  !clan_member remove [CTR] @tag
-
     const isStaff = isStaffMember(message.member);
     const action = args[0];
     const actions = [ADD, REMOVE];
@@ -77,11 +79,13 @@ module.exports = {
       const clanName = args[1];
       const mention = args[2];
 
+      // eslint-disable-next-line max-len
       if ((!clanName || !mention) || (mention && !mention.match(Discord.MessageMentions.USERS_PATTERN))) {
         const wrongArgumentsStaff = 'Wrong arguments. Example usage: `!clan_member add CTR @user`';
         return sendAlertMessage(message.channel, wrongArgumentsStaff, 'warning');
       }
 
+      // eslint-disable-next-line consistent-return
       Clan.findOne({ shortName: clanName }).then((clan) => {
         if (!clan) {
           return sendAlertMessage(message.channel, `There is no clan with the short name "${clanName}".`, 'warning');

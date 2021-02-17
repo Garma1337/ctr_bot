@@ -7,7 +7,9 @@ module.exports = {
   description: 'Check for duplicate and missing results on Lorenzi.',
   guildOnly: true,
   aliases: ['unsubmitted_results', 'missing_results', 'duplicate_results'],
+  // eslint-disable-next-line consistent-return
   execute(message, args) {
+    // eslint-disable-next-line max-len
     if (!isStaffMember(message.member) && !message.member.roles.cache.find((r) => r.name.toLowerCase() === config.roles.ranked_updater_role.toLowerCase())) {
       return sendAlertMessage(message.channel, 'You are not allowed to use this command.', 'warning');
     }
@@ -18,6 +20,7 @@ module.exports = {
       return sendAlertMessage('You can check at most the latest 100 submissions.', 'warning');
     }
 
+    // eslint-disable-next-line max-len
     const channel = message.guild.channels.cache.find((c) => c.name.toLowerCase() === config.channels.ranked_results_submissions_channel.toLowerCase());
     if (!channel) {
       return sendAlertMessage(message.channel, `The channel "${config.channels.ranked_results_submissions_channel}" does not exist.`, 'warning');
@@ -34,6 +37,7 @@ module.exports = {
         }
 
         messages.forEach((m2) => {
+          // eslint-disable-next-line max-len
           if (m.id !== m2.id && m.content === m2.content && !duplicates.find((d) => [m.id, m2.id].includes(d[0]) && [m.id, m2.id].includes(d[1]))) {
             duplicates.push([
               m.id,

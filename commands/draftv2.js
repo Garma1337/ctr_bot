@@ -9,6 +9,7 @@ module.exports = {
   guildOnly: true,
   cooldown: 10,
   aliases: ['new_draft', 'draftv2'],
+  // eslint-disable-next-line consistent-return
   execute(message) {
     const wrongSyntax = 'Wrong command usage. Try `!draft2 [type] @CaptainA @CaptainB [bans] [picks] [timeout]`.';
 
@@ -26,6 +27,7 @@ module.exports = {
       return sendAlertMessage(message.channel, wrongSyntax, 'warning');
     }
 
+    // eslint-disable-next-line max-len
     if (!isStaffMember(message.member) && !mentionedUsers.map((m) => m.id).includes(message.author.id)) {
       return sendAlertMessage(message.channel, 'You should be one of the players doing the draft.', 'warning');
     }

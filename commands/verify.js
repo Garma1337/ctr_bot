@@ -12,6 +12,7 @@ module.exports = {
   args: true,
   usage: '[@tag]',
   aliases: ['ranked_verify'],
+  // eslint-disable-next-line consistent-return
   async execute(message, args) {
     let member = message.mentions.members.first();
     if (!member) {

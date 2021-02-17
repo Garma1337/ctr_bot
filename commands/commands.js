@@ -28,6 +28,7 @@ module.exports = {
     const DELETE = 'delete';
     const actions = [ADD, EDIT, DELETE];
     if (!actions.includes(action)) {
+      // eslint-disable-next-line consistent-return
       return sendAlertMessage(message.channel, `Wrong action. Allowed actions: ${actions.join(', ')}`, 'warning');
     }
 
@@ -36,42 +37,45 @@ module.exports = {
     switch (action) {
       case ADD:
         if (args.length < 2) {
+          // eslint-disable-next-line consistent-return
           return sendAlertMessage(message.channel, 'Wrong amount of arguments. Example: `!commands add name`', 'warning');
         }
 
+        // eslint-disable-next-line no-case-declarations
         const staticCommand = client.commands.get(commandName)
           || client.commands.find((cmd) => cmd.aliases && cmd.aliases.includes(commandName));
         if (staticCommand) {
+          // eslint-disable-next-line consistent-return
           return sendAlertMessage(message.channel, 'There is already a static command with that name!', 'warning');
         }
 
         message.channel.send(`Send a response message for this command. Waiting 1 minute.
 Type \`cancel\` to cancel.`).then(() => {
-          message.channel
-            .awaitMessages((m) => m.author.id === message.author.id, { max: 1, time: 60000, errors: ['time'] })
-            .then((collected) => {
-              const { content } = collected.first();
-              if (content.toLowerCase() === 'cancel') {
-                throw new Error('cancel');
-              }
+          message.channel.awaitMessages((m) => m.author.id === message.author.id, { max: 1, time: 60000, errors: ['time'] }).then((collected) => {
+            const { content } = collected.first();
+            if (content.toLowerCase() === 'cancel') {
+              throw new Error('cancel');
+            }
 
-              Command.findOne({ name: commandName }).then((command) => {
-                if (command) {
-                  return sendAlertMessage(message.channel, 'There is already a dynamic command with that name!', 'warning');
-                }
-                const newCommand = new Command();
-                newCommand.name = commandName;
-                newCommand.message = content;
-                newCommand.save().then(() => {
-                  sendAlertMessage(message.channel, 'Command added.', 'success');
-                });
+            // eslint-disable-next-line consistent-return
+            Command.findOne({ name: commandName }).then((command) => {
+              if (command) {
+                return sendAlertMessage(message.channel, 'There is already a dynamic command with that name!', 'warning');
+              }
+              const newCommand = new Command();
+              newCommand.name = commandName;
+              newCommand.message = content;
+              newCommand.save().then(() => {
+                sendAlertMessage(message.channel, 'Command added.', 'success');
               });
-            }).catch(() => sendAlertMessage(message.channel, 'Command cancelled.', 'error'));
+            });
+          }).catch(() => sendAlertMessage(message.channel, 'Command cancelled.', 'error'));
         });
 
         break;
       case EDIT:
         if (args.length < 2) {
+          // eslint-disable-next-line consistent-return
           return sendAlertMessage(message.channel, 'Wrong amount of arguments. Example: `!commands edit name`', 'warning');
         }
 
@@ -103,6 +107,7 @@ Type \`cancel\` to cancel.`).then(() => {
 
       case DELETE:
         if (args.length < 2) {
+          // eslint-disable-next-line consistent-return
           return sendAlertMessage(message.channel, 'Wrong amount of arguments. Example: `!commands delete name`', 'warning');
         }
 
@@ -128,6 +133,8 @@ Type \`cancel\` to cancel.`).then(() => {
           }
         });
 
+        break;
+      default:
         break;
     }
   },

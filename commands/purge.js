@@ -7,6 +7,7 @@ module.exports = {
   permissions: ['MANAGE_MESSAGES'],
   args: true,
   usage: 'purge [X]',
+  // eslint-disable-next-line consistent-return
   execute(message, args) {
     const limit = parseInt(args[0], 10);
 
@@ -25,14 +26,12 @@ module.exports = {
         message.delete();
       };
 
-      channel.bulkDelete(messages)
-        .then(deletedCallback)
-        .catch((error) => {
-          sendAlertMessage(message.channel, `${error.toString()}\nDeleting one by one now instead. Might take a while...`, 'info').then((deletingMessage) => {
-            const deletePromises = messages.map((m) => m.delete());
-            Promise.all(deletePromises).then(deletedCallback).then(() => deletingMessage.delete());
-          });
+      channel.bulkDelete(messages).then(deletedCallback).catch((error) => {
+        sendAlertMessage(message.channel, `${error.toString()}\nDeleting one by one now instead. Might take a while...`, 'info').then((deletingMessage) => {
+          const deletePromises = messages.map((m) => m.delete());
+          Promise.all(deletePromises).then(deletedCallback).then(() => deletingMessage.delete());
         });
+      });
     });
   },
 };

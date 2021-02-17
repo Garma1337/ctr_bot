@@ -7,6 +7,7 @@ module.exports = {
   name: 'set_psn',
   description: 'Set your PSN.',
   guildOnly: true,
+  // eslint-disable-next-line consistent-return
   execute(message, args) {
     const isStaff = isStaffMember(message.member);
 
@@ -32,6 +33,7 @@ module.exports = {
       return sendAlertMessage(message.channel, 'You okay, bro?', 'warning');
     }
 
+    // eslint-disable-next-line consistent-return
     message.guild.members.fetch(user).then((member) => {
       const discordId = member.user.id;
 
@@ -40,6 +42,7 @@ module.exports = {
         return sendAlertMessage(message.channel, e, 'warning');
       }
 
+      // eslint-disable-next-line consistent-return
       Player.findOne({ psn: PSN }).then((repeatPSN) => {
         if (repeatPSN) {
           if (repeatPSN.discordId === message.author.id) {
@@ -47,6 +50,8 @@ module.exports = {
           }
           return sendAlertMessage(message.channel, 'This PSN is already used by another player.', 'warning');
         }
+
+        // eslint-disable-next-line consistent-return
         Player.findOne({ discordId }).then((doc) => {
           let promise;
           if (!doc) {
@@ -69,7 +74,9 @@ module.exports = {
                 sendLogMessage(message.guild, `${member} changed their PSN.
 Old: \`${oldPSN}\`
 New: \`${PSN}\``);
+                // eslint-disable-next-line no-shadow
               } catch (e) {
+                // eslint-disable-next-line no-console
                 console.error(e);
               }
             }

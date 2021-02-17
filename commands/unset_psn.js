@@ -20,6 +20,7 @@ module.exports = {
   name: 'unset_psn',
   description: 'Unset your PSN.',
   permissions: ['MANAGE_CHANNELS', 'MANAGE_ROLES'],
+  // eslint-disable-next-line consistent-return
   execute(message, args) {
     const isStaff = isStaffMember(message.member);
 
@@ -40,6 +41,7 @@ module.exports = {
       discordId = user.id;
     }
 
+    // eslint-disable-next-line consistent-return
     Player.findOne({ discordId }).then((doc) => {
       if (!doc || !doc.psn) {
         return sendAlertMessage(message.channel, 'You have not set your PSN yet.', 'warning');

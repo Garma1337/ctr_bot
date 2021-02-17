@@ -8,12 +8,14 @@ module.exports = {
   guildOnly: true,
   aliases: ['random_track'],
   cooldown: 10,
+  // eslint-disable-next-line consistent-return
   execute(message, args) {
     let number = 1;
 
     if (args.length) {
       number = Number(args[0]);
 
+      // eslint-disable-next-line no-restricted-globals
       if (isNaN(number) || number < 1 || number > 40) {
         return sendAlertMessage(message.channel, 'Please enter a number between 1 and 40', 'warning');
       }
@@ -29,7 +31,7 @@ module.exports = {
 
       const randomTracks = [];
 
-      for (let i = 0; i < number; i++) {
+      for (let i = 0; i < number; i += 1) {
         const randomTrack = getRandomArrayElement(tracks);
         const index = tracks.findIndex((t) => t === randomTrack);
 

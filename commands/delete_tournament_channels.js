@@ -41,6 +41,7 @@ Command will be automatically cancelled after ${autoCancelSeconds} seconds.`, 'i
 
   async confirm(message) {
     sendAlertMessage(message.channel, 'Processing...', 'info').then(async (botMsg) => {
+      // eslint-disable-next-line max-len
       const channels = message.guild.channels.cache.filter((c) => c.parent && c.parent.name.toLowerCase() === config.channels.tournament_lobbies_category.toLowerCase());
 
       const outMessageRows = [];

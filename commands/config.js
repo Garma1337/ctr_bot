@@ -1,4 +1,4 @@
-const Config = require('../db/models/config');
+const { Config } = require('../db/models/config');
 const sendAlertMessage = require('../utils/sendAlertMessage');
 
 module.exports = {
@@ -26,10 +26,12 @@ module.exports = {
     const actions = [SHOW, EDIT];
 
     if (!actions.includes(action)) {
+      // eslint-disable-next-line consistent-return
       return sendAlertMessage(message.channel, `Wrong command action. Allowed actions: ${actions}`, 'warning');
     }
 
     if (args.length < 2) {
+      // eslint-disable-next-line consistent-return
       return sendAlertMessage(message.channel, 'Wrong amount of arguments. Example: `!config edit name`', 'warning');
     }
 

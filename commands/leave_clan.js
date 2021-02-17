@@ -27,6 +27,7 @@ module.exports = {
     const clanName = args.shift();
 
     if (!clanName) {
+      // eslint-disable-next-line consistent-return
       Clan.find({ 'members.discordId': message.author.id }).then((docs) => {
         if (!docs.length) {
           return sendAlertMessage(message.channel, 'You are not in any clan.', 'warning');
@@ -42,6 +43,7 @@ module.exports = {
         executeAction(message, clan);
       });
     } else {
+      // eslint-disable-next-line consistent-return
       Clan.findOne({ shortName: clanName }).then((clan) => {
         if (!clan) {
           return sendAlertMessage(message.channel, `There is no clan with the short name "${clanName}".`, 'warning');

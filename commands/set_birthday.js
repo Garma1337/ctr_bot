@@ -39,6 +39,7 @@ module.exports = {
       let birthdate = moment(args[0].trim());
 
       if (!birthdate.isValid()) {
+        // eslint-disable-next-line consistent-return
         return sendAlertMessage(message.channel, `The date "${args[0]}" is invalid.`, 'warning');
       }
 
@@ -80,10 +81,12 @@ module.exports = {
     ];
     const days = range(31, 1);
 
+    // eslint-disable-next-line consistent-return
     return sendAlertMessage(message.channel, 'Please enter the year. The value must be between 1970 and 2010. Waiting 1 minute.', 'info').then((confirmMessage) => {
       const filter = (m) => m.author.id === message.author.id;
       const options = { max: 1, time: 60000, errors: ['time'] };
 
+      // eslint-disable-next-line consistent-return
       message.channel.awaitMessages(filter, options).then((collectedMessages) => {
         const collectedMessage = collectedMessages.first();
         const { content } = collectedMessage;
@@ -95,9 +98,12 @@ module.exports = {
           const year = content;
 
           return sendAlertMessage(message.channel, `Select month. Waiting 1 minute.\n
-\`\`\`${months.map((m, i) => m = `${i + 1} - ${m}`).join('\n')}\`\`\``, 'info').then((confirmMessage) => {
+\`\`\`${months.map((m, i) => `${i + 1} - ${m}`).join('\n')}\`\`\``, 'info').then((confirmMessage) => {
+            // eslint-disable-next-line no-shadow,consistent-return
             message.channel.awaitMessages(filter, options).then((collectedMessages) => {
+              // eslint-disable-next-line no-shadow
               const collectedMessage = collectedMessages.first();
+              // eslint-disable-next-line no-shadow
               const { content } = collectedMessage;
 
               confirmMessage.delete();
@@ -110,9 +116,13 @@ module.exports = {
                   month = `0${month}`;
                 }
 
+                // eslint-disable-next-line no-shadow
                 return sendAlertMessage(message.channel, 'Please enter the day. The value must be between 1 and 31. Waiting 1 minute.', 'info').then((confirmMessage) => {
+                  // eslint-disable-next-line no-shadow,consistent-return
                   message.channel.awaitMessages(filter, options).then((collectedMessages) => {
+                    // eslint-disable-next-line no-shadow
                     const collectedMessage = collectedMessages.first();
+                    // eslint-disable-next-line no-shadow
                     const { content } = collectedMessage;
 
                     confirmMessage.delete();

@@ -7,6 +7,7 @@ module.exports = {
   usage: '<role> [remove]\n<users>',
   guildOnly: true,
   permissions: ['MANAGE_ROLES'],
+  // eslint-disable-next-line consistent-return
   execute(message, args) {
     let roleName = args.join(' ');
     let remove = false;
@@ -14,6 +15,7 @@ module.exports = {
       remove = true;
       roleName = args.slice(1).join(' ');
     }
+
     const role = message.guild.roles.cache.find((r) => r.name === roleName);
 
     async function addRole(member) {
@@ -48,6 +50,7 @@ module.exports = {
         const out = [];
         // noinspection LoopStatementThatDoesntLoopJS
         for (const q of rows) {
+          // eslint-disable-next-line no-shadow
           const member = members.find((m) => m.user.tag === q || m.user.id === q);
 
           if (!member) {

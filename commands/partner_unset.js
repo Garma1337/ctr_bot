@@ -8,9 +8,11 @@ module.exports = {
   description: 'Unset your partner for Ranked Duos.',
   guildOnly: true,
   aliases: ['unset_partner', 'partner_remove', 'partner_u', 'divorce'],
+  // eslint-disable-next-line consistent-return
   async execute(message) {
     const { author, guild } = message;
 
+    // eslint-disable-next-line max-len
     const authorSavedDuo = await Duo.findOne({ guild: guild.id, $or: [{ discord1: author.id }, { discord2: author.id }] });
     if (authorSavedDuo) {
       const lobby = await RankedLobby.findOne({

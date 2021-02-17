@@ -82,12 +82,13 @@ client.on('ready', () => {
             return;
           }
         }
-        client.user.setActivity(doc.value);
+
+        client.user.setActivity(doc.value).then();
       } else {
         const conf = new Config();
         conf.name = 'status';
         conf.value = '';
-        conf.save();
+        conf.save().then();
       }
     });
   };
@@ -96,7 +97,9 @@ client.on('ready', () => {
 });
 
 client.on('rateLimit', (rateLimitData) => {
+  // eslint-disable-next-line no-console
   console.log('rateLimit');
+  // eslint-disable-next-line no-console
   console.log(rateLimitData);
 });
 
@@ -112,6 +115,7 @@ async function reactOnSignUp(message, oldMessage = null) {
       return;
     }
 
+    // eslint-disable-next-line max-len
     const signupsChannel = await SignupsChannel.findOne({ guild: message.channel.guild.id, channel: message.channel.id });
     if (!signupsChannel) {
       return;
@@ -154,6 +158,7 @@ async function reactOnSignUp(message, oldMessage = null) {
         r.users.fetch().then((users) => {
           users.forEach((reactionUser) => {
             if (reactionUser.id !== client.user.id) {
+              // eslint-disable-next-line no-console
               r.users.remove(reactionUser).then().catch(console.error);
             }
           });
@@ -166,9 +171,11 @@ async function reactOnSignUp(message, oldMessage = null) {
       message.author.send(`Your signup is wrong. Please, be sure to follow the template (pinned message)!
 You can edit your message, and I will check it again.`).then((m) => DMCallback(m, data)).catch(DMCatchCallback);
     } else {
+      // eslint-disable-next-line max-len
       checkRepetitions(message, data, parser.fields, (m) => parse(m, parser.fields)).then((result) => {
         if (result && result.errors && !result.errors.length) {
           message.react('✅').then().catch(reactionCatchCallback);
+          // eslint-disable-next-line max-len
           message.author.send(signupsChannel.message).then((m) => DMCallback(m, result)).catch(DMCatchCallback);
         } else {
           message.react('❌').then().catch(reactionCatchCallback);
@@ -187,12 +194,15 @@ ${message.content}`;
       sendLogMessage(message.guild, msg, true);
     }
   } catch (e) {
+    // eslint-disable-next-line no-console
     console.error(e);
   }
 }
 
 client.on('messageReactionAdd', (reaction) => {
+  // eslint-disable-next-line max-len
   client.channels.cache.get(reaction.message.channel.id).messages.fetch(reaction.message.id).then((message) => {
+    // eslint-disable-next-line max-len
     if (message.channel.name.toLowerCase() === config.channels.suggestions_channel.toLowerCase() && !message.author.bot) {
       if (['✅', '❌'].includes(reaction.emoji.name)) {
         const likeReaction = message.reactions.cache.find((r) => r.emoji.name === '👍');
@@ -242,7 +252,7 @@ client.on('messageReactionAdd', (reaction) => {
               };
 
               message.delete().then(() => {
-                message.channel.send({ embed });
+                message.channel.send({ embed }).then();
               });
             });
           });
@@ -262,9 +272,7 @@ client.on('messageReactionAdd', (reaction) => {
         r.users.fetch({ limit: 100 }).then((users) => {
           users.forEach((reactionUser) => {
             if (reactionUser.id !== config.bot_user_id) {
-              r.users.remove(reactionUser)
-                .then()
-                .catch(() => {});
+              r.users.remove(reactionUser).then().catch(() => {});
             }
           });
         });
@@ -288,7 +296,7 @@ async function mute(member, message, duration = moment.duration(1, 'h')) {
   muteObj.discordId = member.id;
   muteObj.mutedAt = new Date();
   muteObj.mutedTill = moment().add(duration);
-  muteObj.save();
+  await muteObj.save();
 
   member.guild.channels.cache.forEach((c) => {
     c.createOverwrite(mutedRole, { SEND_MESSAGES: false });
@@ -315,7 +323,10 @@ function checkPings(message) {
     config.roles.ranked_duos_role.toLowerCase(),
     config.roles.ranked_3v3_role.toLowerCase(),
     config.roles.ranked_4v4_role.toLowerCase(),
+    config.roles.ranked_survival_role.toLowerCase(),
+    config.roles.ranked_itemless_duos_role.toLowerCase(),
     config.roles.ranked_battle_role.toLowerCase(),
+    config.roles.ranked_battle_4v4_role.toLowerCase(),
   ];
 
   if (roles.find((r) => rankedRoles.includes(r.name.toLowerCase()))) {
@@ -326,7 +337,7 @@ function checkPings(message) {
     )
       .then(async (doc) => {
         if (doc.count >= 2) { // mute
-          mute(member, message);
+          await mute(member, message);
         } else if (doc.count >= 1) {
           sendAlertMessage(message.channel, `Please don't ping this role, or I will have to mute you for ${muteDuration.humanize()}.`, 'warning', [member.id]);
         }
@@ -349,7 +360,7 @@ function checkPings(message) {
     )
       .then(async (doc) => {
         if (doc.count >= 3) { // mute
-          mute(member, message);
+          await mute(member, message);
         } else if (doc.count >= 2) {
           sendAlertMessage(message.channel, `Please don't ping people so often, or I will have to mute you for ${muteDuration.humanize()}.`, 'warning', [member.id]);
         }
@@ -364,20 +375,20 @@ client.on('message', (message) => {
 
   if (message.channel.type === 'text') {
     checkPings(message);
-    reactOnSignUp(message);
+    reactOnSignUp(message).then();
   }
 
   if (message.channel.name && message.channel.name.includes('streams')) {
     setTimeout(() => {
-      message.suppressEmbeds(true);
+      message.suppressEmbeds(true).then();
     }, 1000);
   }
 
   const { prefix } = client;
 
   if (message.channel.type === 'text' && message.channel.name.toLowerCase() === config.channels.suggestions_channel.toLowerCase() && !message.author.bot) {
-    message.react('👍');
-    message.react('👎');
+    message.react('👍').then();
+    message.react('👎').then();
   }
 
   if (!message.content.startsWith(prefix)) {
@@ -489,7 +500,7 @@ client.on('message', (message) => {
     commandUsage.discordId = message.author.id;
     commandUsage.date = new Date();
 
-    commandUsage.save().then(() => {});
+    commandUsage.save().then();
   } catch (error) {
     catchExecutionError(error);
   }
@@ -497,12 +508,13 @@ client.on('message', (message) => {
 
 client.on('messageUpdate', (oldMessage, newMessage) => {
   if (newMessage && newMessage.channel.type === 'text') {
-    reactOnSignUp(newMessage, oldMessage);
+    reactOnSignUp(newMessage, oldMessage).then();
 
+    // eslint-disable-next-line max-len
     if (newMessage.channel.name.toLowerCase() === config.channels.suggestions_channel.toLowerCase() && !newMessage.author.bot) {
       newMessage.reactions.removeAll().then(() => {
-        newMessage.react('👍');
-        newMessage.react('👎');
+        newMessage.react('👍').then();
+        newMessage.react('👎').then();
       });
     }
   }
@@ -528,6 +540,7 @@ client.on('guildMemberAdd', (member) => {
 
   if (memberCount % 100 === 0) {
     const message = `We have ${memberCount} members! :partying_face:`;
+    // eslint-disable-next-line max-len
     const channel = guild.channels.cache.find((c) => c.name.toLowerCase() === config.channels.main_channel);
     channel.send(message);
   }
@@ -535,9 +548,10 @@ client.on('guildMemberAdd', (member) => {
   const now = new Date();
   const { user } = member;
 
+  // eslint-disable-next-line max-len
   Mute.findOne(({ discordId: user.id, guildId: guild.id, mutedTill: { $gte: now } })).then(async (doc) => {
     if (doc) {
-      mute(member).then(() => {});
+      mute(member).then();
     }
   });
 
@@ -548,8 +562,10 @@ client.on('guildMemberAdd', (member) => {
       player.flag = '🇺🇳';
 
       player.save().then(() => {
+        // eslint-disable-next-line no-console
         console.log(`New record for player has been created: ${user.id}`);
       }).catch(() => {
+        // eslint-disable-next-line no-console
         console.log(`Could not create record for new player: ${user.id}`);
       });
     }
@@ -605,6 +621,7 @@ ${message.content}`;
 
 client.on('presenceUpdate', (oldPresence, newPresence) => {
   const isCTRStream = (a) => a.type === 'STREAMING' && a.state && a.state.toLowerCase().includes('crash team');
+  // eslint-disable-next-line max-len
   const livestreamsChannel = newPresence.guild.channels.cache.find((c) => c.name.toLowerCase() === config.channels.livestreams_channel);
 
   if (livestreamsChannel) {
@@ -671,9 +688,10 @@ function checkMutes() {
     docs.forEach((doc) => {
       const guild = client.guilds.cache.get(doc.guildId);
       guild.members.fetch(doc.discordId).then((member) => {
+        // eslint-disable-next-line max-len
         const mutedRole = guild.roles.cache.find((r) => r.name.toLowerCase() === config.roles.muted_role);
         if (mutedRole && member.roles.cache.has(mutedRole.id)) {
-          member.roles.remove(mutedRole).then(() => {});
+          member.roles.remove(mutedRole).then();
         }
 
         doc.delete();
@@ -686,10 +704,12 @@ new CronJob('* * * * *', checkMutes).start();
 
 try {
   db(() => {
+    // eslint-disable-next-line no-console
     console.log('Bot startup successful!');
-    client.login(config.token);
+    client.login(config.token).then();
   });
 } catch (e) {
+  // eslint-disable-next-line no-console
   console.error(e);
   process.exit(1);
 }

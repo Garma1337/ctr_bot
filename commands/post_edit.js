@@ -22,6 +22,7 @@ module.exports = {
     }
 
     const newMessage = rows.join('\n');
+    // eslint-disable-next-line max-len
     const promises = findBotsMessages(message, numberOfPost, channelNames, (msg) => msg.edit(newMessage));
 
     Promise.all(promises).then(() => {

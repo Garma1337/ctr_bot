@@ -9,7 +9,7 @@ module.exports = {
   permissions: ['MANAGE_CHANNELS', 'MANAGE_ROLES'],
   execute(message, args) {
     // noinspection DuplicatedCode
-    const { guild, client } = message;
+    const { client } = message;
 
     let numberOfPost = Number(args[0]);
     let channelNames;
@@ -24,8 +24,10 @@ module.exports = {
       channelNames = rows.shift().trim().split(/ +/);
     }
 
+    // eslint-disable-next-line array-callback-return,consistent-return
     const promises = channelNames.map((channelName) => {
       let channel;
+
       if (channelName.match(Discord.MessageMentions.CHANNELS_PATTERN)) {
         channel = message.mentions.channels.first();
       } else {
@@ -34,6 +36,7 @@ module.exports = {
       } if (!channel) {
         return sendAlertMessage(message.channel, `Couldn't find channel ${channelName}.`, 'warning');
       }
+
       channel.messages.fetch({ limit: 100 }).then((messages) => {
         let count = 0;
         const result = messages.some((msg) => {

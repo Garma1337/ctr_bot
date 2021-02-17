@@ -12,6 +12,7 @@ module.exports = {
   guildOnly: true,
   aliases: ['statistics'],
   cooldown: 10,
+  // eslint-disable-next-line consistent-return
   async execute(message, args) {
     const types = [
       'regions',
@@ -38,6 +39,7 @@ module.exports = {
     switch (type) {
       case 'regions':
         embedHeading = 'Regions';
+        // eslint-disable-next-line no-case-declarations
         let playerRegions = {};
 
         players.forEach((p) => {
@@ -52,6 +54,7 @@ module.exports = {
 
         playerRegions = sortObject(playerRegions);
 
+        // eslint-disable-next-line guard-for-in
         for (const i in playerRegions) {
           const region = regions.find((r) => r.uid === i);
 
@@ -61,6 +64,7 @@ module.exports = {
 
       case 'languages':
         embedHeading = 'Most spoken languages';
+        // eslint-disable-next-line no-case-declarations
         let languages = {};
 
         players.forEach((p) => {
@@ -75,6 +79,7 @@ module.exports = {
 
         languages = sortObject(languages);
 
+        // eslint-disable-next-line guard-for-in
         for (const i in languages) {
           elements.push(`${i} - ${languages[i]} players`);
         }
@@ -83,6 +88,7 @@ module.exports = {
 
       case 'birthdays':
         embedHeading = 'Most common birthdays';
+        // eslint-disable-next-line no-case-declarations
         let birthdays = {};
 
         players.forEach((p) => {
@@ -103,6 +109,7 @@ module.exports = {
 
         birthdays = sortObject(birthdays);
 
+        // eslint-disable-next-line guard-for-in
         for (const i in birthdays) {
           elements.push(`${i} - ${birthdays[i]} players`);
         }
@@ -110,7 +117,9 @@ module.exports = {
 
       case 'voice_chat':
         embedHeading = 'Most used voice chats';
+        // eslint-disable-next-line no-case-declarations
         let discordVc = 0;
+        // eslint-disable-next-line no-case-declarations
         let ps4Vc = 0;
 
         players.forEach((p) => {
@@ -129,6 +138,7 @@ module.exports = {
 
       case 'nat_types':
         embedHeading = 'Most common NAT types';
+        // eslint-disable-next-line no-case-declarations
         let natTypes = {};
 
         players.forEach((p) => {
@@ -143,6 +153,7 @@ module.exports = {
 
         natTypes = sortObject(natTypes);
 
+        // eslint-disable-next-line guard-for-in
         for (const i in natTypes) {
           elements.push(`${i} - ${natTypes[i]} players`);
         }
@@ -150,6 +161,7 @@ module.exports = {
 
       case 'time_zones':
         embedHeading = 'Most common time zones';
+        // eslint-disable-next-line no-case-declarations
         let timeZones = {};
 
         players.forEach((p) => {
@@ -164,6 +176,7 @@ module.exports = {
 
         timeZones = sortObject(timeZones);
 
+        // eslint-disable-next-line guard-for-in
         for (const i in timeZones) {
           elements.push(`${i} - ${timeZones[i]} players`);
         }
@@ -171,6 +184,7 @@ module.exports = {
 
       case 'characters':
         embedHeading = 'Most favorited Characters';
+        // eslint-disable-next-line no-case-declarations
         let characters = {};
 
         players.forEach((p) => {
@@ -185,6 +199,7 @@ module.exports = {
 
         characters = sortObject(characters);
 
+        // eslint-disable-next-line guard-for-in
         for (const i in characters) {
           elements.push(`${i} - ${characters[i]} players`);
         }
@@ -192,6 +207,7 @@ module.exports = {
 
       case 'tracks':
         embedHeading = 'Most favorited tracks';
+        // eslint-disable-next-line no-case-declarations
         let tracks = {};
 
         players.forEach((p) => {
@@ -206,6 +222,7 @@ module.exports = {
 
         tracks = sortObject(tracks);
 
+        // eslint-disable-next-line guard-for-in
         for (const i in tracks) {
           elements.push(`${i} - ${tracks[i]} players`);
         }
@@ -213,6 +230,7 @@ module.exports = {
 
       case 'consoles':
         embedHeading = 'Most used consoles';
+        // eslint-disable-next-line no-case-declarations
         let playerConsoles = {};
 
         players.forEach((p) => {
@@ -227,6 +245,7 @@ module.exports = {
 
         playerConsoles = sortObject(playerConsoles);
 
+        // eslint-disable-next-line guard-for-in
         for (const i in playerConsoles) {
           const console = consoles.find((c) => c.tag === i);
 

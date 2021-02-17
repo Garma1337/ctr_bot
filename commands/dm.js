@@ -9,6 +9,7 @@ module.exports = {
   permissions: ['MANAGE_CHANNELS', 'MANAGE_ROLES'],
   args: true,
   usage: '[@tag] [message]',
+  // eslint-disable-next-line consistent-return
   async execute(message, args) {
     let member = message.mentions.users.first();
     if (!member) {
@@ -32,13 +33,12 @@ module.exports = {
     };
 
     member.createDM().then((dm) => {
-      dm.send(post, { files: attachments })
-        .then((m) => {
-          DMCallback(m);
-          sendAlertMessage(message.channel, `Message has been sent to ${member.toString()}.`, 'success');
-        }).catch((error) => {
-          sendAlertMessage(message.channel, error.message, 'error');
-        });
+      dm.send(post, { files: attachments }).then((m) => {
+        DMCallback(m);
+        sendAlertMessage(message.channel, `Message has been sent to ${member.toString()}.`, 'success');
+      }).catch((error) => {
+        sendAlertMessage(message.channel, error.message, 'error');
+      });
     });
   },
 };

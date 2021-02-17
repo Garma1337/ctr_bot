@@ -15,6 +15,7 @@ module.exports = {
       const filter = (m) => m.author.id === message.author.id;
       const options = { max: 1, time: 60000, errors: ['time'] };
 
+      // eslint-disable-next-line consistent-return
       message.channel.awaitMessages(filter, options).then((collectedMessages) => {
         const collectedMessage = collectedMessages.first();
         const { content } = collectedMessage;
@@ -28,8 +29,11 @@ module.exports = {
 
           return sendAlertMessage(message.channel, `Please select your time zone. Waiting 1 minute.\n
 \`\`\`${regionTimeZones.map((t, i) => `${i + 1} - ${t}`).join('\n')}\`\`\``, 'info').then((confirmMessage) => {
+            // eslint-disable-next-line no-shadow
             message.channel.awaitMessages(filter, options).then((collectedMessages) => {
+              // eslint-disable-next-line no-shadow
               const collectedMessage = collectedMessages.first();
+              // eslint-disable-next-line no-shadow
               const { content } = collectedMessage;
 
               confirmMessage.delete();

@@ -10,8 +10,8 @@ const {
   BATTLE_4V4,
 } = require('../db/models/ranked_lobby');
 
-const Player = require('../db/models/player');
-const Rank = require('../db/models/rank');
+const { Player } = require('../db/models/player');
+const { Rank } = require('../db/models/rank');
 
 const { flagToCode } = require('../db/regional_indicators');
 
@@ -104,7 +104,6 @@ async function generateTemplate(players, doc) {
   encodedData = encodedData.replace(/#/g, '%23');
 
   const PSNs = [];
-  const consoles = [];
   for (const x of playerDocs) {
     const rank = await Rank.findOne({ name: x.psn });
 
@@ -114,10 +113,9 @@ async function generateTemplate(players, doc) {
     }
 
     PSNs.push(`${x.psn.replace('_', '\\_')} [${mmr}]`);
-    consoles.push(...x.consoles);
   }
 
-  return [PSNs, `https://gb.hlorenzi.com/table?data=${encodedData}`, template, consoles];
+  return [PSNs, `https://gb.hlorenzi.com/table?data=${encodedData}`, template];
 }
 
 module.exports = generateTemplate;

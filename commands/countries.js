@@ -53,6 +53,7 @@ module.exports = {
   description: 'Countries of members.',
   guildOnly: true,
   aliases: ['country'],
+  // eslint-disable-next-line consistent-return
   execute(message, args) {
     if (!args.length) {
       const countryMembers = {};
@@ -89,6 +90,7 @@ module.exports = {
               superScores[r.name] = calculateSuperScore(r, baseRank);
             });
 
+            // eslint-disable-next-line guard-for-in
             for (const i in countryMembers) {
               let superScoreSum = 0;
 
@@ -103,7 +105,9 @@ module.exports = {
               });
 
               if (countryMembers[i].members.length >= 1 && countryMembers[i].superScoreCount > 0) {
+                // eslint-disable-next-line max-len
                 const meaningfulness = calculateMeaningfulness(10, countryMembers[i].superScoreCount, 0.05);
+                // eslint-disable-next-line max-len
                 countryMembers[i].score = Math.floor((superScoreSum / countryMembers[i].superScoreCount) * meaningfulness);
               } else {
                 countryMembers[i].score = superScoreSum;
@@ -112,6 +116,7 @@ module.exports = {
 
             const transformed = [];
 
+            // eslint-disable-next-line guard-for-in
             for (const x in countryMembers) {
               transformed.push({
                 flag: countryMembers[x].flag,
@@ -141,6 +146,7 @@ module.exports = {
         return sendAlertMessage(message.channel, 'You should specify country flag. To see them all use the `!flags` command', 'warning');
       }
 
+      // eslint-disable-next-line consistent-return
       Player.find({ flag }).then(async (players) => {
         if (players.length <= 0) {
           return sendAlertMessage(message.channel, `There are no players from ${flag}.`, 'info');
@@ -161,6 +167,7 @@ module.exports = {
 
         Rank.find({ name: { $in: psns } }).then((ranks) => {
           const promise = getConfigValue('super_score_base_rank');
+          // eslint-disable-next-line consistent-return
           Promise.resolve(promise).then((baseRank) => {
             const superScores = {};
             let superScoreSum = 0;
@@ -182,6 +189,7 @@ module.exports = {
             });
 
             const meaningfulness = calculateMeaningfulness(10, superScoreCount, 0.05);
+            // eslint-disable-next-line max-len
             const weightedSuperScore = Math.floor((superScoreSum / superScoreCount) * meaningfulness);
 
             const formatMembers = (m) => {

@@ -16,8 +16,6 @@ function parseDateString(dateString) {
 }
 
 async function openDateInput(message, confirmMessage, getText) {
-  // todo compare with closeDate if set
-
   const awaitMessagesFilter = (m) => m.author.id === message.author.id;
   const awaitMessagesOptions = { max: 1, time: 5 * 60000, errors: ['time'] };
 
@@ -28,36 +26,36 @@ async function openDateInput(message, confirmMessage, getText) {
     await confirmMessage.edit(getText(error));
     error = '';
 
-    await message.channel.awaitMessages(awaitMessagesFilter, awaitMessagesOptions)
-      .then((collected) => {
-        const collectedMessage = collected.first();
-        const { content } = collectedMessage;
-        collectedMessage.delete();
+    // eslint-disable-next-line no-loop-func,max-len
+    await message.channel.awaitMessages(awaitMessagesFilter, awaitMessagesOptions).then((collected) => {
+      const collectedMessage = collected.first();
+      const { content } = collectedMessage;
+      collectedMessage.delete();
 
-        if (content.toLowerCase() === 'cancel') {
-          throw new Error('cancel');
-        }
+      if (content.toLowerCase() === 'cancel') {
+        throw new Error('cancel');
+      }
 
-        openDate = parseDateString(content);
-      });
+      openDate = parseDateString(content);
+    });
 
     if (!openDate.isValid()) {
       error = 'The date you\'ve entered is invalid. Please, try again. Say `cancel` if you want to cancel the command execution.';
     } else if (moment() > openDate) {
       await confirmMessage.edit('The date you\'ve entered is in the past. Do you wish to continue with it? (yes/no)');
-      await message.channel.awaitMessages(awaitMessagesFilter, awaitMessagesOptions)
-        .then((collected) => {
-          const collectedMessage = collected.first();
-          const { content } = collectedMessage;
-          collectedMessage.delete();
+      // eslint-disable-next-line no-loop-func,max-len
+      await message.channel.awaitMessages(awaitMessagesFilter, awaitMessagesOptions).then((collected) => {
+        const collectedMessage = collected.first();
+        const { content } = collectedMessage;
+        collectedMessage.delete();
 
-          if (content.toLowerCase() !== 'yes') {
-            error = 'The date you\'ve entered is in the past. Please, try again. Say `cancel` if you want to cancel the command execution.';
-          }
-          if (content.toLowerCase() === 'cancel') {
-            throw new Error('cancel');
-          }
-        });
+        if (content.toLowerCase() !== 'yes') {
+          error = 'The date you\'ve entered is in the past. Please, try again. Say `cancel` if you want to cancel the command execution.';
+        }
+        if (content.toLowerCase() === 'cancel') {
+          throw new Error('cancel');
+        }
+      });
     }
   } while (error);
 
@@ -75,18 +73,18 @@ async function closeDateInput(openDate, message, confirmMessage, getText) {
     await confirmMessage.edit(getText(error));
     error = '';
 
-    await message.channel.awaitMessages(awaitMessagesFilter, awaitMessagesOptions)
-      .then((collected) => {
-        const collectedMessage = collected.first();
-        const { content } = collectedMessage;
-        collectedMessage.delete();
+    // eslint-disable-next-line no-loop-func,max-len
+    await message.channel.awaitMessages(awaitMessagesFilter, awaitMessagesOptions).then((collected) => {
+      const collectedMessage = collected.first();
+      const { content } = collectedMessage;
+      collectedMessage.delete();
 
-        if (content.toLowerCase() === 'cancel') {
-          throw new Error('cancel');
-        }
+      if (content.toLowerCase() === 'cancel') {
+        throw new Error('cancel');
+      }
 
-        closeDate = parseDateString(content);
-      });
+      closeDate = parseDateString(content);
+    });
 
     if (!closeDate.isValid()) {
       error = 'The date you\'ve entered is invalid. Please, try again. Say `cancel` if you want to cancel the command execution.';
@@ -94,19 +92,20 @@ async function closeDateInput(openDate, message, confirmMessage, getText) {
       error = 'The date you\'ve entered is before the open date. Please, try again. Say `cancel` if you want to cancel the command execution.';
     } else if (moment() > closeDate) {
       await confirmMessage.edit('The date you\'ve entered is in the past. Do you wish to continue with it? (yes/no)');
-      await message.channel.awaitMessages(awaitMessagesFilter, awaitMessagesOptions)
-        .then((collected) => {
-          const collectedMessage = collected.first();
-          const { content } = collectedMessage;
-          collectedMessage.delete();
+      // eslint-disable-next-line no-loop-func,max-len
+      await message.channel.awaitMessages(awaitMessagesFilter, awaitMessagesOptions).then((collected) => {
+        const collectedMessage = collected.first();
+        const { content } = collectedMessage;
+        collectedMessage.delete();
 
-          if (content.toLowerCase() !== 'yes') {
-            error = 'The date you\'ve entered is in the past. Please, try again. Say `cancel` if you want to cancel the command execution.';
-          }
-          if (content.toLowerCase() === 'cancel') {
-            throw new Error('cancel');
-          }
-        });
+        if (content.toLowerCase() !== 'yes') {
+          error = 'The date you\'ve entered is in the past. Please, try again. Say `cancel` if you want to cancel the command execution.';
+        }
+
+        if (content.toLowerCase() === 'cancel') {
+          throw new Error('cancel');
+        }
+      });
     }
   } while (error);
 
@@ -293,85 +292,79 @@ Say \`cancel\` to cancel everything.`);
               case PARSER:
                 message.channel.send(`Select the type of signups parser
 (tip: you can use \`!signups_templates\` command to see the template for any type of parser):
-${parsersString}`)
-                  .then(async (confirmMessage) => {
-                    message.channel.awaitMessages(awaitMessagesFilter, awaitMessagesOptions)
-                      .then(async (collected) => {
-                        const collectedMessage = collected.first();
-                        const { content } = collectedMessage;
-                        collectedMessage.delete();
+${parsersString}`).then(async (confirmMessage) => {
+                  // eslint-disable-next-line max-len
+                  message.channel.awaitMessages(awaitMessagesFilter, awaitMessagesOptions).then(async (collected) => {
+                    const collectedMessage = collected.first();
+                    const { content } = collectedMessage;
+                    collectedMessage.delete();
 
-                        const parser = parserNames[+content - 1];
-                        if (!parser) {
-                          throw new Error('cancel');
-                        }
-                        doc.parser = parser;
-                        doc.save().then(() => {
-                          confirmMessage.edit(`The new parser has been set: ${parser}`);
-                        });
-                      }).catch(() => {
-                        confirmMessage.edit('Command cancelled. ');
-                      });
+                    const parser = parserNames[+content - 1];
+                    if (!parser) {
+                      throw new Error('cancel');
+                    }
+                    doc.parser = parser;
+                    doc.save().then(() => {
+                      confirmMessage.edit(`The new parser has been set: ${parser}`);
+                    });
+                  }).catch(() => {
+                    confirmMessage.edit('Command cancelled. ');
                   });
+                });
                 break;
               case OPEN:
-                message.channel.send(`Choose the date and time of signups to **open** in the format ${dateFormatExample}`)
-                  .then(async (confirmMessage) => {
-                    openDateInput(message, confirmMessage,
-                      (error) => `${error ? `${error}\n` : ''}
+                message.channel.send(`Choose the date and time of signups to **open** in the format ${dateFormatExample}`).then(async (confirmMessage) => {
+                  openDateInput(message, confirmMessage,
+                    (error) => `${error ? `${error}\n` : ''}
 Choose the date and time of signups to **open** in the format ${dateFormatExample}:`)
-                      .then((openDate) => {
-                        doc.open = openDate;
-                        doc.save().then(() => {
-                          confirmMessage.edit(`The new open date has been set: ${openDate.format('YYYY-MM-DD h:mm A z')}`);
-                        });
-                      })
-                      .catch(() => {
-                        confirmMessage.edit('Command cancelled. ');
+                    .then((openDate) => {
+                      doc.open = openDate;
+                      doc.save().then(() => {
+                        confirmMessage.edit(`The new open date has been set: ${openDate.format('YYYY-MM-DD h:mm A z')}`);
                       });
-                  });
+                    })
+                    .catch(() => {
+                      confirmMessage.edit('Command cancelled. ');
+                    });
+                });
                 break;
               case CLOSE:
-                message.channel.send(`Choose the date and time of signups to **close** in the format ${dateFormatExample}`)
-                  .then(async (confirmMessage) => {
-                    closeDateInput(doc.open, message, confirmMessage,
-                      (error) => `${error ? `${error}\n` : ''}
-Choose the date and time of signups to **open** in the format ${dateFormatExample}:`)
-                      .then((closeDate) => {
-                        doc.close = closeDate;
-                        doc.save().then(() => {
-                          confirmMessage.edit(`The new close date has been set: ${closeDate.format('YYYY-MM-DD h:mm A z')}`);
-                        });
-                      })
-                      .catch((e) => {
-                        console.error(e);
-                        confirmMessage.edit('Command cancelled. ');
-                      });
+                message.channel.send(`Choose the date and time of signups to **close** in the format ${dateFormatExample}`).then(async (confirmMessage) => {
+                  closeDateInput(doc.open, message, confirmMessage,
+                    (error) => `${error ? `${error}\n` : ''}
+Choose the date and time of signups to **open** in the format ${dateFormatExample}:`).then((closeDate) => {
+                    doc.close = closeDate;
+                    doc.save().then(() => {
+                      confirmMessage.edit(`The new close date has been set: ${closeDate.format('YYYY-MM-DD h:mm A z')}`);
+                    });
+                  }).catch((e) => {
+                    // eslint-disable-next-line no-console
+                    console.error(e);
+                    confirmMessage.edit('Command cancelled. ');
                   });
+                });
                 break;
               case MESSAGE:
                 message.channel.send(`Please, enter the message that should be sent to participants when they signup (waiting 5 minutes).
-Say \`cancel\` to cancel.`)
-                  .then(async (confirmMessage) => {
-                    message.channel.awaitMessages(awaitMessagesFilter, awaitMessagesOptions)
-                      .then((collected) => {
-                        const collectedMessage = collected.first();
-                        const { content } = collectedMessage;
-                        collectedMessage.delete();
+Say \`cancel\` to cancel.`).then(async (confirmMessage) => {
+                  // eslint-disable-next-line max-len
+                  message.channel.awaitMessages(awaitMessagesFilter, awaitMessagesOptions).then((collected) => {
+                    const collectedMessage = collected.first();
+                    const { content } = collectedMessage;
+                    collectedMessage.delete();
 
-                        if (content.toLowerCase() === 'cancel') {
-                          throw new Error('cancel');
-                        }
+                    if (content.toLowerCase() === 'cancel') {
+                      throw new Error('cancel');
+                    }
 
-                        doc.message = content;
-                        doc.save().then(() => {
-                          confirmMessage.edit('The new message has been set.');
-                        });
-                      })
-                      .catch(() => {
-                        confirmMessage.edit('Command cancelled. ');
-                      });
+                    doc.message = content;
+                    doc.save().then(() => {
+                      confirmMessage.edit('The new message has been set.');
+                    });
+                  }).catch(() => {
+                    confirmMessage.edit('Command cancelled. ');
                   });
+                });
                 break;
             }
           });
@@ -397,29 +390,26 @@ Say \`cancel\` to cancel.`)
         SignupsChannel.findOne({ guild: message.guild.id, channel: channel.id }).then((doc) => {
           if (doc) {
             message.channel.send(`Are you sure you want to remove signups parser from this channel? (yes/no)
-The auto check on new messages and \`!parse_signups\` command for this channel will stop working.`)
-              .then(async (confirmMessage) => {
-                message.channel.awaitMessages(
-                  (m) => m.author.id === message.author.id,
-                  { max: 1, time: 60000, errors: ['time'] },
-                )
-                  .then((collected) => {
-                    const collectedMessage = collected.first();
-                    const { content } = collectedMessage;
-                    collectedMessage.delete();
+The auto check on new messages and \`!parse_signups\` command for this channel will stop working.`).then(async (confirmMessage) => {
+              message.channel.awaitMessages(
+                (m) => m.author.id === message.author.id,
+                { max: 1, time: 60000, errors: ['time'] },
+              ).then((collected) => {
+                const collectedMessage = collected.first();
+                const { content } = collectedMessage;
+                collectedMessage.delete();
 
-                    if (content.toLowerCase() === 'yes') {
-                      doc.delete().then(() => {
-                        confirmMessage.edit('Signups parser has been removed from the channel.');
-                      });
-                    } else {
-                      throw new Error('cancel');
-                    }
-                  })
-                  .catch(() => {
-                    confirmMessage.edit('Command cancelled');
+                if (content.toLowerCase() === 'yes') {
+                  doc.delete().then(() => {
+                    confirmMessage.edit('Signups parser has been removed from the channel.');
                   });
+                } else {
+                  throw new Error('cancel');
+                }
+              }).catch(() => {
+                confirmMessage.edit('Command cancelled');
               });
+            });
           } else {
             message.channel.send('This channel is not defined as signups channel.');
           }

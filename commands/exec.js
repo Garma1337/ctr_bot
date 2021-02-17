@@ -29,6 +29,7 @@ module.exports = {
 
     const code = args.join(' ');
     try {
+      // eslint-disable-next-line no-eval
       let evaled = eval(code);
 
       if (typeof evaled !== 'string') {

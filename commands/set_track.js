@@ -8,6 +8,7 @@ module.exports = {
   description: 'Set your favorite track.',
   guildOnly: true,
   execute(message, args) {
+    // eslint-disable-next-line consistent-return
     fs.readFile('tracks.txt', 'utf8', (err, data) => {
       if (err) {
         throw err;

@@ -30,6 +30,7 @@ function createDraftv2(channel, mode, bans, picks, timeout, mentions) {
       'Content-Type': 'application/json',
     },
     params: post,
+    // eslint-disable-next-line consistent-return
   }).then((r) => {
     const { data } = r;
     const errors = data.errors || [];

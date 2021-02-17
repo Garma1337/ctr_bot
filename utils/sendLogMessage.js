@@ -5,13 +5,16 @@ const sendLogMessage = (guild, message, noPing = false) => {
   if (logChannel) {
     if (noPing) {
       logChannel.send('...').then((m) => {
+        // eslint-disable-next-line no-console
         m.edit(message).then().catch(console.error);
       });
     } else {
       logChannel.send(message);
     }
   } else {
+    // eslint-disable-next-line no-console
     console.error(`Channel "${config.channels.tourney_log_channel}" does not exist.`);
+    // eslint-disable-next-line no-console
     console.log(message);
   }
 };

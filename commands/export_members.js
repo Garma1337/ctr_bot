@@ -33,6 +33,7 @@ module.exports = {
     const discordIds = message.guild.members.cache.map((m) => m.id);
 
     Player.find({ discordId: { $in: discordIds } }).then((players) => {
+      // eslint-disable-next-line array-callback-return,consistent-return
       const out = players.map((p) => {
         const member = message.guild.members.cache.find((m) => m.id === p.discordId);
         if (member) {

@@ -11,6 +11,7 @@ Team2: p1,p2,p3
 ...\``,
   args: true,
   guildOnly: true,
+  // eslint-disable-next-line consistent-return
   execute(message, args) {
     const numOfRaces = Number(args[0]);
 
@@ -71,6 +72,7 @@ Team2: p1,p2,p3
         files: [attachment],
       }).then(() => {
         message.channel.stopTyping(true);
+        // eslint-disable-next-line no-shadow
       }).catch((error) => {
         sendLogMessage(message.guild, error.message);
 

@@ -8,36 +8,38 @@ module.exports = {
   guildOnly: true,
   aliases: ['room'],
   permissions: ['MANAGE_CHANNELS', 'MANAGE_ROLES'],
+  // eslint-disable-next-line consistent-return
   execute(message, args) {
     if (!args.length) {
-      Room.find({ guild: message.guild.id }).sort({ number: 1 })
-        .then((docs) => {
-          if (!docs.length) {
-            return sendAlertMessage(message.channel, 'There are no rooms.', 'info');
+      // eslint-disable-next-line consistent-return
+      Room.find({ guild: message.guild.id }).sort({ number: 1 }).then((docs) => {
+        if (!docs.length) {
+          return sendAlertMessage(message.channel, 'There are no rooms.', 'info');
+        }
+
+        const rooms = docs.map((doc) => {
+          const channelName = `ranked-room-${doc.number}`;
+          // eslint-disable-next-line max-len
+          const channel = message.guild.channels.cache.find((c) => c.name.toLowerCase() === channelName.toLowerCase());
+          let out = '';
+
+          if (channel) {
+            out += `${channel}`;
+          } else {
+            out += `#${channelName} (deleted)`;
           }
 
-          const rooms = docs.map((doc) => {
-            const channelName = `ranked-room-${doc.number}`;
-            const channel = message.guild.channels.cache.find((c) => c.name.toLowerCase() === channelName.toLowerCase());
-            let out = '';
+          if (doc.lobby) {
+            out += ` - ${doc.lobby}`;
+          } else {
+            out += ' - Free';
+          }
 
-            if (channel) {
-              out += `${channel}`;
-            } else {
-              out += `#${channelName} (deleted)`;
-            }
-
-            if (doc.lobby) {
-              out += ` - ${doc.lobby}`;
-            } else {
-              out += ' - Free';
-            }
-
-            return out;
-          });
-
-          sendAlertMessage(message.channel, rooms.join('\n'), 'info');
+          return out;
         });
+
+        sendAlertMessage(message.channel, rooms.join('\n'), 'info');
+      });
     } else {
       const isStaff = isStaffMember(message.member);
 
@@ -62,6 +64,7 @@ module.exports = {
               });
             });
         } else {
+          // eslint-disable-next-line consistent-return
           Room.findOne({ guild: message.guild.id, number }).then((doc) => {
             if (!doc) {
               return sendAlertMessage(message.channel, 'There is no room with this number.', 'warning');

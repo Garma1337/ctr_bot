@@ -65,6 +65,7 @@ const Lobby = new Schema({
   players: [String],
   teamList: Array,
   closed: { type: Boolean, default: false },
+  // eslint-disable-next-line max-len
   type: { type: String, enum: [RACE_FFA, RACE_ITEMLESS, RACE_DUOS, RACE_3V3, RACE_4V4, RACE_SURVIVAL, RACE_ITEMLESS_DUOS, BATTLE_FFA, BATTLE_4V4] },
   pools: { type: Boolean, default: true },
   spicyTracks: { type: Boolean, default: false },
@@ -417,6 +418,7 @@ Lobby.methods = {
     return trackOptions[this.type];
   },
   canBeRanked() {
+    // eslint-disable-next-line max-len
     return !(this.lapCount !== 5 || this.engineRestriction || this.trackCount > this.getDefaultTrackCount() || this.ruleset !== 1);
   },
   getStartedIcon() {

@@ -7,9 +7,11 @@ module.exports = {
   args: true,
   guildOnly: true,
   permissions: ['MANAGE_CHANNELS', 'MANAGE_ROLES'],
+  // eslint-disable-next-line consistent-return
   execute(message, args) {
     let numberOfPost = Number(args[0]);
     let channelNames;
+
     const rows = message.content.split('\n');
     rows.shift();
 

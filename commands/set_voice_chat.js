@@ -43,6 +43,7 @@ module.exports = {
       user = message.author;
     }
 
+    // eslint-disable-next-line consistent-return
     return sendAlertMessage(message.channel, `Select voice chat option. Waiting 1 minute.\n
 \`\`\`1 - Discord
 2 - PS4

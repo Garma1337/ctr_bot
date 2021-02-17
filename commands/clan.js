@@ -127,6 +127,7 @@ Edit clans:
                 superScores[r.name] = calculateSuperScore(r, baseRank);
               });
 
+              // eslint-disable-next-line guard-for-in
               for (const i in clanMembers) {
                 let superScoreSum = 0;
                 clanMembers[i].superScoreCount = 0;
@@ -142,7 +143,9 @@ Edit clans:
                 });
 
                 if (clanMembers[i].members.length >= 1 && clanMembers[i].superScoreCount > 0) {
+                  // eslint-disable-next-line max-len
                   const meaningfulness = calculateMeaningfulness(5, clanMembers[i].superScoreCount, 0.05);
+                  // eslint-disable-next-line max-len
                   clanMembers[i].score = Math.floor((superScoreSum / clanMembers[i].superScoreCount) * meaningfulness);
                 } else {
                   clanMembers[i].score = superScoreSum;
@@ -151,6 +154,7 @@ Edit clans:
 
               const transformed = [];
 
+              // eslint-disable-next-line guard-for-in
               for (const x in clanMembers) {
                 transformed.push({
                   shortName: clanMembers[x].shortName,
@@ -191,6 +195,7 @@ Edit clans:
     const actions = [ADD, DELETE, REMOVE];
     if (actions.includes(action)) {
       if (!isStaffMember(message.member)) {
+        // eslint-disable-next-line consistent-return
         return sendAlertMessage(message.channel, 'You don\'t have permission to do that!', 'warning');
       }
 
@@ -198,10 +203,13 @@ Edit clans:
       const fullName = args.slice(2).join(' ');
       let clan = null;
 
+      // eslint-disable-next-line default-case
       switch (action) {
         case ADD:
+          // eslint-disable-next-line no-case-declarations
           const regexShortName = createCaseInsensitiveRegEx(shortName);
 
+          // eslint-disable-next-line consistent-return
           Clan.findOne({ shortName: { $regex: regexShortName } }).then((doc) => {
             if (doc) {
               return sendAlertMessage(message.channel, `There is already a clan with the short name "${shortName}".`, 'warning');
@@ -237,6 +245,7 @@ Edit clans:
       const regexShortName = createCaseInsensitiveRegEx(clanName);
       const regexFullName = createCaseInsensitiveRegEx(clanFullName);
 
+      // eslint-disable-next-line max-len,consistent-return
       Clan.findOne().or([{ shortName: { $regex: regexShortName } }, { fullName: { $regex: regexFullName } }]).then((clan) => {
         if (clan) {
           Player.find({ discordId: { $in: clan.getMemberIds() } }).then((docs) => {
@@ -273,6 +282,7 @@ Edit clans:
                 });
 
                 const meaningfulness = calculateMeaningfulness(5, superScoreCount, 0.05);
+                // eslint-disable-next-line max-len
                 const weightedSuperScore = Math.floor((superScoreSum / superScoreCount) * meaningfulness);
 
                 const formatMembers = (m) => {

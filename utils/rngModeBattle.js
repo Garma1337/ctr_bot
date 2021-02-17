@@ -25,7 +25,8 @@ async function rngModeBattle(type, maps) {
   const randomModes = [];
   const maxModeUsage = Math.ceil(N / modeNames.length);
 
-  for (let i = 0; i < N; i++) {
+  for (let i = 0; i < N; i += 1) {
+    // eslint-disable-next-line no-constant-condition
     while (true) {
       const rng = Math.floor(modeNames.length * Math.random());
       const mode = modes.find((m) => m.name === modeNames[rng]);

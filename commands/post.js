@@ -37,9 +37,12 @@ module.exports = {
             return;
           }
         }
+
+        // eslint-disable-next-line consistent-return
         return sendAlertMessage(message.channel, `Couldn't find channel ${channelName}.`, 'warning');
       }
 
+      // eslint-disable-next-line consistent-return
       return channel.send(post, { files: attachments });
     });
 

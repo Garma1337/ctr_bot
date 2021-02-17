@@ -26,6 +26,7 @@ module.exports = {
       user = message.author;
     }
 
+    // eslint-disable-next-line consistent-return
     message.guild.members.fetch(user).then((member) => {
       const discordId = member.user.id;
 

@@ -123,6 +123,7 @@ module.exports = {
           psn = player.psn || '-';
         }
 
+        // eslint-disable-next-line consistent-return
         Rank.findOne({ name: psn }).then((rank) => {
           if (!rank) {
             return sendAlertMessage(message.channel, `${psn} has not played any ranked matches yet.`, 'warning');
@@ -132,11 +133,13 @@ module.exports = {
         });
       }
     } else {
+      // eslint-disable-next-line consistent-return
       Player.findOne({ discordId: message.author.id }).then((player) => {
         if (!player || !player.psn) {
           return sendAlertMessage(message.channel, 'You have not played any ranked matches yet.', 'warning');
         }
 
+        // eslint-disable-next-line consistent-return
         Rank.findOne({ name: player.psn }).then((rank) => {
           if (!rank) {
             return sendAlertMessage(message.channel, 'You have not played any ranked matches yet.', 'warning');

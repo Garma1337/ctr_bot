@@ -10,7 +10,8 @@ module.exports = {
   name: 'partner_set',
   description: 'Set your partner for Ranked Duos.',
   guildOnly: true,
-  aliases: ['set_partner', 'partner_s', 'marry'],
+  aliases: ['set_partner', 'partner_s', 'marry', 'fuck'],
+  // eslint-disable-next-line consistent-return
   async execute(message) {
     if (!message.mentions.members.size) {
       return sendAlertMessage(message.channel, 'You should tag your partner.', 'warning');
@@ -25,11 +26,13 @@ module.exports = {
       return sendAlertMessage(message.channel, 'You cannot set yourself or a bot as your partner.', 'warning');
     }
 
+    // eslint-disable-next-line max-len
     const authorVerified = message.member.roles.cache.find((r) => r.name.toLowerCase() === config.roles.ranked_verified_role.toLowerCase());
     if (!authorVerified) {
       return sendAlertMessage(message.channel, 'You are not verified.', 'warning');
     }
 
+    // eslint-disable-next-line max-len
     const partnerVerified = partner.roles.cache.find((r) => r.name.toLowerCase() === config.roles.ranked_verified_role.toLowerCase());
     if (!partnerVerified) {
       return sendAlertMessage(message.channel, 'Your partner is not verified.', 'warning');
@@ -55,17 +58,21 @@ module.exports = {
       return sendAlertMessage(message.channel, 'Your partner needs to set their PSN.', 'warning');
     }
 
+    // eslint-disable-next-line max-len
     const authorSavedDuo = await Duo.findOne({ guild: guild.id, $or: [{ discord1: author.id }, { discord2: author.id }] });
     if (authorSavedDuo) {
+      // eslint-disable-next-line max-len
       const savedPartner = authorSavedDuo.discord1 === author.id ? authorSavedDuo.discord2 : authorSavedDuo.discord1;
       return sendAlertMessage(message.channel, `${author}, you've already set a partner: <@${savedPartner}>.`, 'warning');
     }
 
+    // eslint-disable-next-line max-len
     const partnerSavedDuo = await Duo.findOne({ guild: guild.id, $or: [{ discord1: partner.id }, { discord2: partner.id }] });
     if (partnerSavedDuo) {
       return sendAlertMessage(message.channel, `${author}, ${partner} already has another partner.`, 'warning');
     }
 
+    // eslint-disable-next-line max-len
     const lobby = await RankedLobby.findOne({ type: RACE_DUOS, players: { $in: [author.id, partner.id] } });
     if (lobby) {
       return sendAlertMessage(message.channel, 'You can\'t set a partner while one of you is in a lobby.', 'warning');
@@ -75,7 +82,8 @@ module.exports = {
       confirmMessage.react('✅');
 
       const filter = (r, u) => r.emoji.name === '✅' && u.id === partner.id;
-      confirmMessage.awaitReactions(filter, { max: 1, time: 60000, errors: ['time'] }).then(async (collected) => {
+      // eslint-disable-next-line consistent-return
+      confirmMessage.awaitReactions(filter, { max: 1, time: 60000, errors: ['time'] }).then(async () => {
         if (confirmMessage.deleted) {
           return sendAlertMessage(message.channel, 'Command cancelled. Stop abusing staff powers.', 'error');
         }
@@ -88,7 +96,9 @@ module.exports = {
           return sendAlertMessage(message.channel, `Command cancelled: ${author} joined a lobby.`, 'error');
         }
 
+        // eslint-disable-next-line max-len
         const authorDuo = await Duo.findOne({ guild: guild.id, $or: [{ discord1: author.id }, { discord2: author.id }] });
+        // eslint-disable-next-line max-len
         const partnerDuo = await Duo.findOne({ guild: guild.id, $or: [{ discord1: partner.id }, { discord2: partner.id }] });
         if (authorDuo || partnerDuo) {
           return sendAlertMessage(message.channel, 'Command cancelled: one of you has already set a partner.', 'error');

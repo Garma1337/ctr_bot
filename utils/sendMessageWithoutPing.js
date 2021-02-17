@@ -4,9 +4,7 @@
  * @param message
  */
 function sendMessageWithoutPing(channel, message) {
-  channel
-    .send('...')
-    .then((m) => m.edit(message));
+  channel.send('...').then((m) => m.edit(message));
 }
 
 module.exports = sendMessageWithoutPing;

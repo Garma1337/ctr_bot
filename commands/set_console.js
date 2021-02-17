@@ -42,6 +42,7 @@ module.exports = {
       ],
     };
 
+    // eslint-disable-next-line consistent-return
     return message.channel.send({ embed }).then((confirmMessage) => {
       emoteChars.forEach((e) => {
         confirmMessage.react(e);

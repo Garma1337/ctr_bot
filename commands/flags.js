@@ -10,6 +10,7 @@ module.exports = {
       flags.slice(halfLength),
     ];
 
+    // eslint-disable-next-line array-callback-return
     chunks.map((chunk) => {
       message.channel.send({ embed: { description: chunk.join(' ') } });
     });

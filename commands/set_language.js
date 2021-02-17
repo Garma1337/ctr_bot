@@ -55,15 +55,18 @@ module.exports = {
     };
 
     if (args.length <= 0) {
+      // eslint-disable-next-line consistent-return
       return message.channel.send({ embed });
     }
 
     const emotes = [];
 
+    // eslint-disable-next-line guard-for-in
     for (const i in args) {
       const language = serverLanguages.find((l) => l.char === args[i]);
 
       if (!language) {
+        // eslint-disable-next-line consistent-return
         return sendAlertMessage(message.channel, `${args[i]} is not a valid language flag.`, 'warning');
       }
 

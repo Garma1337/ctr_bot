@@ -13,6 +13,7 @@ module.exports = {
   guildOnly: true,
   permissions: ['MANAGE_CHANNELS', 'MANAGE_ROLES'],
   aliases: ['ranked_ban'],
+  // eslint-disable-next-line consistent-return
   async execute(message, args) {
     if (args.length) {
       const argument = args[0];
@@ -41,6 +42,7 @@ module.exports = {
         }
       }
 
+      // eslint-disable-next-line consistent-return
       RankedBan.findOne({ discordId: member.id, guildId: message.guild.id }).then((doc) => {
         if (doc) {
           return sendAlertMessage(message.channel, 'This member is already banned.', 'warning');
@@ -59,17 +61,21 @@ module.exports = {
 
         const savePromise = rb.save();
 
+        // eslint-disable-next-line max-len
         const lobbiesChannel = message.guild.channels.cache.find((c) => c.name === config.channels.ranked_lobbies_channel);
         const overwritePromise = lobbiesChannel.createOverwrite(member, { VIEW_CHANNEL: false });
 
         const msg = message.channel.send('...');
 
+        // eslint-disable-next-line max-len
         RankedLobby.find({ guild: message.guild.id, players: member.id, started: false }).then((docs) => {
+          // eslint-disable-next-line no-shadow
           docs.forEach(async (doc) => {
             const guild = message.client.guilds.cache.get(doc.guild);
             if (guild) {
               const channel = guild.channels.cache.get(doc.channel);
               if (channel) {
+                // eslint-disable-next-line no-shadow
                 channel.messages.fetch(doc.message).then((msg) => {
                   if (doc.type === 'duos') {
                     const duo = doc.teamList.filter((d) => d.includes(member.id));
@@ -127,6 +133,7 @@ module.exports = {
       });
     } else {
       sendAlertMessage(message.channel, 'Fetching ranked bans ...', 'info').then((m) => {
+        // eslint-disable-next-line consistent-return
         RankedBan.find({ guildId: message.guild.id }).then(async (docs) => {
           m.delete();
 

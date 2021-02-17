@@ -8,7 +8,9 @@ module.exports = {
   guildOnly: true,
   permissions: ['MANAGE_CHANNELS', 'MANAGE_ROLES'],
   execute(message) {
+    // eslint-disable-next-line max-len
     if (!(message.member && message.member.roles.cache.find((r) => r.name.toLowerCase() === config.roles.admin_role.toLowerCase())) && message.author.id !== config.owner) {
+      // eslint-disable-next-line max-len
       const adminRole = message.guild.roles.cache.find((r) => r.name.toLowerCase() === config.roles.admin_role.toLowerCase());
       return sendAlertMessage(message.channel, `You should have the role ${adminRole} to use this command!`, 'warning');
     }

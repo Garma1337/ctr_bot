@@ -10,6 +10,7 @@ module.exports = {
   description: 'Check and react on every signup message again.',
   guildOnly: true,
   permissions: ['MANAGE_CHANNELS', 'MANAGE_ROLES'],
+  // eslint-disable-next-line consistent-return
   async execute(message, args) {
     if (!args.length) {
       return sendAlertMessage(message.channel, 'You should specify the channel.', 'warning');
@@ -53,9 +54,11 @@ module.exports = {
           };
 
           if (!data.errors.length) {
+            // eslint-disable-next-line consistent-return
             return m.react('✅').then().catch(reactionCatchCallback);
           }
 
+          // eslint-disable-next-line consistent-return
           return m.react('❌').then().catch(reactionCatchCallback);
         });
 

@@ -127,21 +127,6 @@ module.exports = {
   aliases: ['p'],
   cooldown: 10,
   execute(message, args) {
-    if (args[0] === 'help') {
-      return sendAlertMessage(message.channel, `To customize your profile, use these commands:\n
-!set_psn
-!set_country
-!set_region
-!set_language
-!set_birthday
-!set_voice_chat
-!set_nat
-!set_time_zone
-!set_character
-!set_track
-!set_console`, 'info');
-    }
-
     let user = message.author;
 
     if (args.length > 0) {
@@ -229,6 +214,7 @@ module.exports = {
           `**Registered**: ${guildMember.user.createdAt.toLocaleString('default', { month: 'short' })} ${guildMember.user.createdAt.getDate()}, ${guildMember.user.createdAt.getFullYear()}`,
         ];
 
+        // eslint-disable-next-line max-len
         if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === config.roles.ranked_verified_role.toLowerCase())) {
           profile.push('**Ranked Verified** :white_check_mark:');
         }
@@ -328,46 +314,57 @@ module.exports = {
               achievements.push('Administrator');
             }
 
+            // eslint-disable-next-line max-len
             if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === config.roles.staff_role.toLowerCase())) {
               achievements.push('Staff Member');
             }
 
+            // eslint-disable-next-line max-len
             if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === config.roles.bot_developer_role.toLowerCase())) {
               achievements.push('Bot Developer');
             }
 
+            // eslint-disable-next-line max-len
             if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === config.roles.media_staff_role.toLowerCase())) {
               achievements.push('Media Staff');
             }
 
+            // eslint-disable-next-line max-len
             if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === config.roles.ctr_staff_role.toLowerCase())) {
               achievements.push('CrashTeamRanking Staff');
             }
 
+            // eslint-disable-next-line max-len
             if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === config.roles.donator_role.toLowerCase())) {
               achievements.push('Donator');
             }
 
+            // eslint-disable-next-line max-len
             if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === config.roles.wc_champion_role.toLowerCase())) {
               achievements.push('World Cup Champion');
             }
 
+            // eslint-disable-next-line max-len
             if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === config.roles.tournament_champion_role.toLowerCase())) {
               achievements.push('Tournament Champion');
             }
 
+            // eslint-disable-next-line max-len
             if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === config.roles.ranked_champion_role.toLowerCase())) {
               achievements.push('Ranked Champion');
             }
 
+            // eslint-disable-next-line max-len
             if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === config.roles.challenge_master_role.toLowerCase())) {
               achievements.push('Challenge Master');
             }
 
+            // eslint-disable-next-line max-len
             if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === config.roles.captain_role.toLowerCase())) {
               achievements.push('Captain');
             }
 
+            // eslint-disable-next-line max-len
             if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === config.roles.nitro_booster_role.toLowerCase())) {
               achievements.push('Server Booster');
             }
@@ -383,6 +380,7 @@ module.exports = {
               achievements.push('Member for over 1 year');
             }
 
+            // eslint-disable-next-line max-len
             if (player && player.psn && player.flag && player.nat && player.timeZone && player.birthday && (player.discordVc || player.ps4Vc) && player.favCharacter && player.favCharacter && player.languages.length > 0 && player.consoles.length > 0) {
               achievements.push('Complete Profile');
             }

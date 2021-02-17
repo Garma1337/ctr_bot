@@ -6,6 +6,7 @@ module.exports = {
   name: 'unset_flag',
   description: 'Set your country flag.',
   aliases: ['remove_country', 'remove_flag', 'unset_country'],
+  // eslint-disable-next-line consistent-return
   execute(message, args) {
     const isStaff = isStaffMember(message.member);
 
@@ -23,6 +24,7 @@ module.exports = {
       return sendAlertMessage(message.channel, 'Nope.', 'warning');
     }
 
+    // eslint-disable-next-line consistent-return
     Player.findOne({ discordId }).then((doc) => {
       if (doc) {
         doc.flag = '🇺🇳';

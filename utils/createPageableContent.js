@@ -93,7 +93,8 @@ function getMessageContent(options, pagination) {
 }
 
 /**
- * Creates a paginable embed with a list of objects. It currently only supports a list within one column.
+ * Creates a paginable embed with a list of objects.
+ * It currently only supports a list within one column.
  *
  * Example for options:
  * {
@@ -137,7 +138,7 @@ function createPageableContent(channel, userId, options) {
       message.react(options.emojiPrevious);
       message.react(options.emojiNext);
 
-      // only the user that executed the command can react
+      // eslint-disable-next-line max-len
       const reactionCollectorFilter = (reaction, user) => ([options.emojiPrevious, options.emojiNext].includes(reaction.emoji.name) && user.id !== message.author.id && user.id === userId);
       const reactionCollectorOptions = {
         time: options.reactionCollectorOptions.time,
@@ -145,6 +146,7 @@ function createPageableContent(channel, userId, options) {
         dispose: true,
       };
 
+      // eslint-disable-next-line max-len
       const reactionCollector = message.createReactionCollector(reactionCollectorFilter, reactionCollectorOptions);
       reactionCollector.on('collect', (reaction, user) => {
         if (reaction.message.id === message.id) {
@@ -170,7 +172,7 @@ function createPageableContent(channel, userId, options) {
           message.edit(messageContent.content);
         }
 
-        reaction.users.remove(user);
+        reaction.users.remove(user).then();
       });
     }
   });

@@ -9,26 +9,13 @@ const sendLogMessage = require('../utils/sendLogMessage');
 /* eslint-disable no-unused-vars,no-console */
 const timer = (client, targetDate, callback) => {
   const now = new Date();
-  const target = targetDate;
-
-  if (target <= now) {
+  if (targetDate <= now) {
     callback(client);
     return;
   }
 
   setTimeout(timer, 1000, client, targetDate, callback); // tick every second
 };
-
-const setAlarm = (client, date, callback) => {
-  const now = new Date();
-  const target = date;
-
-  if (target > now) {
-    timer(client, date, callback);
-  }
-};
-
-// callbacks
 
 const openSignups = (client, doc) => {
   const guild = client.guilds.cache.get(doc.guild);
@@ -37,14 +24,13 @@ const openSignups = (client, doc) => {
 
   channel.createOverwrite(channel.guild.roles.everyone, { SEND_MESSAGES: true }).then(() => {
     sendLogMessage(guild, `Changed permission in channel${channel} for everyone SEND_MESSAGES: true`);
-    channel.send(parser.template)
-      .then((msg) => {
-        msg.pin().then(() => {
-          const filter = channel.messages.cache.filter((m) => m.type === 'PINS_ADD' && m.author.id === client.user.id);
-          filter.last().delete();
-        });
-      })
-      .catch(console.error);
+
+    channel.send(parser.template).then((msg) => {
+      msg.pin().then(() => {
+        const filter = channel.messages.cache.filter((m) => m.type === 'PINS_ADD' && m.author.id === client.user.id);
+        filter.last().delete().then();
+      });
+    }).catch(console.error);
   }).catch((error) => {
     sendLogMessage(guild, error.toString());
   });
@@ -53,6 +39,7 @@ const openSignups = (client, doc) => {
 const closeSignups = (client, doc) => {
   const guild = client.guilds.cache.get(doc.guild);
   const channel = guild.channels.cache.get(doc.channel);
+
   channel.send('Signups are now closed!').catch(console.error);
   channel.createOverwrite(channel.guild.roles.everyone, { SEND_MESSAGES: false }).then(() => {
     sendLogMessage(guild, `Changed permission in channel${channel} for everyone SEND_MESSAGES: false`);
@@ -82,7 +69,7 @@ const sendScheduledMessage = (client, scheduledMessage) => {
   const guild = client.guilds.cache.get(scheduledMessage.guild);
   message = formatRolePings(message, guild.roles.cache);
 
-  channel.send(message).then((sentMessage) => {});
+  channel.send(message).then();
 };
 
 const areDatesEqualsToMinutes = (date, now) => date.getUTCFullYear() === now.getUTCFullYear()
@@ -91,7 +78,6 @@ const areDatesEqualsToMinutes = (date, now) => date.getUTCFullYear() === now.get
   && date.getUTCHours() === now.getUTCHours()
   && date.getUTCMinutes() === now.getUTCMinutes();
 
-// scheduled messages
 const scheduler = async (client) => {
   const now = new Date();
   await ScheduledMessage.find({ sent: false }).then((docs) => {
@@ -119,12 +105,9 @@ const scheduler = async (client) => {
   });
 };
 
-// alarms
 const alarms = (client) => {
-  // scheduler(client);
-
   new CronJob('* * * * *', () => {
-    scheduler(client);
+    scheduler(client).then();
   }).start();
 };
 

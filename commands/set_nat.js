@@ -42,6 +42,7 @@ module.exports = {
       user = message.author;
     }
 
+    // eslint-disable-next-line consistent-return
     return sendAlertMessage(message.channel, `Select NAT type. Waiting 1 minute.\n
 \`\`\`1 - NAT 1
 2 - NAT 2 Open

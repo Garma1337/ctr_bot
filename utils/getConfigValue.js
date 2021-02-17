@@ -15,6 +15,7 @@ async function getConfigValue(configName, defaultValue = null) {
     config.editable = true;
 
     config.save().then(() => {
+      // eslint-disable-next-line no-console
       console.log(`Created new config value: ${configName}`);
     });
   }
