@@ -1,10 +1,10 @@
 const config = require('../config');
 const { Duo } = require('../db/models/duo');
-const { RankedLobby } = require('../db/models/ranked_lobby');
+const { Lobby } = require('../db/models/lobby');
 const { Player } = require('../db/models/player');
 const { RankedBan } = require('../db/models/ranked_ban');
 const sendAlertMessage = require('../utils/sendAlertMessage');
-const { RACE_DUOS } = require('../db/models/ranked_lobby');
+const { RACE_DUOS } = require('../db/models/lobby');
 
 module.exports = {
   name: 'partner_set',
@@ -73,7 +73,7 @@ module.exports = {
     }
 
     // eslint-disable-next-line max-len
-    const lobby = await RankedLobby.findOne({ type: RACE_DUOS, players: { $in: [author.id, partner.id] } });
+    const lobby = await Lobby.findOne({ type: RACE_DUOS, players: { $in: [author.id, partner.id] } });
     if (lobby) {
       return sendAlertMessage(message.channel, 'You can\'t set a partner while one of you is in a lobby.', 'warning');
     }
@@ -91,7 +91,7 @@ module.exports = {
         confirmMessage.delete();
 
         // eslint-disable-next-line no-shadow
-        const lobby = await RankedLobby.findOne({ type: RACE_DUOS, players: author.id });
+        const lobby = await Lobby.findOne({ type: RACE_DUOS, players: author.id });
         if (lobby) {
           return sendAlertMessage(message.channel, `Command cancelled: ${author} joined a lobby.`, 'error');
         }

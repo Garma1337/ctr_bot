@@ -8,7 +8,7 @@ const {
   RACE_ITEMLESS_DUOS,
   BATTLE_FFA,
   BATTLE_4V4,
-} = require('../db/models/ranked_lobby');
+} = require('../db/models/lobby');
 
 const { Player } = require('../db/models/player');
 const { Rank } = require('../db/models/rank');

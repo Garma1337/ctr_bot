@@ -1,5 +1,5 @@
 const { battleModesFFA, battleModes4v4 } = require('../db/modes_battle');
-const { BATTLE_FFA, BATTLE_4V4 } = require('../db/models/ranked_lobby');
+const { BATTLE_FFA, BATTLE_4V4 } = require('../db/models/lobby');
 
 async function rngModeBattle(type, maps) {
   let list;

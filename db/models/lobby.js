@@ -21,14 +21,14 @@ const SURVIVAL_STYLES = [
   'Itemless',
 ];
 const LEADERBOARDS = {
-  [RACE_FFA]: 'tJLAVi',
-  [RACE_ITEMLESS]: 'xgEBFt',
-  [RACE_DUOS]: 'lxd_JN',
-  [RACE_3V3]: 'V8s-GJ',
-  [RACE_4V4]: 'oNvm3e',
-  [RACE_SURVIVAL]: 'GlpVTZ',
-  [RACE_ITEMLESS_DUOS]: 'CS5KrM',
-  [BATTLE_FFA]: 'ylWyts',
+  [RACE_FFA]: 'ot__JZ',
+  [RACE_ITEMLESS]: 'RWmmxq',
+  [RACE_DUOS]: 'fkoS4t',
+  [RACE_3V3]: '3pR38X',
+  [RACE_4V4]: 'h4oEo6',
+  [RACE_SURVIVAL]: 'CS5KrM',
+  [RACE_ITEMLESS_DUOS]: null,
+  [BATTLE_FFA]: 'CXbdRH',
   [BATTLE_4V4]: '3H76QB',
 };
 const TRACK_OPTION_RNG = 'Full RNG';
@@ -73,9 +73,9 @@ const Lobby = new Schema({
   trackCount: { type: Number, enum: [4, 5, 8, 10, 12, 15, 16, 20, 37] },
   ruleset: { type: Number, enum: [0, 1, 2], default: 1 },
   region: String,
-  engineRestriction: { type: String, enum: engineUids },
+  engineRestriction: { type: String, enum: engineUids.concat(null), default: null },
   lapCount: { type: Number, enum: [1, 3, 5, 7], default: 5 },
-  survivalStyle: { type: Number, enum: [0, 1, 2], default: 1 },
+  survivalStyle: { type: Number, enum: [null, 0, 1, 2], default: null },
   allowPremadeTeams: { type: Boolean, default: true },
   reservedTeam: String,
   ranked: { type: Boolean, default: false },
@@ -112,6 +112,9 @@ Lobby.methods = {
   },
   isWar() {
     return [RACE_3V3, RACE_4V4, BATTLE_4V4].includes(this.type);
+  },
+  isSolos() {
+    return !this.isTeams();
   },
   getMinimumRequiredPlayers() {
     const requirements = {
@@ -156,7 +159,7 @@ Lobby.methods = {
       [RACE_DUOS]: 8,
       [RACE_3V3]: 8,
       [RACE_4V4]: 10,
-      [RACE_SURVIVAL]: 7,
+      [RACE_SURVIVAL]: 8,
       [RACE_ITEMLESS_DUOS]: 8,
       [BATTLE_FFA]: 5,
       [BATTLE_4V4]: 8,
@@ -292,7 +295,19 @@ Lobby.methods = {
 
     return lobbyEndCooldowns[this.type];
   },
+  hasLeaderboard() {
+    // eslint-disable-next-line no-prototype-builtins
+    if (!LEADERBOARDS.hasOwnProperty(this.type)) {
+      return false;
+    }
+
+    return LEADERBOARDS[this.type] !== null;
+  },
   getLeaderboard() {
+    if (!this.hasLeaderboard()) {
+      return null;
+    }
+
     return LEADERBOARDS[this.type];
   },
   getRemindMinutes() {
@@ -419,11 +434,24 @@ Lobby.methods = {
   },
   canBeRanked() {
     // eslint-disable-next-line max-len
-    return !(this.lapCount !== 5 || this.engineRestriction || this.trackCount > this.getDefaultTrackCount() || this.ruleset !== 1);
+    return (
+      this.lapCount === 5
+      && this.engineRestriction === null
+      && this.trackCount === this.getDefaultTrackCount()
+      && this.ruleset === 1
+      && this.hasLeaderboard()
+    );
   },
   getStartedIcon() {
     return 'https://i.imgur.com/cD0sLmQ.png';
   },
+  getReactionEmote() {
+    if (this.ranked) {
+      return '✅';
+    }
+
+    return '☑️';
+  },
 };
 
-module.exports.RankedLobby = model('lobby', Lobby);
+module.exports.Lobby = model('lobby', Lobby);

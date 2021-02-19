@@ -1,7 +1,7 @@
 const { Duo } = require('../db/models/duo');
-const { RankedLobby } = require('../db/models/ranked_lobby');
+const { Lobby } = require('../db/models/lobby');
 const sendAlertMessage = require('../utils/sendAlertMessage');
-const { RACE_DUOS } = require('../db/models/ranked_lobby');
+const { RACE_DUOS } = require('../db/models/lobby');
 
 module.exports = {
   name: 'partner_unset',
@@ -15,7 +15,7 @@ module.exports = {
     // eslint-disable-next-line max-len
     const authorSavedDuo = await Duo.findOne({ guild: guild.id, $or: [{ discord1: author.id }, { discord2: author.id }] });
     if (authorSavedDuo) {
-      const lobby = await RankedLobby.findOne({
+      const lobby = await Lobby.findOne({
         type: RACE_DUOS,
         players: { $in: [authorSavedDuo.discord1, authorSavedDuo.discord2] },
       });

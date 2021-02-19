@@ -12,19 +12,17 @@ const {
   RACE_3V3,
   RACE_4V4,
   RACE_SURVIVAL,
-  RACE_ITEMLESS_DUOS,
   BATTLE_FFA,
   BATTLE_4V4,
-} = require('../db/models/ranked_lobby');
+} = require('../db/models/lobby');
 
 const ranks = {
-  [RACE_FFA]: 'FFA',
-  [RACE_ITEMLESS]: 'Itemless',
+  [RACE_FFA]: 'Items FFA',
+  [RACE_ITEMLESS]: 'Itemless FFA',
   [RACE_DUOS]: 'Duos',
   [RACE_3V3]: '3 vs. 3',
   [RACE_4V4]: '4 vs. 4',
   [RACE_SURVIVAL]: 'Survival',
-  [RACE_ITEMLESS_DUOS]: 'Itemless Duos',
   [BATTLE_FFA]: 'Battle FFA',
   [BATTLE_4V4]: 'Battle 4 vs. 4',
 };

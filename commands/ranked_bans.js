@@ -1,6 +1,6 @@
 const moment = require('moment');
 const config = require('../config');
-const { RankedLobby } = require('../db/models/ranked_lobby');
+const { Lobby } = require('../db/models/lobby');
 const { RankedBan } = require('../db/models/ranked_ban');
 const createPageableContent = require('../utils/createPageableContent');
 const findMember = require('../utils/findMember');
@@ -68,7 +68,7 @@ module.exports = {
         const msg = message.channel.send('...');
 
         // eslint-disable-next-line max-len
-        RankedLobby.find({ guild: message.guild.id, players: member.id, started: false }).then((docs) => {
+        Lobby.find({ guild: message.guild.id, players: member.id, started: false }).then((docs) => {
           // eslint-disable-next-line no-shadow
           docs.forEach(async (doc) => {
             const guild = message.client.guilds.cache.get(doc.guild);

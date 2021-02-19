@@ -1,7 +1,7 @@
+const { Lobby } = require('../db/models/lobby');
 const { Team } = require('../db/models/team');
-const { RankedLobby } = require('../db/models/ranked_lobby');
 const sendAlertMessage = require('../utils/sendAlertMessage');
-const { RACE_3V3, RACE_4V4 } = require('../db/models/ranked_lobby');
+const { RACE_3V3, RACE_4V4 } = require('../db/models/lobby');
 
 module.exports = {
   name: 'team_unset',
@@ -14,7 +14,7 @@ module.exports = {
 
     const team = await Team.findOne({ guild: guild.id, players: author.id });
     if (team) {
-      const lobby = await RankedLobby.findOne({
+      const lobby = await Lobby.findOne({
         type: { $in: [RACE_3V3, RACE_4V4] },
         players: { $in: team.players },
       });
