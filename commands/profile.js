@@ -10,11 +10,11 @@ const { regions } = require('../db/regions');
 
 const {
   RACE_FFA,
-  RACE_ITEMLESS,
   RACE_DUOS,
   RACE_3V3,
   RACE_4V4,
   RACE_SURVIVAL,
+  RACE_ITEMLESS_FFA,
   BATTLE_FFA,
   BATTLE_4V4,
 } = require('../db/models/lobby');
@@ -265,32 +265,32 @@ module.exports = {
             if (!rank) {
               playerRanks = [
                 '**Items FFA**: -',
-                '**Itemless FFA**: -',
                 '**Duos**: -',
                 '**3 vs. 3**: -',
                 '**4 vs. 4**: -',
                 '**Survival**: -',
+                '**Itemless FFA**: -',
                 '**Battle FFA**: -',
                 '**Battle 4 vs. 4**: -',
                 '**Super Score**: -',
               ];
             } else {
               const itemsRanking = getRankingPosition(rank, RACE_FFA);
-              const itemlessRanking = getRankingPosition(rank, RACE_ITEMLESS);
               const duosRanking = getRankingPosition(rank, RACE_DUOS);
               const _3v3Ranking = getRankingPosition(rank, RACE_3V3);
               const _4v4Ranking = getRankingPosition(rank, RACE_4V4);
               const survivalRanking = getRankingPosition(rank, RACE_SURVIVAL);
+              const itemlessRanking = getRankingPosition(rank, RACE_ITEMLESS_FFA);
               const battleFFARanking = getRankingPosition(rank, BATTLE_FFA);
               const battle4v4Ranking = getRankingPosition(rank, BATTLE_4V4);
 
               playerRanks = [
                 `**Items FFA**: ${itemsRanking !== '-' ? `#${itemsRanking} - ${getRankingRating(rank, RACE_FFA)}` : '-'}`,
-                `**Itemless FFA**: ${itemlessRanking !== '-' ? `#${itemlessRanking} - ${getRankingRating(rank, RACE_ITEMLESS)}` : '-'}`,
                 `**Duos**: ${duosRanking !== '-' ? `#${duosRanking} - ${getRankingRating(rank, RACE_DUOS)}` : '-'}`,
                 `**3 vs. 3**: ${_3v3Ranking !== '-' ? `#${_3v3Ranking} - ${getRankingRating(rank, RACE_3V3)}` : '-'}`,
                 `**4 vs. 4**: ${_4v4Ranking !== '-' ? `#${_4v4Ranking} - ${getRankingRating(rank, RACE_4V4)}` : '-'}`,
                 `**Survival**: ${survivalRanking !== '-' ? `#${survivalRanking} - ${getRankingRating(rank, RACE_SURVIVAL)}` : '-'}`,
+                `**Itemless FFA**: ${itemlessRanking !== '-' ? `#${itemlessRanking} - ${getRankingRating(rank, RACE_ITEMLESS_FFA)}` : '-'}`,
                 `**Battle FFA**: ${battleFFARanking !== '-' ? `#${battleFFARanking} - ${getRankingRating(rank, BATTLE_FFA)}` : '-'}`,
                 `**Battle 4 vs. 4**: ${battle4v4Ranking !== '-' ? `#${battle4v4Ranking} - ${getRankingRating(rank, BATTLE_4V4)}` : '-'}`,
                 `**Super Score**: ${calculateSuperScore(rank, baseRank)}`,

@@ -4,14 +4,18 @@ const { CronJob } = require('cron');
 const AsyncLock = require('async-lock');
 const {
   RACE_FFA,
-  RACE_ITEMLESS,
   RACE_DUOS,
   RACE_3V3,
   RACE_4V4,
   RACE_SURVIVAL,
+  RACE_ITEMLESS_FFA,
   RACE_ITEMLESS_DUOS,
+  RACE_ITEMLESS_4V4,
   BATTLE_FFA,
+  BATTLE_DUOS,
+  BATTLE_3V3,
   BATTLE_4V4,
+  BATTLE_SURVIVAL,
   SURVIVAL_STYLES,
   LEADERBOARDS,
   TRACK_OPTION_RNG,
@@ -38,6 +42,7 @@ const createAndFindRole = require('../utils/createAndFindRole');
 const generateTemplate = require('../utils/generateTemplate');
 const getConfigValue = require('../utils/getConfigValue');
 const getRandomArrayElement = require('../utils/getRandomArrayElement');
+const greedyPartition = require('../utils/greedyPartition');
 const isStaffMember = require('../utils/isStaffMember');
 const rngPools = require('../utils/rngPools');
 const rngModeBattle = require('../utils/rngModeBattle');
@@ -168,7 +173,7 @@ async function getEmbed(doc, players, tracks, roomChannel) {
   };
 
   const tracksField = {
-    name: 'Tracks',
+    name: doc.isRacing() ? 'Tracks' : 'Maps',
     value: tracks,
     inline: true,
   };
@@ -202,7 +207,7 @@ async function getEmbed(doc, players, tracks, roomChannel) {
   };
 
   const trackCountField = {
-    name: 'Tracks',
+    name: doc.isRacing() ? 'Track Count' : 'Map Count',
     value: doc.trackCount,
     inline: true,
   };
@@ -283,7 +288,7 @@ async function getEmbed(doc, players, tracks, roomChannel) {
       fields.push(engineStyleField);
     }
 
-    if (doc.isSurvival() && survivalStyle) {
+    if (doc.isRacing() && doc.isSurvival()) {
       fields.push(survivalStyleField);
     }
 
@@ -329,7 +334,7 @@ async function getEmbed(doc, players, tracks, roomChannel) {
       fields.push(engineStyleField);
     }
 
-    if (doc.isSurvival() && survivalStyle) {
+    if (doc.isRacing() && doc.isSurvival()) {
       fields.push(survivalStyleField);
     }
 
@@ -366,7 +371,7 @@ async function getEmbed(doc, players, tracks, roomChannel) {
     fields.push(engineStyleField);
   }
 
-  if (doc.isSurvival() && survivalStyle) {
+  if (doc.isRacing() && doc.isSurvival()) {
     fields.push(survivalStyleField);
   }
 
@@ -514,24 +519,7 @@ function startLobby(docId) {
 
                 if ([3, 4].includes(teamSize)) {
                   if (teamCount > 1) {
-                    /* custom greedy algorithm */
-                    const result = {
-                      A: [],
-                      B: [],
-                      sumA: 0,
-                      sumB: 0,
-                    };
-
-                    sorted.forEach((s) => {
-                      // eslint-disable-next-line max-len
-                      if ((result.sumA < result.sumB && result.A.length < teamSize) || result.B.length >= teamSize) {
-                        result.A.push(s);
-                        result.sumA += s.rank;
-                      } else {
-                        result.B.push(s);
-                        result.sumB += s.rank;
-                      }
-                    });
+                    const result = greedyPartition(sorted, teamSize, 'rank');
 
                     const playersA = result.A.map((a) => a.discordId);
                     const playersB = result.B.map((b) => b.discordId);
@@ -655,33 +643,8 @@ ${playersText}`,
                     });
                   }
 
-                  sendAlertMessage(roomChannel, `Report any rule violations to ranked staff by sending a DM to <@!${config.bot_user_id}>.`, 'info').then(() => {
-                    if (doc.isWar() && doc.draftTracks) {
-                      const teams = ['A', 'B'];
-
-                      // eslint-disable-next-line max-len
-                      const captainAPromise = client.guilds.cache.get(doc.guild).members.fetch(getRandomArrayElement(doc.teamList[0]));
-                      // eslint-disable-next-line max-len
-                      const captainBPromise = client.guilds.cache.get(doc.guild).members.fetch(getRandomArrayElement(doc.teamList[1]));
-
-                      Promise.all([captainAPromise, captainBPromise]).then((captains) => {
-                        switch (doc.type) {
-                          case RACE_3V3:
-                            createDraft(roomChannel, '1', teams, captains);
-                            break;
-                          case RACE_4V4:
-                            createDraft(roomChannel, '0', teams, captains);
-                            break;
-                          case BATTLE_4V4:
-                            createDraftv2(roomChannel, 2, 0, 4, 30, captains);
-                            break;
-                          default:
-                            break;
-                        }
-                      });
-                    }
-
-                    if (doc.ranked) {
+                  if (doc.ranked) {
+                    sendAlertMessage(roomChannel, `Report any rule violations to ranked staff by sending a DM to <@!${config.bot_user_id}>.`, 'info').then(() => {
                       // eslint-disable-next-line no-shadow
                       sendAlertMessage(roomChannel, 'Select a scorekeeper. The scorekeeper can react to this message to make others aware that he is keeping scores. If nobody reacts to this message within 5 minutes the lobby will be ended automatically.', 'info').then((m) => {
                         setTimeout(() => {
@@ -706,8 +669,33 @@ ${playersText}`,
                           sendAlertMessage(roomChannel, 'The lobby was ended automatically because nobody volunteered to keep scores.', 'warning');
                         });
                       });
-                    }
-                  });
+                    });
+                  }
+
+                  if (doc.isWar() && doc.draftTracks) {
+                    const teams = ['A', 'B'];
+
+                    // eslint-disable-next-line max-len
+                    const captainAPromise = client.guilds.cache.get(doc.guild).members.fetch(getRandomArrayElement(doc.teamList[0]));
+                    // eslint-disable-next-line max-len
+                    const captainBPromise = client.guilds.cache.get(doc.guild).members.fetch(getRandomArrayElement(doc.teamList[1]));
+
+                    Promise.all([captainAPromise, captainBPromise]).then((captains) => {
+                      switch (doc.type) {
+                        case RACE_3V3:
+                          createDraft(roomChannel, '1', teams, captains);
+                          break;
+                        case RACE_4V4:
+                          createDraft(roomChannel, '0', teams, captains);
+                          break;
+                        case BATTLE_4V4:
+                          createDraftv2(roomChannel, 2, 0, 4, 30, captains);
+                          break;
+                        default:
+                          break;
+                      }
+                    });
+                  }
                 });
               });
             });
@@ -959,18 +947,24 @@ module.exports = {
 
         return sendAlertMessage(message.channel, `Select the mode you want to play. Waiting 1 minute.
 
-**Race Modes**
+**Item Race Modes**
 1 - FFA
-2 - Itemless
-3 - Duos
-4 - 3 vs. 3
-5 - 4 vs. 4
-6 - Survival
-7 - Itemless Duos
+2 - Duos
+3 - 3 vs. 3
+4 - 4 vs. 4
+5 - Survival
+
+**Itemless Race Modes**
+6 - FFA
+7 - Duos
+8 - 4 vs. 4
 
 **Battle Modes**
-8 - FFA
-9 - 4 vs. 4`, 'info').then((confirmMessage) => {
+9 - FFA
+10 - Duos
+11 - 3 vs. 3
+12 - 4 vs. 4
+13 - Survival`, 'info').then((confirmMessage) => {
           // eslint-disable-next-line consistent-return
           message.channel.awaitMessages(filter, options).then(async (collected) => {
             confirmMessage.delete();
@@ -980,7 +974,7 @@ module.exports = {
 
             let sentMessage;
             let choice = parseInt(content, 10);
-            const modes = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+            const modes = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
 
             if (modes.includes(choice)) {
               let type;
@@ -989,28 +983,40 @@ module.exports = {
                   type = RACE_FFA;
                   break;
                 case 2:
-                  type = RACE_ITEMLESS;
-                  break;
-                case 3:
                   type = RACE_DUOS;
                   break;
-                case 4:
+                case 3:
                   type = RACE_3V3;
                   break;
-                case 5:
+                case 4:
                   type = RACE_4V4;
                   break;
-                case 6:
+                case 5:
                   type = RACE_SURVIVAL;
+                  break;
+                case 6:
+                  type = RACE_ITEMLESS_FFA;
                   break;
                 case 7:
                   type = RACE_ITEMLESS_DUOS;
                   break;
                 case 8:
-                  type = BATTLE_FFA;
+                  type = RACE_ITEMLESS_4V4;
                   break;
                 case 9:
+                  type = BATTLE_FFA;
+                  break;
+                case 10:
+                  type = BATTLE_DUOS;
+                  break;
+                case 11:
+                  type = BATTLE_3V3;
+                  break;
+                case 12:
                   type = BATTLE_4V4;
+                  break;
+                case 13:
+                  type = BATTLE_SURVIVAL;
                   break;
                 default:
                   break;
@@ -1891,7 +1897,7 @@ async function mogi(reaction, user, removed = false) {
           }
 
           // eslint-disable-next-line max-len
-          if (doc.ranked && !doc.locked.$isEmpty() && [RACE_FFA, RACE_ITEMLESS, RACE_SURVIVAL, BATTLE_FFA].includes(doc.type) && player.psn) {
+          if (doc.ranked && !doc.locked.$isEmpty() && doc.isSolos() && player.psn) {
             const playerRank = await Rank.findOne({ name: player.psn });
 
             let rank = PLAYER_DEFAULT_RANK;

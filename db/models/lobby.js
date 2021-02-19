@@ -6,30 +6,39 @@ const { engineStyles } = require('../engineStyles');
 
 const engineUids = engineStyles.map((e) => e.uid);
 
-const RACE_FFA = 'race_ffa';
-const RACE_ITEMLESS = 'race_itemless';
-const RACE_DUOS = 'race_duos';
-const RACE_3V3 = 'race_3v3';
-const RACE_4V4 = 'race_4v4';
+const UNKNOWN = 'unknown';
+const RACE_ITEMS_FFA = 'race_ffa';
+const RACE_ITEMS_DUOS = 'race_duos';
+const RACE_ITEMS_3V3 = 'race_3v3';
+const RACE_ITEMS_4V4 = 'race_4v4';
 const RACE_SURVIVAL = 'race_survival';
+const RACE_ITEMLESS_FFA = 'race_itemless_ffa';
 const RACE_ITEMLESS_DUOS = 'race_itemless_duos';
+const RACE_ITEMLESS_4V4 = 'race_itemless_4v4';
 const BATTLE_FFA = 'battle_ffa';
+const BATTLE_DUOS = 'battle_duos';
+const BATTLE_3V3 = 'battle_3v3';
 const BATTLE_4V4 = 'battle_4v4';
+const BATTLE_SURVIVAL = 'battle_survival';
 const SURVIVAL_STYLES = [
   'Items only',
   'Mixed',
   'Itemless',
 ];
 const LEADERBOARDS = {
-  [RACE_FFA]: 'ot__JZ',
-  [RACE_ITEMLESS]: 'RWmmxq',
-  [RACE_DUOS]: 'fkoS4t',
-  [RACE_3V3]: '3pR38X',
-  [RACE_4V4]: 'h4oEo6',
+  [RACE_ITEMS_FFA]: 'ot__JZ',
+  [RACE_ITEMS_DUOS]: 'fkoS4t',
+  [RACE_ITEMS_3V3]: '3pR38X',
+  [RACE_ITEMS_4V4]: 'h4oEo6',
   [RACE_SURVIVAL]: 'CS5KrM',
+  [RACE_ITEMLESS_FFA]: 'RWmmxq',
   [RACE_ITEMLESS_DUOS]: null,
+  [RACE_ITEMLESS_4V4]: null,
   [BATTLE_FFA]: 'CXbdRH',
+  [BATTLE_DUOS]: null,
+  [BATTLE_3V3]: null,
   [BATTLE_4V4]: '3H76QB',
+  [BATTLE_SURVIVAL]: null,
 };
 const TRACK_OPTION_RNG = 'Full RNG';
 const TRACK_OPTION_POOLS = 'Pools';
@@ -37,15 +46,19 @@ const TRACK_OPTION_SPICY = 'Spicy';
 const TRACK_OPTION_DRAFT = 'Draft';
 const TRACK_OPTION_IRON_MAN = 'Iron Man';
 
-module.exports.RACE_FFA = RACE_FFA;
-module.exports.RACE_ITEMLESS = RACE_ITEMLESS;
-module.exports.RACE_DUOS = RACE_DUOS;
-module.exports.RACE_3V3 = RACE_3V3;
-module.exports.RACE_4V4 = RACE_4V4;
+module.exports.RACE_FFA = RACE_ITEMS_FFA;
+module.exports.RACE_DUOS = RACE_ITEMS_DUOS;
+module.exports.RACE_3V3 = RACE_ITEMS_3V3;
+module.exports.RACE_4V4 = RACE_ITEMS_4V4;
 module.exports.RACE_SURVIVAL = RACE_SURVIVAL;
+module.exports.RACE_ITEMLESS_FFA = RACE_ITEMLESS_FFA;
 module.exports.RACE_ITEMLESS_DUOS = RACE_ITEMLESS_DUOS;
+module.exports.RACE_ITEMLESS_4V4 = RACE_ITEMLESS_4V4;
 module.exports.BATTLE_FFA = BATTLE_FFA;
+module.exports.BATTLE_DUOS = BATTLE_DUOS;
+module.exports.BATTLE_3V3 = BATTLE_3V3;
 module.exports.BATTLE_4V4 = BATTLE_4V4;
+module.exports.BATTLE_SURVIVAL = BATTLE_SURVIVAL;
 module.exports.SURVIVAL_STYLES = SURVIVAL_STYLES;
 module.exports.LEADERBOARDS = LEADERBOARDS;
 module.exports.TRACK_OPTION_RNG = TRACK_OPTION_RNG;
@@ -55,78 +68,149 @@ module.exports.TRACK_OPTION_DRAFT = TRACK_OPTION_DRAFT;
 module.exports.TRACK_OPTION_IRON_MAN = TRACK_OPTION_IRON_MAN;
 
 const Lobby = new Schema({
-  date: { type: Date, default: Date.now },
+  date: {
+    type: Date,
+    default: Date.now,
+  },
   guild: String,
   channel: String,
   message: String,
   creator: String,
-  started: { type: Boolean, default: false },
-  startedAt: { type: Date, default: null },
+  started: {
+    type: Boolean,
+    default: false,
+  },
+  startedAt: {
+    type: Date,
+    default: null,
+  },
   players: [String],
   teamList: Array,
-  closed: { type: Boolean, default: false },
-  // eslint-disable-next-line max-len
-  type: { type: String, enum: [RACE_FFA, RACE_ITEMLESS, RACE_DUOS, RACE_3V3, RACE_4V4, RACE_SURVIVAL, RACE_ITEMLESS_DUOS, BATTLE_FFA, BATTLE_4V4] },
-  pools: { type: Boolean, default: true },
-  spicyTracks: { type: Boolean, default: false },
-  draftTracks: { type: Boolean, default: false },
-  trackCount: { type: Number, enum: [4, 5, 8, 10, 12, 15, 16, 20, 37] },
-  ruleset: { type: Number, enum: [0, 1, 2], default: 1 },
+  closed: {
+    type: Boolean,
+    default: false,
+  },
+  type: {
+    type: String,
+    enum: [
+      RACE_ITEMS_FFA,
+      RACE_ITEMS_DUOS,
+      RACE_ITEMS_3V3,
+      RACE_ITEMS_4V4,
+      RACE_SURVIVAL,
+      RACE_ITEMLESS_FFA,
+      RACE_ITEMLESS_DUOS,
+      RACE_ITEMLESS_4V4,
+      BATTLE_FFA,
+      BATTLE_DUOS,
+      BATTLE_3V3,
+      BATTLE_4V4,
+      BATTLE_SURVIVAL,
+    ],
+  },
+  pools: {
+    type: Boolean,
+    default: true,
+  },
+  spicyTracks: {
+    type: Boolean,
+    default: false,
+  },
+  draftTracks: {
+    type: Boolean,
+    default: false,
+  },
+  trackCount: {
+    type: Number,
+    enum: [4, 5, 8, 10, 12, 15, 16, 20, 37],
+  },
+  ruleset: {
+    type: Number,
+    enum: [0, 1, 2],
+    default: 1,
+  },
   region: String,
-  engineRestriction: { type: String, enum: engineUids.concat(null), default: null },
-  lapCount: { type: Number, enum: [1, 3, 5, 7], default: 5 },
-  survivalStyle: { type: Number, enum: [null, 0, 1, 2], default: null },
-  allowPremadeTeams: { type: Boolean, default: true },
+  engineRestriction: {
+    type: String,
+    enum: engineUids.concat(null),
+    default: null,
+  },
+  lapCount: {
+    type: Number,
+    enum: [1, 3, 5, 7],
+    default: 5,
+  },
+  survivalStyle: {
+    type: Number,
+    enum: [null, 0, 1, 2],
+    default: null,
+  },
+  allowPremadeTeams: {
+    type: Boolean,
+    default: true,
+  },
   reservedTeam: String,
-  ranked: { type: Boolean, default: false },
-  locked: { rank: Number, shift: Number },
+  ranked: {
+    type: Boolean,
+    default: false,
+  },
+  locked: {
+    rank: Number,
+    shift: Number,
+  },
 });
 
 Lobby.methods = {
   isRacing() {
-    return ![BATTLE_FFA, BATTLE_4V4].includes(this.type);
-  },
-  isBattle() {
-    return !this.isRacing();
-  },
-  isFFA() {
-    return [RACE_FFA, BATTLE_FFA].includes(this.type);
+    return !this.isBattle();
   },
   isItemless() {
-    return [RACE_ITEMLESS, RACE_ITEMLESS_DUOS].includes(this.type);
+    return [RACE_ITEMLESS_FFA, RACE_ITEMLESS_DUOS, RACE_ITEMLESS_4V4].includes(this.type);
+  },
+  isBattle() {
+    return [BATTLE_FFA, BATTLE_DUOS, BATTLE_3V3, BATTLE_4V4, BATTLE_SURVIVAL].includes(this.type);
+  },
+  isFFA() {
+    return [RACE_ITEMS_FFA, RACE_ITEMLESS_FFA, BATTLE_FFA].includes(this.type);
   },
   isDuos() {
-    return [RACE_DUOS, RACE_ITEMLESS_DUOS].includes(this.type);
+    return [RACE_ITEMS_DUOS, RACE_ITEMLESS_DUOS, BATTLE_DUOS].includes(this.type);
   },
   is3v3() {
-    return this.type === RACE_3V3;
+    return [RACE_ITEMS_3V3, BATTLE_3V3].includes(this.type);
   },
   is4v4() {
-    return [RACE_4V4, BATTLE_4V4].includes(this.type);
+    return [RACE_ITEMS_4V4, RACE_ITEMLESS_4V4, BATTLE_4V4].includes(this.type);
   },
   isSurvival() {
-    return this.type === RACE_SURVIVAL;
+    return [RACE_SURVIVAL, BATTLE_SURVIVAL].includes(this.type);
   },
   isTeams() {
-    return [RACE_DUOS, RACE_3V3, RACE_4V4, RACE_ITEMLESS_DUOS, BATTLE_4V4].includes(this.type);
+    // eslint-disable-next-line max-len
+    return (this.isDuos() || this.isWar());
   },
   isWar() {
-    return [RACE_3V3, RACE_4V4, BATTLE_4V4].includes(this.type);
+    // eslint-disable-next-line max-len
+    return (this.is3v3() || this.is4v4());
   },
   isSolos() {
     return !this.isTeams();
   },
   getMinimumRequiredPlayers() {
     const requirements = {
-      [RACE_FFA]: 2,
-      [RACE_ITEMLESS]: 4,
-      [RACE_DUOS]: 6,
-      [RACE_3V3]: 6,
-      [RACE_4V4]: 8,
+      [RACE_ITEMS_FFA]: 2,
+      [RACE_ITEMS_DUOS]: 6,
+      [RACE_ITEMS_3V3]: 6,
+      [RACE_ITEMS_4V4]: 8,
       [RACE_SURVIVAL]: 8,
+      [RACE_ITEMLESS_FFA]: 4,
       [RACE_ITEMLESS_DUOS]: 6,
+      [RACE_ITEMLESS_4V4]: 8,
       [BATTLE_FFA]: 4,
+      [BATTLE_DUOS]: 6,
+      [BATTLE_3V3]: 6,
       [BATTLE_4V4]: 8,
+      [BATTLE_SURVIVAL]: 8,
     };
 
     return requirements[this.type];
@@ -136,15 +220,19 @@ Lobby.methods = {
   },
   getMaximumAllowedPlayers() {
     const limits = {
-      [RACE_FFA]: 8,
-      [RACE_ITEMLESS]: 4,
-      [RACE_DUOS]: 8,
-      [RACE_3V3]: 6,
-      [RACE_4V4]: 8,
+      [RACE_ITEMS_FFA]: 8,
+      [RACE_ITEMS_DUOS]: 8,
+      [RACE_ITEMS_3V3]: 6,
+      [RACE_ITEMS_4V4]: 8,
       [RACE_SURVIVAL]: 8,
+      [RACE_ITEMLESS_FFA]: 4,
       [RACE_ITEMLESS_DUOS]: 8,
+      [RACE_ITEMLESS_4V4]: 8,
       [BATTLE_FFA]: 4,
+      [BATTLE_DUOS]: 8,
+      [BATTLE_3V3]: 6,
       [BATTLE_4V4]: 8,
+      [BATTLE_SURVIVAL]: 8,
     };
 
     return limits[this.type];
@@ -154,15 +242,19 @@ Lobby.methods = {
   },
   getDefaultTrackCount() {
     const trackCounts = {
-      [RACE_FFA]: 8,
-      [RACE_ITEMLESS]: 5,
-      [RACE_DUOS]: 8,
-      [RACE_3V3]: 8,
-      [RACE_4V4]: 10,
+      [RACE_ITEMS_FFA]: 8,
+      [RACE_ITEMS_DUOS]: 8,
+      [RACE_ITEMS_3V3]: 8,
+      [RACE_ITEMS_4V4]: 10,
       [RACE_SURVIVAL]: 8,
+      [RACE_ITEMLESS_FFA]: 5,
       [RACE_ITEMLESS_DUOS]: 8,
+      [RACE_ITEMLESS_4V4]: 8,
       [BATTLE_FFA]: 5,
+      [BATTLE_DUOS]: 5,
+      [BATTLE_3V3]: 8,
       [BATTLE_4V4]: 8,
+      [BATTLE_SURVIVAL]: 8,
     };
 
     return trackCounts[this.type];
@@ -183,26 +275,54 @@ Lobby.methods = {
       title += 'Rank Locked ';
     }
 
-    if (this.isFFA() && !this.isBattle()) {
-      title += 'FFA';
-    } else if (this.isItemless() && !this.isDuos()) {
-      title += 'Itemless FFA';
-    } else if (this.isDuos() && !this.isItemless()) {
-      title += 'Duos';
-    } else if (this.is3v3()) {
-      title += '3 vs. 3';
-    } else if (this.is4v4() && !this.isBattle()) {
-      title += '4 vs. 4';
-    } else if (this.isSurvival()) {
-      title += 'Survival';
-    } else if (this.isDuos() && this.isItemless()) {
-      title += 'Itemless Duos';
-    } else if (this.isFFA() && this.isBattle()) {
-      title += 'Battle FFA';
-    } else if (this.is4v4() && this.isBattle()) {
-      title += 'Battle 4 vs. 4';
-    } else {
-      title += 'Unknown';
+    if (this.isRacing()) {
+      if (!this.isItemless()) {
+        if (this.isFFA()) {
+          title += 'FFA';
+        } else if (this.isDuos()) {
+          title += 'Duos';
+        } else if (this.is3v3()) {
+          title += '3 vs. 3';
+        } else if (this.is4v4()) {
+          title += '4 vs. 4';
+        } else if (this.isSurvival()) {
+          title += 'Survival';
+        } else {
+          title += UNKNOWN;
+        }
+      }
+
+      if (this.isItemless()) {
+        if (this.isFFA()) {
+          title += 'Itemless FFA';
+        } else if (this.isDuos()) {
+          title += 'Itemless Duos';
+        } else if (this.is4v4()) {
+          title += 'Itemless 4 vs. 4';
+        } else {
+          title += UNKNOWN;
+        }
+      }
+    }
+
+    if (this.isBattle()) {
+      if (this.isFFA()) {
+        title += 'Battle FFA';
+      } else if (this.isDuos()) {
+        title += 'Battle Duos';
+      } else if (this.is3v3()) {
+        title += 'Battle 3 vs. 3';
+      } else if (this.is4v4()) {
+        title += 'Battle 4 vs. 4';
+      } else if (this.isSurvival()) {
+        title += 'Battle Survival';
+      } else {
+        title += UNKNOWN;
+      }
+    }
+
+    if (!this.isBattle() && !this.isRacing()) {
+      title += UNKNOWN;
     }
 
     title += ' Lobby';
@@ -237,60 +357,76 @@ Lobby.methods = {
   },
   getIcon() {
     const icons = {
-      [RACE_FFA]: 'https://vignette.wikia.nocookie.net/crashban/images/3/32/CTRNF-BowlingBomb.png',
-      [RACE_ITEMLESS]: 'https://static.wikia.nocookie.net/crashban/images/b/b5/CTRNF-SuperEngine.png',
-      [RACE_DUOS]: 'https://vignette.wikia.nocookie.net/crashban/images/8/83/CTRNF-AkuUka.png',
-      [RACE_3V3]: 'https://static.wikia.nocookie.net/crashban/images/f/fd/CTRNF-TripleMissile.png',
-      [RACE_4V4]: 'https://i.imgur.com/3dvcaur.png',
+      [RACE_ITEMS_FFA]: 'https://vignette.wikia.nocookie.net/crashban/images/3/32/CTRNF-BowlingBomb.png',
+      [RACE_ITEMS_DUOS]: 'https://vignette.wikia.nocookie.net/crashban/images/8/83/CTRNF-AkuUka.png',
+      [RACE_ITEMS_3V3]: 'https://static.wikia.nocookie.net/crashban/images/f/fd/CTRNF-TripleMissile.png',
+      [RACE_ITEMS_4V4]: 'https://i.imgur.com/3dvcaur.png',
       [RACE_SURVIVAL]: 'https://static.wikia.nocookie.net/crashban/images/f/fb/CTRNF-WarpOrb.png',
+      [RACE_ITEMLESS_FFA]: 'https://static.wikia.nocookie.net/crashban/images/b/b5/CTRNF-SuperEngine.png',
       [RACE_ITEMLESS_DUOS]: 'https://i.imgur.com/kTxPvij.png',
+      [RACE_ITEMLESS_4V4]: 'https://static.wikia.nocookie.net/crashban/images/1/12/NF_Purple_Retro_Kart.png',
       [BATTLE_FFA]: 'https://vignette.wikia.nocookie.net/crashban/images/9/97/CTRNF-Invisibility.png',
+      [BATTLE_DUOS]: 'https://static.wikia.nocookie.net/crashban/images/e/eb/CTRNF-%3F_Crate_Iron_Checkpoint_Crate_icon.png',
+      [BATTLE_3V3]: 'https://static.wikia.nocookie.net/crashban/images/d/d1/CTRNF-TripleBowlingBomb.png',
       [BATTLE_4V4]: 'https://i.imgur.com/aLFsltt.png',
+      [BATTLE_SURVIVAL]: 'https://static.wikia.nocookie.net/crashban/images/2/29/Jelly_crown_sticker.png',
     };
 
     return icons[this.type];
   },
   getRoleName() {
     const roleNames = {
-      [RACE_FFA]: config.roles.ranked_ffa_role,
-      [RACE_ITEMLESS]: config.roles.ranked_itemless_role,
-      [RACE_DUOS]: config.roles.ranked_duos_role,
-      [RACE_3V3]: config.roles.ranked_3v3_role,
-      [RACE_4V4]: config.roles.ranked_4v4_role,
+      [RACE_ITEMS_FFA]: config.roles.ranked_ffa_role,
+      [RACE_ITEMS_DUOS]: config.roles.ranked_duos_role,
+      [RACE_ITEMS_3V3]: config.roles.ranked_3v3_role,
+      [RACE_ITEMS_4V4]: config.roles.ranked_4v4_role,
       [RACE_SURVIVAL]: config.roles.ranked_survival_role,
+      [RACE_ITEMLESS_FFA]: config.roles.ranked_itemless_role,
       [RACE_ITEMLESS_DUOS]: config.roles.ranked_itemless_duos_role,
-      [BATTLE_FFA]: config.roles.ranked_battle_role,
+      [RACE_ITEMLESS_4V4]: config.roles.ranked_itemless_4v4_role,
+      [BATTLE_FFA]: config.roles.ranked_battle_ffa_role,
+      [BATTLE_DUOS]: config.roles.ranked_battle_duos_role,
+      [BATTLE_3V3]: config.roles.ranked_battle_3v3_role,
       [BATTLE_4V4]: config.roles.ranked_battle_4v4_role,
+      [BATTLE_SURVIVAL]: config.roles.ranked_battle_survival_role,
     };
 
     return roleNames[this.type];
   },
   getColor() {
     const colors = {
-      [RACE_FFA]: 3707391,
-      [RACE_ITEMLESS]: 16747320,
-      [RACE_DUOS]: 16732141,
-      [RACE_3V3]: 16724019,
-      [RACE_4V4]: 9568066,
-      [RACE_SURVIVAL]: 7204341,
-      [RACE_ITEMLESS_DUOS]: 0,
-      [BATTLE_FFA]: 15856113,
-      [BATTLE_4V4]: 11299064,
+      [RACE_ITEMS_FFA]: 3707391, // Medium Blue
+      [RACE_ITEMS_DUOS]: 16732141, // Pink
+      [RACE_ITEMS_3V3]: 16724019, // Red
+      [RACE_ITEMS_4V4]: 9568066, // Green
+      [RACE_SURVIVAL]: 7204341, // Light Blue
+      [RACE_ITEMLESS_FFA]: 16747320, // Orange
+      [RACE_ITEMLESS_DUOS]: 0, // Black
+      [RACE_ITEMLESS_4V4]: 5650319, // Dark Purple
+      [BATTLE_FFA]: 15856113, // Silver
+      [BATTLE_DUOS]: 8602134, // Brown
+      [BATTLE_3V3]: 3355963, // Dark Grey
+      [BATTLE_4V4]: 11299064, // Purple
+      [BATTLE_SURVIVAL]: 14530048, // Yellow
     };
 
     return colors[this.type];
   },
   getLobbyEndCooldown() {
     const lobbyEndCooldowns = {
-      [RACE_FFA]: 50,
-      [RACE_ITEMLESS]: 30,
-      [RACE_DUOS]: 50,
-      [RACE_3V3]: 50,
-      [RACE_4V4]: 60,
-      [RACE_SURVIVAL]: 50,
-      [RACE_ITEMLESS_DUOS]: 50,
+      [RACE_ITEMS_FFA]: 45,
+      [RACE_ITEMS_DUOS]: 45,
+      [RACE_ITEMS_3V3]: 45,
+      [RACE_ITEMS_4V4]: 60,
+      [RACE_SURVIVAL]: 40,
+      [RACE_ITEMLESS_FFA]: 30,
+      [RACE_ITEMLESS_DUOS]: 45,
+      [RACE_ITEMLESS_4V4]: 45,
       [BATTLE_FFA]: 30,
+      [BATTLE_DUOS]: 60,
+      [BATTLE_3V3]: 60,
       [BATTLE_4V4]: 60,
+      [BATTLE_SURVIVAL]: 40,
     };
 
     return lobbyEndCooldowns[this.type];
@@ -312,60 +448,76 @@ Lobby.methods = {
   },
   getRemindMinutes() {
     const remindMinutes = {
-      [RACE_FFA]: [45, 60],
-      [RACE_ITEMLESS]: [30, 45],
-      [RACE_DUOS]: [45, 60],
-      [RACE_3V3]: [45, 60],
-      [RACE_4V4]: [60, 75],
-      [RACE_SURVIVAL]: [45, 60],
+      [RACE_ITEMS_FFA]: [45, 60],
+      [RACE_ITEMS_DUOS]: [45, 60],
+      [RACE_ITEMS_3V3]: [45, 60],
+      [RACE_ITEMS_4V4]: [60, 75],
+      [RACE_SURVIVAL]: [40, 55],
+      [RACE_ITEMLESS_FFA]: [30, 45],
       [RACE_ITEMLESS_DUOS]: [45, 60],
+      [RACE_ITEMLESS_4V4]: [45, 60],
       [BATTLE_FFA]: [30, 45],
-      [BATTLE_4V4]: [40, 55],
+      [BATTLE_DUOS]: [60, 75],
+      [BATTLE_3V3]: [60, 75],
+      [BATTLE_4V4]: [60, 75],
+      [BATTLE_SURVIVAL]: [40, 55],
     };
 
     return remindMinutes[this.type];
   },
   getPingMinutes() {
     const pingMinutes = {
-      [RACE_FFA]: [75, 90, 105, 120],
-      [RACE_ITEMLESS]: [60, 75, 90, 105, 120],
-      [RACE_DUOS]: [75, 90, 105, 120],
-      [RACE_3V3]: [75, 90, 105, 120],
-      [RACE_4V4]: [90, 105, 120, 135],
-      [RACE_SURVIVAL]: [75, 90, 105, 120],
+      [RACE_ITEMS_FFA]: [75, 90, 105, 120],
+      [RACE_ITEMS_DUOS]: [75, 90, 105, 120],
+      [RACE_ITEMS_3V3]: [75, 90, 105, 120],
+      [RACE_ITEMS_4V4]: [90, 105, 120, 135],
+      [RACE_SURVIVAL]: [70, 85, 100, 115],
+      [RACE_ITEMLESS_FFA]: [60, 75, 90, 105, 120],
       [RACE_ITEMLESS_DUOS]: [75, 90, 105, 120],
+      [RACE_ITEMLESS_4V4]: [75, 90, 105, 120],
       [BATTLE_FFA]: [60, 75, 90, 105, 120],
-      [BATTLE_4V4]: [70, 85, 100, 115, 130],
+      [BATTLE_DUOS]: [90, 105, 120, 135],
+      [BATTLE_3V3]: [90, 105, 120, 135],
+      [BATTLE_4V4]: [90, 105, 120, 135],
+      [BATTLE_SURVIVAL]: [70, 85, 100, 115],
     };
 
     return pingMinutes[this.type];
   },
   getMaxTrackCount() {
     const maxTrackCount = {
-      [RACE_FFA]: 37,
-      [RACE_ITEMLESS]: 37,
-      [RACE_DUOS]: 37,
-      [RACE_3V3]: 37,
-      [RACE_4V4]: 37,
+      [RACE_ITEMS_FFA]: 37,
+      [RACE_ITEMS_DUOS]: 37,
+      [RACE_ITEMS_3V3]: 37,
+      [RACE_ITEMS_4V4]: 37,
       [RACE_SURVIVAL]: 8,
+      [RACE_ITEMLESS_FFA]: 37,
       [RACE_ITEMLESS_DUOS]: 37,
+      [RACE_ITEMLESS_4V4]: 37,
       [BATTLE_FFA]: 12,
+      [BATTLE_DUOS]: 12,
+      [BATTLE_3V3]: 12,
       [BATTLE_4V4]: 12,
+      [BATTLE_SURVIVAL]: 8,
     };
 
     return maxTrackCount[this.type];
   },
   getTrackCountOptions() {
     const trackCountOptions = {
-      [RACE_FFA]: [5, 8, 10, 12, 15, 16, 20, 37],
-      [RACE_ITEMLESS]: [5, 8, 10, 12, 15, 16, 20, 37],
-      [RACE_DUOS]: [5, 8, 10, 12, 15, 16, 20, 37],
-      [RACE_3V3]: [5, 8, 10, 12, 15, 16, 20, 37],
-      [RACE_4V4]: [5, 8, 10, 12, 15, 16, 20, 37],
+      [RACE_ITEMS_FFA]: [5, 8, 10, 12, 15, 16, 20, 37],
+      [RACE_ITEMS_DUOS]: [5, 8, 10, 12, 15, 16, 20, 37],
+      [RACE_ITEMS_3V3]: [5, 8, 10, 12, 15, 16, 20, 37],
+      [RACE_ITEMS_4V4]: [5, 8, 10, 12, 15, 16, 20, 37],
       [RACE_SURVIVAL]: [8],
+      [RACE_ITEMLESS_FFA]: [5, 8, 10, 12, 15, 16, 20, 37],
       [RACE_ITEMLESS_DUOS]: [5, 8, 10, 12, 15, 16, 20, 37],
+      [RACE_ITEMLESS_4V4]: [5, 8, 10, 12, 15, 16, 20, 37],
       [BATTLE_FFA]: [5, 8, 10, 12],
+      [BATTLE_DUOS]: [5, 8, 10, 12],
+      [BATTLE_3V3]: [5, 8, 10, 12],
       [BATTLE_4V4]: [5, 8, 10, 12],
+      [BATTLE_SURVIVAL]: [8],
     };
 
     return trackCountOptions[this.type];
@@ -375,32 +527,26 @@ Lobby.methods = {
   },
   getTrackOptions() {
     const trackOptions = {
-      [RACE_FFA]: [
+      [RACE_ITEMS_FFA]: [
         TRACK_OPTION_RNG,
         TRACK_OPTION_POOLS,
         TRACK_OPTION_SPICY,
         TRACK_OPTION_IRON_MAN,
       ],
-      [RACE_ITEMLESS]: [
+      [RACE_ITEMS_DUOS]: [
         TRACK_OPTION_RNG,
         TRACK_OPTION_POOLS,
         TRACK_OPTION_SPICY,
         TRACK_OPTION_IRON_MAN,
       ],
-      [RACE_DUOS]: [
-        TRACK_OPTION_RNG,
-        TRACK_OPTION_POOLS,
-        TRACK_OPTION_SPICY,
-        TRACK_OPTION_IRON_MAN,
-      ],
-      [RACE_3V3]: [
+      [RACE_ITEMS_3V3]: [
         TRACK_OPTION_RNG,
         TRACK_OPTION_POOLS,
         TRACK_OPTION_SPICY,
         TRACK_OPTION_DRAFT,
         TRACK_OPTION_IRON_MAN,
       ],
-      [RACE_4V4]: [
+      [RACE_ITEMS_4V4]: [
         TRACK_OPTION_RNG,
         TRACK_OPTION_POOLS,
         TRACK_OPTION_SPICY,
@@ -412,14 +558,34 @@ Lobby.methods = {
         TRACK_OPTION_POOLS,
         TRACK_OPTION_SPICY,
       ],
+      [RACE_ITEMLESS_FFA]: [
+        TRACK_OPTION_RNG,
+        TRACK_OPTION_POOLS,
+        TRACK_OPTION_IRON_MAN,
+      ],
       [RACE_ITEMLESS_DUOS]: [
         TRACK_OPTION_RNG,
         TRACK_OPTION_POOLS,
-        TRACK_OPTION_SPICY,
+        TRACK_OPTION_IRON_MAN,
+      ],
+      [RACE_ITEMLESS_4V4]: [
+        TRACK_OPTION_RNG,
+        TRACK_OPTION_POOLS,
+        TRACK_OPTION_DRAFT,
         TRACK_OPTION_IRON_MAN,
       ],
       [BATTLE_FFA]: [
         TRACK_OPTION_RNG,
+        TRACK_OPTION_IRON_MAN,
+      ],
+      [BATTLE_DUOS]: [
+        TRACK_OPTION_RNG,
+        TRACK_OPTION_POOLS,
+        TRACK_OPTION_IRON_MAN,
+      ],
+      [BATTLE_3V3]: [
+        TRACK_OPTION_RNG,
+        TRACK_OPTION_DRAFT,
         TRACK_OPTION_IRON_MAN,
       ],
       [BATTLE_4V4]: [
@@ -428,6 +594,9 @@ Lobby.methods = {
         TRACK_OPTION_DRAFT,
         TRACK_OPTION_IRON_MAN,
       ],
+      [BATTLE_SURVIVAL]: [
+        TRACK_OPTION_RNG,
+      ],
     };
 
     return trackOptions[this.type];
@@ -435,7 +604,7 @@ Lobby.methods = {
   canBeRanked() {
     // eslint-disable-next-line max-len
     return (
-      this.lapCount === 5
+      (this.lapCount === 5 || this.isBattle())
       && this.engineRestriction === null
       && this.trackCount === this.getDefaultTrackCount()
       && this.ruleset === 1

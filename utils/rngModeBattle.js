@@ -1,11 +1,17 @@
 const { battleModesFFA, battleModes4v4 } = require('../db/modes_battle');
-const { BATTLE_FFA, BATTLE_4V4 } = require('../db/models/lobby');
+const {
+  BATTLE_FFA,
+  BATTLE_DUOS,
+  BATTLE_3V3,
+  BATTLE_4V4,
+  BATTLE_SURVIVAL,
+} = require('../db/models/lobby');
 
 async function rngModeBattle(type, maps) {
   let list;
   if (type === BATTLE_FFA) {
     list = battleModesFFA;
-  } else if (type === BATTLE_4V4) {
+  } else if ([BATTLE_DUOS, BATTLE_3V3, BATTLE_4V4, BATTLE_SURVIVAL].includes(type)) {
     list = battleModes4v4;
   } else {
     list = battleModesFFA;

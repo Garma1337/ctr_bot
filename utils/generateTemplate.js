@@ -1,13 +1,17 @@
 const {
   RACE_FFA,
-  RACE_ITEMLESS,
   RACE_DUOS,
   RACE_3V3,
   RACE_4V4,
   RACE_SURVIVAL,
+  RACE_ITEMLESS_FFA,
   RACE_ITEMLESS_DUOS,
+  RACE_ITEMLESS_4V4,
   BATTLE_FFA,
+  BATTLE_DUOS,
+  BATTLE_3V3,
   BATTLE_4V4,
+  BATTLE_SURVIVAL,
 } = require('../db/models/lobby');
 
 const { Player } = require('../db/models/player');
@@ -44,10 +48,6 @@ async function generateTemplate(players, doc) {
       title += 'Match # - FFA\n';
       numberOfMaps = 8;
       break;
-    case RACE_ITEMLESS:
-      title += 'Match # - Itemless FFA\n';
-      numberOfMaps = 5;
-      break;
     case RACE_DUOS:
       title += '#title Match # - Duos\n';
       numberOfMaps = 8;
@@ -64,17 +64,37 @@ async function generateTemplate(players, doc) {
       title += 'Match # - Survival\n';
       numberOfMaps = 1;
       break;
+    case RACE_ITEMLESS_FFA:
+      title += 'Match # - Itemless FFA\n';
+      numberOfMaps = 5;
+      break;
     case RACE_ITEMLESS_DUOS:
       title += '#title Match # - Itemless Duos\n';
       numberOfMaps = 8;
+      break;
+    case RACE_ITEMLESS_4V4:
+      title += '#title Match # - Itemless 4 vs. 4\n';
+      numberOfMaps = 5;
       break;
     case BATTLE_FFA:
       title += 'Match # - Battle FFA\n';
       numberOfMaps = 5;
       break;
+    case BATTLE_DUOS:
+      title += '#title Match # - Battle Duos\n';
+      numberOfMaps = 8;
+      break;
+    case BATTLE_3V3:
+      title += '#title Match # - Battle 3 vs. 3\n';
+      numberOfMaps = 8;
+      break;
     case BATTLE_4V4:
       title += '#title Match # - Battle 4 vs. 4\n';
       numberOfMaps = 8;
+      break;
+    case BATTLE_SURVIVAL:
+      title += 'Match # - Battle Survival\n';
+      numberOfMaps = 1;
       break;
     default:
       break;

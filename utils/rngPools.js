@@ -2,14 +2,18 @@ const getRandomArrayElement = require('./getRandomArrayElement');
 
 const {
   RACE_FFA,
-  RACE_ITEMLESS,
   RACE_DUOS,
   RACE_3V3,
   RACE_4V4,
   RACE_SURVIVAL,
+  RACE_ITEMLESS_FFA,
   RACE_ITEMLESS_DUOS,
+  RACE_ITEMLESS_4V4,
   BATTLE_FFA,
+  BATTLE_DUOS,
+  BATTLE_3V3,
   BATTLE_4V4,
+  BATTLE_SURVIVAL,
 } = require('../db/models/lobby');
 
 const {
@@ -42,6 +46,7 @@ async function rngPools(doc) {
     case RACE_3V3:
     case RACE_SURVIVAL:
     case RACE_ITEMLESS_DUOS:
+    case RACE_ITEMLESS_4V4:
       if (doc.spicyTracks) {
         pools = [getRandomArrayElement(spicyPools)];
       } else {
@@ -53,7 +58,7 @@ async function rngPools(doc) {
       }
 
       break;
-    case RACE_ITEMLESS:
+    case RACE_ITEMLESS_FFA:
       pools = _4v4Pools;
       pools[3].splice(7, 1); // Remove Megamix Mania
       break;
@@ -67,9 +72,10 @@ async function rngPools(doc) {
 
       break;
     case BATTLE_FFA:
-      pools = battlePools;
-      break;
+    case BATTLE_DUOS:
+    case BATTLE_3V3:
     case BATTLE_4V4:
+    case BATTLE_SURVIVAL:
       pools = battlePools;
       break;
     default:
@@ -113,7 +119,7 @@ async function rngPools(doc) {
     }).sort((a, b) => a[1] - b[1]).map((p) => p[0]);
 
     // Survival is only 7 races, so we just remove one Track
-    if (doc.type === RACE_SURVIVAL) {
+    if (doc.isSurvival()) {
       maps.pop();
     }
   } else {
