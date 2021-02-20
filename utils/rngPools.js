@@ -52,7 +52,7 @@ async function rngPools(doc) {
       if (doc.spicyTracks) {
         pools = [getRandomArrayElement(spicyPools)];
       } else {
-        pools = itemPools;
+        pools = (doc.trackCount % 4 === 0 ? itemPools : _4v4Pools);
 
         if (doc.isSurvival() || doc.type === RACE_KRUNKING) {
           pools[1].push('Spyro Circuit'); // Make Spyro Circuit appear in Survival and Krunking
@@ -61,14 +61,14 @@ async function rngPools(doc) {
 
       break;
     case RACE_ITEMLESS_FFA:
-      pools = _4v4Pools;
+      pools = (doc.trackCount % 4 === 0 ? itemPools : _4v4Pools);
       pools[3].splice(7, 1); // Remove Megamix Mania
       break;
     case RACE_4V4:
       if (doc.spicyTracks) {
         pools = [getRandomArrayElement(spicyPools)];
       } else {
-        pools = _4v4Pools;
+        pools = (doc.trackCount % 4 === 0 ? itemPools : _4v4Pools);
         pools[2].splice(7, 1); // Remove Spyro Circuit
       }
 

@@ -200,7 +200,7 @@ Lobby.methods = {
   },
   getMinimumRequiredPlayers() {
     const requirements = {
-      [RACE_ITEMS_FFA]: 2,
+      [RACE_ITEMS_FFA]: 6,
       [RACE_ITEMS_DUOS]: 6,
       [RACE_ITEMS_3V3]: 6,
       [RACE_ITEMS_4V4]: 8,
@@ -424,7 +424,7 @@ Lobby.methods = {
   },
   getLobbyEndCooldown() {
     const remindMinutes = this.getRemindMinutes();
-    return remindMinutes[this.type][0];
+    return remindMinutes[0];
   },
   hasLeaderboard() {
     // eslint-disable-next-line no-prototype-builtins

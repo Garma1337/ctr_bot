@@ -162,19 +162,19 @@ async function getEmbed(doc, players, tracks, roomChannel) {
   const ruleset = rulesets.find((r, i) => i === doc.ruleset);
 
   const playersField = {
-    name: 'Players',
+    name: ':busts_in_silhouette: Players',
     value: playersText,
     inline: true,
   };
 
   const psnsField = {
-    name: 'PSN IDs & Ranks',
+    name: ':credit_card: PSN IDs & Ranks',
     value: psnAndRanks,
     inline: true,
   };
 
   const tracksField = {
-    name: doc.isRacing() ? 'Tracks' : 'Maps',
+    name: `:motorway: ${doc.isRacing() ? 'Tracks' : 'Maps'}`,
     value: tracks,
     inline: true,
   };
@@ -183,85 +183,64 @@ async function getEmbed(doc, players, tracks, roomChannel) {
 
   if (roomChannel) {
     roomField = {
-      name: 'Room',
+      name: ':key: Room',
       value: roomChannel.toString(),
       inline: true,
     };
   }
 
   const creatorField = {
-    name: 'Creator',
+    name: ':bust_in_silhouette: Creator',
     value: `${creator.flag} <@${doc.creator}>`,
     inline: true,
   };
 
   const averageRankField = {
-    name: 'Average Rank',
+    name: ':checkered_flag: Average Rank',
     value: avgRank,
     inline: true,
   };
 
-  const rulesetField = {
-    name: 'Ruleset',
-    value: ruleset.name,
-    inline: true,
-  };
+  const settings = [`**${doc.isRacing() ? 'Track Count' : 'Map Count'}**: ${doc.trackCount}`];
 
-  const trackCountField = {
-    name: doc.isRacing() ? 'Track Count' : 'Map Count',
-    value: doc.trackCount,
-    inline: true,
-  };
+  if (doc.isRacing()) {
+    settings.push(`**Lap Count**: ${doc.lapCount}`);
+    settings.push(`**Ruleset**: ${ruleset.name}`);
 
-  const lapCountField = {
-    name: 'Laps',
-    value: doc.lapCount,
-    inline: true,
-  };
+    if (engineRestriction) {
+      settings.push(`**Engine Style**: ${engineRestriction.icon}`);
+    }
 
-  let regionLockField = {};
-
-  if (region) {
-    regionLockField = {
-      name: 'Region Lock',
-      value: region.description,
-      inline: true,
-    };
+    if (survivalStyle) {
+      settings.push(`**Survival Style**: ${survivalStyle}`);
+    }
   }
 
-  let rankLockField = {};
+  if (region) {
+    settings.push(`**Region**: ${region.description}`);
+  }
 
   if (!doc.locked.$isEmpty()) {
     const playerRank = parseInt(doc.locked.rank, 10);
     const minRank = playerRank - doc.locked.shift;
     const maxRank = playerRank + doc.locked.shift;
 
-    rankLockField = {
-      name: 'Rank Lock',
-      value: `${minRank} - ${maxRank}`,
-      inline: true,
-    };
+    settings.push(`**Rank Lock**: ${minRank} - ${maxRank}`);
   }
 
-  let engineStyleField = {};
+  if (doc.isTeams()) {
+    settings.push(`**Premade Teams**: ${doc.allowPremadeTeams ? 'Allowed' : 'Not allowed'}`);
 
-  if (engineRestriction) {
-    engineStyleField = {
-      name: 'Engine Style',
-      value: engineRestriction.icon,
-      inline: true,
-    };
+    if (doc.reservedTeam) {
+      settings.push(`**Team Reservation**: <@${doc.creator}> & <@${doc.reservedTeam}>`);
+    }
   }
 
-  let survivalStyleField = {};
-
-  if (survivalStyle) {
-    survivalStyleField = {
-      name: 'Survival Style',
-      value: survivalStyle,
-      inline: true,
-    };
-  }
+  const settingsField = {
+    name: ':joystick: Lobby Settings',
+    value: settings.join('\n'),
+    inline: true,
+  };
 
   if (tracks) {
     fields = [
@@ -270,27 +249,11 @@ async function getEmbed(doc, players, tracks, roomChannel) {
       tracksField,
       roomField,
       creatorField,
-      averageRankField,
+      settingsField,
     ];
 
-    if (doc.isRacing()) {
-      fields.push(...[rulesetField, lapCountField]);
-    }
-
-    if (!doc.locked.$isEmpty()) {
-      fields.push(rankLockField);
-    }
-
-    if (region) {
-      fields.push(regionLockField);
-    }
-
-    if (doc.isRacing() && engineRestriction) {
-      fields.push(engineStyleField);
-    }
-
-    if (doc.isRacing() && doc.isSurvival()) {
-      fields.push(survivalStyleField);
+    if (doc.ranked) {
+      fields.push(averageRankField);
     }
 
     return {
@@ -309,34 +272,17 @@ async function getEmbed(doc, players, tracks, roomChannel) {
   }
 
   if (players) {
-    creatorField.inline = !!rankLockField;
+    creatorField.inline = false;
 
     fields = [
       playersField,
       psnsField,
       creatorField,
-      averageRankField,
-      trackCountField,
+      settingsField,
     ];
 
-    if (doc.isRacing()) {
-      fields.push(...[rulesetField, lapCountField]);
-    }
-
-    if (!doc.locked.$isEmpty()) {
-      fields.splice(2, 0, rankLockField);
-    }
-
-    if (region) {
-      fields.push(regionLockField);
-    }
-
-    if (doc.isRacing() && engineRestriction) {
-      fields.push(engineStyleField);
-    }
-
-    if (doc.isRacing() && doc.isSurvival()) {
-      fields.push(survivalStyleField);
+    if (doc.ranked) {
+      fields.push(averageRankField);
     }
 
     return {
@@ -353,28 +299,8 @@ async function getEmbed(doc, players, tracks, roomChannel) {
 
   fields = [
     creatorField,
-    trackCountField,
+    settingsField,
   ];
-
-  if (doc.isRacing()) {
-    fields.push(...[rulesetField, lapCountField]);
-  }
-
-  if (!doc.locked.$isEmpty()) {
-    fields.push(rankLockField);
-  }
-
-  if (region) {
-    fields.push(regionLockField);
-  }
-
-  if (doc.isRacing() && engineRestriction) {
-    fields.push(engineStyleField);
-  }
-
-  if (doc.isRacing() && doc.isSurvival()) {
-    fields.push(survivalStyleField);
-  }
 
   return {
     color: doc.getColor(),
@@ -1246,6 +1172,10 @@ ${engineStyles.length + 1} - No engine restriction\`\`\``, 'info');
                   sentMessage.delete();
                   return 1;
                 });
+              }
+
+              if (!(lobby.isRacing() && lobby.isSurvival())) {
+                survivalStyle = null;
               }
 
               lobby.survivalStyle = survivalStyle;
