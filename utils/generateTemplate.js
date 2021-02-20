@@ -4,6 +4,7 @@ const {
   RACE_3V3,
   RACE_4V4,
   RACE_SURVIVAL,
+  RACE_KRUNKING,
   RACE_ITEMLESS_FFA,
   RACE_ITEMLESS_DUOS,
   RACE_ITEMLESS_4V4,
@@ -41,56 +42,48 @@ async function generateTemplate(players, doc) {
   }
 
   let title = '';
-  let numberOfMaps = 0;
+  let numberOfMaps = doc.trackCount;
 
   switch (doc.type) {
     case RACE_FFA:
       title += 'Match # - FFA\n';
-      numberOfMaps = 8;
       break;
     case RACE_DUOS:
       title += '#title Match # - Duos\n';
-      numberOfMaps = 8;
       break;
     case RACE_3V3:
       title += '#title Match # - 3 vs. 3\n';
-      numberOfMaps = 8;
       break;
     case RACE_4V4:
       title += '#title Match # - 4 vs. 4\n';
-      numberOfMaps = 10;
       break;
     case RACE_SURVIVAL:
       title += 'Match # - Survival\n';
       numberOfMaps = 1;
       break;
+    case RACE_KRUNKING:
+      title += '#title Match # - Krunking\n';
+      break;
     case RACE_ITEMLESS_FFA:
       title += 'Match # - Itemless FFA\n';
-      numberOfMaps = 5;
       break;
     case RACE_ITEMLESS_DUOS:
       title += '#title Match # - Itemless Duos\n';
-      numberOfMaps = 8;
       break;
     case RACE_ITEMLESS_4V4:
       title += '#title Match # - Itemless 4 vs. 4\n';
-      numberOfMaps = 5;
       break;
     case BATTLE_FFA:
       title += 'Match # - Battle FFA\n';
-      numberOfMaps = 5;
       break;
     case BATTLE_DUOS:
       title += '#title Match # - Battle Duos\n';
-      numberOfMaps = 8;
       break;
     case BATTLE_3V3:
       title += '#title Match # - Battle 3 vs. 3\n';
-      numberOfMaps = 8;
       break;
     case BATTLE_4V4:
       title += '#title Match # - Battle 4 vs. 4\n';
-      numberOfMaps = 8;
       break;
     case BATTLE_SURVIVAL:
       title += 'Match # - Battle Survival\n';

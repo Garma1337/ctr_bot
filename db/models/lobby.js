@@ -12,6 +12,7 @@ const RACE_ITEMS_DUOS = 'race_duos';
 const RACE_ITEMS_3V3 = 'race_3v3';
 const RACE_ITEMS_4V4 = 'race_4v4';
 const RACE_SURVIVAL = 'race_survival';
+const RACE_KRUNKING = 'race_krunking';
 const RACE_ITEMLESS_FFA = 'race_itemless_ffa';
 const RACE_ITEMLESS_DUOS = 'race_itemless_duos';
 const RACE_ITEMLESS_4V4 = 'race_itemless_4v4';
@@ -31,6 +32,7 @@ const LEADERBOARDS = {
   [RACE_ITEMS_3V3]: '3pR38X',
   [RACE_ITEMS_4V4]: 'h4oEo6',
   [RACE_SURVIVAL]: 'CS5KrM',
+  [RACE_KRUNKING]: null,
   [RACE_ITEMLESS_FFA]: 'RWmmxq',
   [RACE_ITEMLESS_DUOS]: null,
   [RACE_ITEMLESS_4V4]: null,
@@ -51,6 +53,7 @@ module.exports.RACE_DUOS = RACE_ITEMS_DUOS;
 module.exports.RACE_3V3 = RACE_ITEMS_3V3;
 module.exports.RACE_4V4 = RACE_ITEMS_4V4;
 module.exports.RACE_SURVIVAL = RACE_SURVIVAL;
+module.exports.RACE_KRUNKING = RACE_KRUNKING;
 module.exports.RACE_ITEMLESS_FFA = RACE_ITEMLESS_FFA;
 module.exports.RACE_ITEMLESS_DUOS = RACE_ITEMLESS_DUOS;
 module.exports.RACE_ITEMLESS_4V4 = RACE_ITEMLESS_4V4;
@@ -98,6 +101,7 @@ const Lobby = new Schema({
       RACE_ITEMS_3V3,
       RACE_ITEMS_4V4,
       RACE_SURVIVAL,
+      RACE_KRUNKING,
       RACE_ITEMLESS_FFA,
       RACE_ITEMLESS_DUOS,
       RACE_ITEMLESS_4V4,
@@ -177,7 +181,7 @@ Lobby.methods = {
     return [RACE_ITEMS_DUOS, RACE_ITEMLESS_DUOS, BATTLE_DUOS].includes(this.type);
   },
   is3v3() {
-    return [RACE_ITEMS_3V3, BATTLE_3V3].includes(this.type);
+    return [RACE_ITEMS_3V3, RACE_KRUNKING, BATTLE_3V3].includes(this.type);
   },
   is4v4() {
     return [RACE_ITEMS_4V4, RACE_ITEMLESS_4V4, BATTLE_4V4].includes(this.type);
@@ -186,11 +190,9 @@ Lobby.methods = {
     return [RACE_SURVIVAL, BATTLE_SURVIVAL].includes(this.type);
   },
   isTeams() {
-    // eslint-disable-next-line max-len
     return (this.isDuos() || this.isWar());
   },
   isWar() {
-    // eslint-disable-next-line max-len
     return (this.is3v3() || this.is4v4());
   },
   isSolos() {
@@ -203,6 +205,7 @@ Lobby.methods = {
       [RACE_ITEMS_3V3]: 6,
       [RACE_ITEMS_4V4]: 8,
       [RACE_SURVIVAL]: 8,
+      [RACE_KRUNKING]: 6,
       [RACE_ITEMLESS_FFA]: 4,
       [RACE_ITEMLESS_DUOS]: 6,
       [RACE_ITEMLESS_4V4]: 8,
@@ -225,6 +228,7 @@ Lobby.methods = {
       [RACE_ITEMS_3V3]: 6,
       [RACE_ITEMS_4V4]: 8,
       [RACE_SURVIVAL]: 8,
+      [RACE_KRUNKING]: 6,
       [RACE_ITEMLESS_FFA]: 4,
       [RACE_ITEMLESS_DUOS]: 8,
       [RACE_ITEMLESS_4V4]: 8,
@@ -247,6 +251,7 @@ Lobby.methods = {
       [RACE_ITEMS_3V3]: 8,
       [RACE_ITEMS_4V4]: 10,
       [RACE_SURVIVAL]: 8,
+      [RACE_KRUNKING]: 5,
       [RACE_ITEMLESS_FFA]: 5,
       [RACE_ITEMLESS_DUOS]: 8,
       [RACE_ITEMLESS_4V4]: 8,
@@ -281,12 +286,14 @@ Lobby.methods = {
           title += 'FFA';
         } else if (this.isDuos()) {
           title += 'Duos';
-        } else if (this.is3v3()) {
+        } else if (this.is3v3() && this.type !== RACE_KRUNKING) {
           title += '3 vs. 3';
         } else if (this.is4v4()) {
           title += '4 vs. 4';
         } else if (this.isSurvival()) {
           title += 'Survival';
+        } else if (this.type === RACE_KRUNKING) {
+          title += 'Krunking';
         } else {
           title += UNKNOWN;
         }
@@ -362,6 +369,7 @@ Lobby.methods = {
       [RACE_ITEMS_3V3]: 'https://static.wikia.nocookie.net/crashban/images/f/fd/CTRNF-TripleMissile.png',
       [RACE_ITEMS_4V4]: 'https://i.imgur.com/3dvcaur.png',
       [RACE_SURVIVAL]: 'https://static.wikia.nocookie.net/crashban/images/f/fb/CTRNF-WarpOrb.png',
+      [RACE_KRUNKING]: 'https://static.wikia.nocookie.net/crashban/images/8/81/CTRNF-Jurassic_Krunk_Icon.png',
       [RACE_ITEMLESS_FFA]: 'https://static.wikia.nocookie.net/crashban/images/b/b5/CTRNF-SuperEngine.png',
       [RACE_ITEMLESS_DUOS]: 'https://i.imgur.com/kTxPvij.png',
       [RACE_ITEMLESS_4V4]: 'https://static.wikia.nocookie.net/crashban/images/1/12/NF_Purple_Retro_Kart.png',
@@ -381,6 +389,7 @@ Lobby.methods = {
       [RACE_ITEMS_3V3]: config.roles.ranked_3v3_role,
       [RACE_ITEMS_4V4]: config.roles.ranked_4v4_role,
       [RACE_SURVIVAL]: config.roles.ranked_survival_role,
+      [RACE_KRUNKING]: config.roles.ranked_krunking_role,
       [RACE_ITEMLESS_FFA]: config.roles.ranked_itemless_role,
       [RACE_ITEMLESS_DUOS]: config.roles.ranked_itemless_duos_role,
       [RACE_ITEMLESS_4V4]: config.roles.ranked_itemless_4v4_role,
@@ -396,40 +405,26 @@ Lobby.methods = {
   getColor() {
     const colors = {
       [RACE_ITEMS_FFA]: 3707391, // Medium Blue
-      [RACE_ITEMS_DUOS]: 16732141, // Pink
-      [RACE_ITEMS_3V3]: 16724019, // Red
-      [RACE_ITEMS_4V4]: 9568066, // Green
+      [RACE_ITEMS_DUOS]: 16732141, // Medium Pink
+      [RACE_ITEMS_3V3]: 16724019, // Medium Red
+      [RACE_ITEMS_4V4]: 9568066, // Medium Green
       [RACE_SURVIVAL]: 7204341, // Light Blue
-      [RACE_ITEMLESS_FFA]: 16747320, // Orange
+      [RACE_KRUNKING]: 3369831, // Dark Teal
+      [RACE_ITEMLESS_FFA]: 16747320, // Medium Orange
       [RACE_ITEMLESS_DUOS]: 0, // Black
       [RACE_ITEMLESS_4V4]: 5650319, // Dark Purple
       [BATTLE_FFA]: 15856113, // Silver
-      [BATTLE_DUOS]: 8602134, // Brown
+      [BATTLE_DUOS]: 8602134, // Dark Brown
       [BATTLE_3V3]: 3355963, // Dark Grey
-      [BATTLE_4V4]: 11299064, // Purple
-      [BATTLE_SURVIVAL]: 14530048, // Yellow
+      [BATTLE_4V4]: 11299064, // Medium Purple
+      [BATTLE_SURVIVAL]: 14530048, // Medium Yellow
     };
 
     return colors[this.type];
   },
   getLobbyEndCooldown() {
-    const lobbyEndCooldowns = {
-      [RACE_ITEMS_FFA]: 45,
-      [RACE_ITEMS_DUOS]: 45,
-      [RACE_ITEMS_3V3]: 45,
-      [RACE_ITEMS_4V4]: 60,
-      [RACE_SURVIVAL]: 40,
-      [RACE_ITEMLESS_FFA]: 30,
-      [RACE_ITEMLESS_DUOS]: 45,
-      [RACE_ITEMLESS_4V4]: 45,
-      [BATTLE_FFA]: 30,
-      [BATTLE_DUOS]: 60,
-      [BATTLE_3V3]: 60,
-      [BATTLE_4V4]: 60,
-      [BATTLE_SURVIVAL]: 40,
-    };
-
-    return lobbyEndCooldowns[this.type];
+    const remindMinutes = this.getRemindMinutes();
+    return remindMinutes[this.type][0];
   },
   hasLeaderboard() {
     // eslint-disable-next-line no-prototype-builtins
@@ -447,42 +442,48 @@ Lobby.methods = {
     return LEADERBOARDS[this.type];
   },
   getRemindMinutes() {
-    const remindMinutes = {
-      [RACE_ITEMS_FFA]: [45, 60],
-      [RACE_ITEMS_DUOS]: [45, 60],
-      [RACE_ITEMS_3V3]: [45, 60],
-      [RACE_ITEMS_4V4]: [60, 75],
-      [RACE_SURVIVAL]: [40, 55],
-      [RACE_ITEMLESS_FFA]: [30, 45],
-      [RACE_ITEMLESS_DUOS]: [45, 60],
-      [RACE_ITEMLESS_4V4]: [45, 60],
-      [BATTLE_FFA]: [30, 45],
-      [BATTLE_DUOS]: [60, 75],
-      [BATTLE_3V3]: [60, 75],
-      [BATTLE_4V4]: [60, 75],
-      [BATTLE_SURVIVAL]: [40, 55],
-    };
+    let remindMinutesMax = 0;
 
-    return remindMinutes[this.type];
+    // Lobby setup takes less time with only front row
+    if (this.players.length < 5) {
+      remindMinutesMax += 5;
+    } else {
+      remindMinutesMax += 10;
+    }
+
+    // Drafting takes 5 more minutes
+    if (this.draftTracks) {
+      remindMinutesMax += 5;
+    }
+
+    if (this.isRacing()) {
+      // 3 Laps = 2 Minutes per Race, 5 Laps = 4 Minutes and 7 Laps = 6 Minutes
+      remindMinutesMax += ((this.lapCount - 1) * this.trackCount);
+    } else if (this.isBattle()) {
+      // Battle is always using 6 minutes
+      remindMinutesMax += (6 * this.trackCount);
+    }
+
+    // Adding 1 Minute per Race/Battle due to load screen
+    remindMinutesMax += this.trackCount;
+
+    // Adding allowed 2 Minute breaks between races, at most 3 times per lobby
+    remindMinutesMax += 6;
+
+    const remindMinutesMin = Math.round(remindMinutesMax * 0.8);
+
+    return [remindMinutesMin, remindMinutesMax];
   },
   getPingMinutes() {
-    const pingMinutes = {
-      [RACE_ITEMS_FFA]: [75, 90, 105, 120],
-      [RACE_ITEMS_DUOS]: [75, 90, 105, 120],
-      [RACE_ITEMS_3V3]: [75, 90, 105, 120],
-      [RACE_ITEMS_4V4]: [90, 105, 120, 135],
-      [RACE_SURVIVAL]: [70, 85, 100, 115],
-      [RACE_ITEMLESS_FFA]: [60, 75, 90, 105, 120],
-      [RACE_ITEMLESS_DUOS]: [75, 90, 105, 120],
-      [RACE_ITEMLESS_4V4]: [75, 90, 105, 120],
-      [BATTLE_FFA]: [60, 75, 90, 105, 120],
-      [BATTLE_DUOS]: [90, 105, 120, 135],
-      [BATTLE_3V3]: [90, 105, 120, 135],
-      [BATTLE_4V4]: [90, 105, 120, 135],
-      [BATTLE_SURVIVAL]: [70, 85, 100, 115],
-    };
+    const remindMinutes = this.getRemindMinutes();
+    const remindMinutesMax = remindMinutes[1];
 
-    return pingMinutes[this.type];
+    return [
+      Math.round(remindMinutesMax * 1.2),
+      Math.round(remindMinutesMax * 1.4),
+      Math.round(remindMinutesMax * 1.6),
+      Math.round(remindMinutesMax * 1.8),
+    ];
   },
   getMaxTrackCount() {
     const maxTrackCount = {
@@ -491,6 +492,7 @@ Lobby.methods = {
       [RACE_ITEMS_3V3]: 37,
       [RACE_ITEMS_4V4]: 37,
       [RACE_SURVIVAL]: 8,
+      [RACE_KRUNKING]: 37,
       [RACE_ITEMLESS_FFA]: 37,
       [RACE_ITEMLESS_DUOS]: 37,
       [RACE_ITEMLESS_4V4]: 37,
@@ -510,6 +512,7 @@ Lobby.methods = {
       [RACE_ITEMS_3V3]: [5, 8, 10, 12, 15, 16, 20, 37],
       [RACE_ITEMS_4V4]: [5, 8, 10, 12, 15, 16, 20, 37],
       [RACE_SURVIVAL]: [8],
+      [RACE_KRUNKING]: [5, 8, 10, 12, 15, 16, 20, 37],
       [RACE_ITEMLESS_FFA]: [5, 8, 10, 12, 15, 16, 20, 37],
       [RACE_ITEMLESS_DUOS]: [5, 8, 10, 12, 15, 16, 20, 37],
       [RACE_ITEMLESS_4V4]: [5, 8, 10, 12, 15, 16, 20, 37],
@@ -521,6 +524,26 @@ Lobby.methods = {
     };
 
     return trackCountOptions[this.type];
+  },
+  getDefaultLapCount() {
+    const defaultLapCount = {
+      [RACE_ITEMS_FFA]: 5,
+      [RACE_ITEMS_DUOS]: 5,
+      [RACE_ITEMS_3V3]: 5,
+      [RACE_ITEMS_4V4]: 5,
+      [RACE_SURVIVAL]: 5,
+      [RACE_KRUNKING]: 5,
+      [RACE_ITEMLESS_FFA]: 3,
+      [RACE_ITEMLESS_DUOS]: 3,
+      [RACE_ITEMLESS_4V4]: 3,
+      [BATTLE_FFA]: 1,
+      [BATTLE_DUOS]: 1,
+      [BATTLE_3V3]: 1,
+      [BATTLE_4V4]: 1,
+      [BATTLE_SURVIVAL]: 1,
+    };
+
+    return defaultLapCount[this.type];
   },
   isIronMan() {
     return this.trackCount === this.getMaxTrackCount();
@@ -557,6 +580,13 @@ Lobby.methods = {
         TRACK_OPTION_RNG,
         TRACK_OPTION_POOLS,
         TRACK_OPTION_SPICY,
+      ],
+      [RACE_KRUNKING]: [
+        TRACK_OPTION_RNG,
+        TRACK_OPTION_POOLS,
+        TRACK_OPTION_SPICY,
+        TRACK_OPTION_DRAFT,
+        TRACK_OPTION_IRON_MAN,
       ],
       [RACE_ITEMLESS_FFA]: [
         TRACK_OPTION_RNG,
@@ -604,7 +634,7 @@ Lobby.methods = {
   canBeRanked() {
     // eslint-disable-next-line max-len
     return (
-      (this.lapCount === 5 || this.isBattle())
+      (this.lapCount === this.getDefaultLapCount() || this.isBattle())
       && this.engineRestriction === null
       && this.trackCount === this.getDefaultTrackCount()
       && this.ruleset === 1

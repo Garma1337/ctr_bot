@@ -68,6 +68,7 @@ module.exports = {
     ranked_3v3_role: 'ranked 3v3',
     ranked_4v4_role: 'ranked 4v4',
     ranked_survival_role: 'ranked survival',
+    ranked_krunking_role: 'ranked krunking',
     ranked_itemless_role: 'ranked itemless',
     ranked_itemless_duos_role: 'ranked itemless duos',
     ranked_itemless_4v4_role: 'ranked itemless 4v4',

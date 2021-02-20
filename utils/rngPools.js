@@ -6,6 +6,7 @@ const {
   RACE_3V3,
   RACE_4V4,
   RACE_SURVIVAL,
+  RACE_KRUNKING,
   RACE_ITEMLESS_FFA,
   RACE_ITEMLESS_DUOS,
   RACE_ITEMLESS_4V4,
@@ -45,6 +46,7 @@ async function rngPools(doc) {
     case RACE_DUOS:
     case RACE_3V3:
     case RACE_SURVIVAL:
+    case RACE_KRUNKING:
     case RACE_ITEMLESS_DUOS:
     case RACE_ITEMLESS_4V4:
       if (doc.spicyTracks) {
@@ -52,8 +54,8 @@ async function rngPools(doc) {
       } else {
         pools = itemPools;
 
-        if (doc.isSurvival()) {
-          pools[1].push('Spyro Circuit'); // Make Spyro Circuit appear in Survival
+        if (doc.isSurvival() || doc.type === RACE_KRUNKING) {
+          pools[1].push('Spyro Circuit'); // Make Spyro Circuit appear in Survival and Krunking
         }
       }
 

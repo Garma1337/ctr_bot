@@ -8,6 +8,7 @@ const {
   RACE_3V3,
   RACE_4V4,
   RACE_SURVIVAL,
+  RACE_KRUNKING,
   RACE_ITEMLESS_FFA,
   RACE_ITEMLESS_DUOS,
   RACE_ITEMLESS_4V4,
@@ -964,7 +965,10 @@ module.exports = {
 10 - Duos
 11 - 3 vs. 3
 12 - 4 vs. 4
-13 - Survival`, 'info').then((confirmMessage) => {
+13 - Survival
+
+**Misc. Modes**
+14 - Krunking`, 'info').then((confirmMessage) => {
           // eslint-disable-next-line consistent-return
           message.channel.awaitMessages(filter, options).then(async (collected) => {
             confirmMessage.delete();
@@ -974,7 +978,7 @@ module.exports = {
 
             let sentMessage;
             let choice = parseInt(content, 10);
-            const modes = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
+            const modes = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
 
             if (modes.includes(choice)) {
               let type;
@@ -1017,6 +1021,9 @@ module.exports = {
                   break;
                 case 13:
                   type = BATTLE_SURVIVAL;
+                  break;
+                case 14:
+                  type = RACE_KRUNKING;
                   break;
                 default:
                   break;
@@ -1081,7 +1088,7 @@ module.exports = {
               let trackCount = (trackOption === TRACK_OPTION_IRON_MAN ? lobby.getMaxTrackCount() : lobby.getDefaultTrackCount());
 
               // eslint-disable-next-line max-len
-              if (trackOption !== TRACK_OPTION_IRON_MAN && !draftTracks && !spicyTracks && type !== RACE_SURVIVAL && custom) {
+              if (trackOption !== TRACK_OPTION_IRON_MAN && !draftTracks && !spicyTracks && !lobby.isSurvival() && custom) {
                 const text = lobby.getTrackCountOptions().map((o) => `\`${o}\``).join(', ');
                 sentMessage = await sendAlertMessage(message.channel, `Select the number of tracks. The number has to be any of ${text}.`, 'info');
 
@@ -1107,8 +1114,8 @@ module.exports = {
 
               lobby.trackCount = trackCount;
 
-              let lapCount = 5;
-              if (![BATTLE_FFA, BATTLE_4V4].includes(type) && custom) {
+              let lapCount = lobby.getDefaultLapCount();
+              if (!lobby.isBattle() && custom) {
                 sentMessage = await sendAlertMessage(message.channel, 'Select the number of laps. The number has to be `3`, `5` or `7`. Every other input will be counted as `5`.', 'info');
 
                 // eslint-disable-next-line no-shadow,max-len
@@ -1124,17 +1131,17 @@ module.exports = {
                     return choice;
                   }
 
-                  return 5;
+                  return lobby.getDefaultLapCount();
                 }).catch(() => {
                   sentMessage.delete();
-                  return 5;
+                  return lobby.getDefaultLapCount();
                 });
               }
 
               lobby.lapCount = lapCount;
 
               let ruleset = 1;
-              if (![BATTLE_FFA, BATTLE_4V4].includes(type) && custom) {
+              if (!lobby.isBattle() && custom) {
                 sentMessage = await sendAlertMessage(message.channel, `Select the ruleset. Waiting 1 minute.
 \`\`\`${rulesets.map((r, i) => `${i + 1} - ${r.name}`).join('\n')}\`\`\``, 'info');
 
@@ -1189,7 +1196,7 @@ ${regions.length + 1} - No region lock\`\`\``, 'info');
 
               let engineRestriction = null;
               const engineUids = engineStyles.map((e) => e.uid);
-              if (![BATTLE_FFA, BATTLE_4V4].includes(type) && custom) {
+              if (!lobby.isBattle() && custom) {
                 sentMessage = await sendAlertMessage(message.channel, `Select an engine restriction. Waiting 1 minute.
 \`\`\`${engineStyles.map((e, i) => `${i + 1} - ${e.name}`).join('\n')}
 ${engineStyles.length + 1} - No engine restriction\`\`\``, 'info');
@@ -1217,7 +1224,7 @@ ${engineStyles.length + 1} - No engine restriction\`\`\``, 'info');
               lobby.engineRestriction = engineRestriction;
 
               let survivalStyle = 1;
-              if (type === RACE_SURVIVAL && custom) {
+              if (lobby.isRacing() && lobby.isSurvival() && custom) {
                 sentMessage = await sendAlertMessage(message.channel, `Select a play style. Waiting 1 minute.
 \`\`\`${SURVIVAL_STYLES.map((s, i) => `${i + 1} - ${s}`).join('\n')}\`\`\``, 'info');
 
@@ -1245,7 +1252,7 @@ ${engineStyles.length + 1} - No engine restriction\`\`\``, 'info');
 
               let allowPremadeTeams = true;
               // eslint-disable-next-line max-len
-              if (custom && [RACE_DUOS, RACE_3V3, RACE_4V4, RACE_ITEMLESS_DUOS, BATTLE_4V4].includes(type)) {
+              if (custom && lobby.isTeams()) {
                 sentMessage = await sendAlertMessage(message.channel, 'Do you want to allow premade teams? (yes / no)', 'info');
                 // eslint-disable-next-line max-len,no-shadow
                 allowPremadeTeams = await message.channel.awaitMessages(filter, options).then(async (collected) => {
@@ -1265,7 +1272,7 @@ ${engineStyles.length + 1} - No engine restriction\`\`\``, 'info');
               lobby.allowPremadeTeams = allowPremadeTeams;
 
               let reservedTeam = null;
-              if (custom && allowPremadeTeams && [RACE_3V3, RACE_4V4, BATTLE_4V4].includes(type)) {
+              if (lobby.isTeams() && allowPremadeTeams && custom) {
                 sentMessage = await sendAlertMessage(message.channel, 'Do you want to reserve the lobby for an existing team? (yes / no)', 'info');
                 // eslint-disable-next-line max-len,no-shadow
                 const reserveLobby = await message.channel.awaitMessages(filter, options).then(async (collected) => {
@@ -1313,7 +1320,7 @@ ${engineStyles.length + 1} - No engine restriction\`\`\``, 'info');
               lobby.reservedTeam = reservedTeam;
 
               let ranked = lobby.canBeRanked();
-              if (custom && lobby.canBeRanked()) {
+              if (lobby.canBeRanked() && custom) {
                 sentMessage = await sendAlertMessage(message.channel, 'Do you want to create a ranked lobby? (yes / no)', 'info');
                 // eslint-disable-next-line max-len,no-shadow
                 ranked = await message.channel.awaitMessages(filter, options).then(async (collected) => {
@@ -1340,7 +1347,7 @@ ${engineStyles.length + 1} - No engine restriction\`\`\``, 'info');
               let rankDiff = null;
               let playerRank = null;
 
-              if (custom && ranked) {
+              if (ranked && custom) {
                 sentMessage = await sendAlertMessage(message.channel, 'Do you want to put a rank restriction on your lobby? (yes / no)', 'info');
                 // eslint-disable-next-line max-len,no-shadow
                 mmrLock = await message.channel.awaitMessages(filter, options).then(async (collected) => {
