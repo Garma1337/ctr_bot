@@ -380,11 +380,11 @@ Lobby.methods = {
       [RACE_ITEMLESS_DUOS]: 'https://i.imgur.com/kTxPvij.png',
       [RACE_ITEMLESS_4V4]: 'https://static.wikia.nocookie.net/crashban/images/1/12/NF_Purple_Retro_Kart.png',
       [BATTLE_FFA]: 'https://vignette.wikia.nocookie.net/crashban/images/9/97/CTRNF-Invisibility.png',
-      [BATTLE_DUOS]: 'https://static.wikia.nocookie.net/crashban/images/e/eb/CTRNF-%3F_Crate_Iron_Checkpoint_Crate_icon.png',
+      [BATTLE_DUOS]: 'https://static.wikia.nocookie.net/crashban/images/5/5a/CTRNF-Master_Wheels.png',
       [BATTLE_3V3]: 'https://static.wikia.nocookie.net/crashban/images/d/d1/CTRNF-TripleBowlingBomb.png',
       [BATTLE_4V4]: 'https://i.imgur.com/aLFsltt.png',
       [BATTLE_SURVIVAL]: 'https://static.wikia.nocookie.net/crashban/images/2/29/Jelly_crown_sticker.png',
-      [CUSTOM]: 'https://static.wikia.nocookie.net/crashban/images/5/5a/CTRNF-Master_Wheels.png',
+      [CUSTOM]: 'https://static.wikia.nocookie.net/crashban/images/e/eb/CTRNF-%3F_Crate_Iron_Checkpoint_Crate_icon.png',
     };
 
     return icons[this.type];
@@ -422,11 +422,11 @@ Lobby.methods = {
       [RACE_ITEMLESS_DUOS]: 0, // Black
       [RACE_ITEMLESS_4V4]: 5650319, // Dark Purple
       [BATTLE_FFA]: 15856113, // Silver
-      [BATTLE_DUOS]: 8602134, // Dark Brown
-      [BATTLE_3V3]: 3355963, // Dark Grey
+      [BATTLE_DUOS]: 7944547, // Dark Magenta
+      [BATTLE_3V3]: 4016232, // Grey Blue
       [BATTLE_4V4]: 11299064, // Medium Purple
       [BATTLE_SURVIVAL]: 14530048, // Medium Yellow
-      [CUSTOM]: 7944547, // Dark Magenta
+      [CUSTOM]: 8602134, // Dark Brown
     };
 
     return colors[this.type];
