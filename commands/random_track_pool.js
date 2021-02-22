@@ -1,4 +1,4 @@
-const rngPools = require('../utils/rngPools');
+const rngPools = require('../utils/generateTracks');
 const sendAlertMessage = require('../utils/sendAlertMessage');
 
 const {

@@ -22,7 +22,6 @@ const {
   LEADERBOARDS,
   TRACK_OPTION_RNG,
   TRACK_OPTION_POOLS,
-  TRACK_OPTION_SPICY,
   TRACK_OPTION_DRAFT,
   TRACK_OPTION_IRON_MAN,
 } = require('../db/models/lobby');
@@ -42,12 +41,12 @@ const createDraft = require('../utils/createDraft');
 const createDraftv2 = require('../utils/createDraftv2');
 const createAndFindRole = require('../utils/createAndFindRole');
 const generateTemplate = require('../utils/generateTemplate');
+const generateTracks = require('../utils/generateTracks');
 const getConfigValue = require('../utils/getConfigValue');
 const getRandomArrayElement = require('../utils/getRandomArrayElement');
 const greedyPartition = require('../utils/greedyPartition');
 const isStaffMember = require('../utils/isStaffMember');
-const rngPools = require('../utils/rngPools');
-const rngModeBattle = require('../utils/rngModeBattle');
+const rngModeBattle = require('../utils/generateBattleModes');
 const sendAlertMessage = require('../utils/sendAlertMessage');
 const sendLogMessage = require('../utils/sendLogMessage');
 const { battleModesFFA, battleModes4v4 } = require('../db/modes_battle');
@@ -202,7 +201,11 @@ async function getEmbed(doc, players, tracks, roomChannel) {
     inline: true,
   };
 
-  const settings = [`**${doc.isRacing() ? 'Track Count' : 'Map Count'}**: ${doc.trackCount}`];
+  const settings = [];
+
+  if (!doc.isCustom()) {
+    settings.push(`**${doc.isRacing() ? 'Track Count' : 'Map Count'}**: ${doc.trackCount}`);
+  }
 
   if (doc.isRacing()) {
     settings.push(`**Lap Count**: ${doc.lapCount}`);
@@ -237,11 +240,15 @@ async function getEmbed(doc, players, tracks, roomChannel) {
     }
   }
 
-  const settingsField = {
-    name: ':joystick: Lobby Settings',
-    value: settings.join('\n'),
-    inline: true,
-  };
+  let settingsField = {};
+
+  if (settings.length > 0) {
+    settingsField = {
+      name: ':joystick: Lobby Settings',
+      value: settings.join('\n'),
+      inline: true,
+    };
+  }
 
   if (tracks) {
     fields = [
@@ -250,11 +257,14 @@ async function getEmbed(doc, players, tracks, roomChannel) {
       tracksField,
       roomField,
       creatorField,
-      settingsField,
     ];
 
     if (doc.ranked) {
       fields.push(averageRankField);
+    }
+
+    if (settings.length > 0) {
+      fields.push(settingsField);
     }
 
     return {
@@ -279,11 +289,14 @@ async function getEmbed(doc, players, tracks, roomChannel) {
       playersField,
       psnsField,
       creatorField,
-      settingsField,
     ];
 
     if (doc.ranked) {
       fields.push(averageRankField);
+    }
+
+    if (settings.length > 0) {
+      fields.push(settingsField);
     }
 
     return {
@@ -298,10 +311,11 @@ async function getEmbed(doc, players, tracks, roomChannel) {
     };
   }
 
-  fields = [
-    creatorField,
-    settingsField,
-  ];
+  fields = [creatorField];
+
+  if (settings.length > 0) {
+    fields.push(settingsField);
+  }
 
   return {
     color: doc.getColor(),
@@ -370,7 +384,7 @@ function startLobby(docId) {
   Lobby.findOneAndUpdate({ _id: docId, started: false }, { started: true, startedAt: new Date() }, { new: true }).then((doc) => {
     // eslint-disable-next-line max-len
     client.guilds.cache.get(doc.guild).channels.cache.get(doc.channel).messages.fetch(doc.message).then((message) => {
-      rngPools(doc, doc.pools).then((tracks) => {
+      generateTracks(doc).then((tracks) => {
         findRoom(doc).then((room) => {
           findRoomChannel(doc.guild, room.number).then(async (roomChannel) => {
             const trackCount = tracks.length;
@@ -530,12 +544,11 @@ ${playersText}`,
                 }).then(() => {
                   if (doc.isBattle()) {
                     let list;
-                    if (doc.isFFA()) {
+
+                    if (!doc.isTeams()) {
                       list = battleModesFFA;
-                    } else if (doc.isWar()) {
-                      list = battleModes4v4;
                     } else {
-                      list = battleModesFFA;
+                      list = battleModes4v4;
                     }
 
                     const embedFields = [];
@@ -953,7 +966,6 @@ module.exports = {
               let trackOption = ![RACE_FFA, BATTLE_FFA].includes(type) ? TRACK_OPTION_POOLS : TRACK_OPTION_RNG;
               let pools = ![RACE_FFA, BATTLE_FFA].includes(type);
               let draftTracks = false;
-              let spicyTracks = false;
 
               if (trackOptions.length > 1 && custom) {
                 sentMessage = await sendAlertMessage(message.channel, `Select track option. Waiting 1 minute.
@@ -979,9 +991,6 @@ module.exports = {
                   pools = false;
                 } else if (trackOptions[index] === TRACK_OPTION_POOLS) {
                   pools = true;
-                } else if (trackOptions[index] === TRACK_OPTION_SPICY) {
-                  pools = false;
-                  spicyTracks = true;
                 } else if (trackOptions[index] === TRACK_OPTION_DRAFT) {
                   pools = false;
                   draftTracks = true;
@@ -994,15 +1003,13 @@ module.exports = {
 
               lobby.pools = pools;
               lobby.draftTracks = draftTracks;
-              lobby.spicyTracks = spicyTracks;
 
               // eslint-disable-next-line max-len
               let trackCount = (trackOption === TRACK_OPTION_IRON_MAN ? lobby.getMaxTrackCount() : lobby.getDefaultTrackCount());
 
               // eslint-disable-next-line max-len
-              if (trackOption !== TRACK_OPTION_IRON_MAN && !draftTracks && !spicyTracks && !lobby.isSurvival() && custom) {
-                const text = lobby.getTrackCountOptions().map((o) => `\`${o}\``).join(', ');
-                sentMessage = await sendAlertMessage(message.channel, `Select the number of tracks. The number has to be any of ${text}.`, 'info');
+              if (trackOption !== TRACK_OPTION_IRON_MAN && !draftTracks && !lobby.isSurvival() && lobby.getMaxTrackCount() > 0 && custom) {
+                sentMessage = await sendAlertMessage(message.channel, `Select the number of tracks. The number has to be any of \`1\` to \`${lobby.getMaxTrackCount()}\`.`, 'info');
 
                 // eslint-disable-next-line max-len,no-shadow
                 trackCount = await message.channel.awaitMessages(filter, options).then(async (collected) => {
@@ -1013,7 +1020,7 @@ module.exports = {
                   const { content } = collectedMessage;
 
                   choice = parseInt(content, 10);
-                  if (lobby.getTrackCountOptions().includes(choice)) {
+                  if (choice >= 1 && choice <= lobby.getMaxTrackCount()) {
                     return choice;
                   }
 
@@ -1307,11 +1314,15 @@ The value should be in the range of \`${diffMin} to ${diffMax}\`. The value defa
                     return diffDefault;
                   });
 
-                  const rank = await Rank.findOne({ name: player.psn });
                   playerRank = PLAYER_DEFAULT_RANK;
 
-                  if (rank && rank[type] && rank[type].rank) {
-                    playerRank = rank[type].rank;
+                  const player = await Player.findOne({ discordId: message.author.id });
+                  if (player && player.psn) {
+                    const rank = await Rank.findOne({ name: player.psn });
+
+                    if (rank && rank[type] && rank[type].rank) {
+                      playerRank = rank[type].rank;
+                    }
                   }
                 }
               }
@@ -1377,7 +1388,8 @@ The value should be in the range of \`${diffMin} to ${diffMax}\`. The value defa
           if (doc.started) {
             const minutes = diffMinutes(new Date(), doc.startedAt);
             const confirmationMinutes = doc.getLobbyEndCooldown();
-            if (minutes < confirmationMinutes) {
+
+            if (confirmationMinutes === null || minutes < confirmationMinutes) {
               // eslint-disable-next-line consistent-return
               Room.findOne({ lobby: doc.id }).then((room) => {
                 if (!room) {
@@ -1426,7 +1438,7 @@ The value should be in the range of \`${diffMin} to ${diffMax}\`. The value defa
             const minutes = diffMinutes(new Date(), doc.startedAt);
             const confirmationMinutes = doc.getLobbyEndCooldown();
 
-            if (minutes >= confirmationMinutes) {
+            if (confirmationMinutes === null || minutes >= confirmationMinutes) {
               // eslint-disable-next-line consistent-return
               Room.findOne({ lobby: doc.id }).then((room) => {
                 if (!room) {
@@ -2235,10 +2247,15 @@ const checkOldLobbies = () => {
     docs.forEach((doc) => {
       const minutes = diffMinutes(new Date(), doc.startedAt);
 
-      if (doc.getRemindMinutes().includes(minutes)) {
-        findRoomAndSendMessage(doc);
-      } else if (doc.getPingMinutes().includes(minutes)) {
-        findRoomAndSendMessage(doc, true);
+      const remindMinutes = doc.getRemindMinutes();
+      const pingMinutes = doc.getPingMinutes();
+
+      if (remindMinutes !== null && pingMinutes !== null) {
+        if (remindMinutes.includes(minutes)) {
+          findRoomAndSendMessage(doc);
+        } else if (pingMinutes.includes(minutes)) {
+          findRoomAndSendMessage(doc, true);
+        }
       }
     });
   });

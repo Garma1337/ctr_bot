@@ -7,11 +7,11 @@ const {
   BATTLE_SURVIVAL,
 } = require('../db/models/lobby');
 
-async function rngModeBattle(type, maps) {
+async function generateBattleModes(type, maps) {
   let list;
-  if (type === BATTLE_FFA) {
+  if ([BATTLE_FFA, BATTLE_SURVIVAL].includes(type)) {
     list = battleModesFFA;
-  } else if ([BATTLE_DUOS, BATTLE_3V3, BATTLE_4V4, BATTLE_SURVIVAL].includes(type)) {
+  } else if ([BATTLE_DUOS, BATTLE_3V3, BATTLE_4V4].includes(type)) {
     list = battleModes4v4;
   } else {
     list = battleModesFFA;
@@ -49,4 +49,4 @@ async function rngModeBattle(type, maps) {
   return randomModes;
 }
 
-module.exports = rngModeBattle;
+module.exports = generateBattleModes;
