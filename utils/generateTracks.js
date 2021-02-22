@@ -25,17 +25,8 @@ function shuffle(array) {
  * @returns array
  */
 function removeBannedTracks(pool, doc) {
-  if (!doc.isRacing()) {
-    return pool;
-  }
-
-  if (doc.isItemless()) {
-    pool = pool.filter((t) => t !== 'Megamix Mania');
-  } else if (!doc.isItemless() && !doc.isSurvival()) {
-    pool = pool.filter((t) => t !== 'Spyro Circuit');
-  }
-
-  return pool;
+  const bannedTracks = doc.getBannedTracks();
+  return pool.filter((t) => !bannedTracks.includes(t));
 }
 
 /**
@@ -107,9 +98,10 @@ async function generateTracks(doc) {
       }
     } else {
       const pool = removeBannedTracks(pools[0], doc);
-      const trackIndex = Math.floor(Math.random() * pool.length);
 
       for (let i = 0; i < doc.trackCount; i += 1) {
+        const trackIndex = Math.floor(Math.random() * pool.length);
+
         maps.push(pool[trackIndex]);
         pool.splice(trackIndex, 1);
       }

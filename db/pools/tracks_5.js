@@ -44,6 +44,7 @@ module.exports = [
     'Deep Sea Driving',
     'Thunder Struck',
     'Out of Time',
+    'Hyper Spaceway',
     'Twilight Tour',
     'Drive-Thru Danger',
   ],

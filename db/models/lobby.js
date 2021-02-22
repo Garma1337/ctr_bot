@@ -48,6 +48,9 @@ const TRACK_OPTION_RNG = 'Full RNG';
 const TRACK_OPTION_POOLS = 'Pools';
 const TRACK_OPTION_DRAFT = 'Draft';
 const TRACK_OPTION_IRON_MAN = 'Iron Man';
+const TRACK_HYPER_SPACEWAY = 'Hyper Spaceway';
+const TRACK_SPYRO_CIRCUIT = 'Spyro Circuit';
+const TRACK_MEGAMIX_MANIA = 'Megamix Mania';
 
 module.exports.RACE_FFA = RACE_ITEMS_FFA;
 module.exports.RACE_DUOS = RACE_ITEMS_DUOS;
@@ -209,7 +212,7 @@ Lobby.methods = {
       [RACE_ITEMLESS_FFA]: 4,
       [RACE_ITEMLESS_DUOS]: 6,
       [RACE_ITEMLESS_4V4]: 8,
-      [BATTLE_FFA]: 1,
+      [BATTLE_FFA]: 4,
       [BATTLE_DUOS]: 6,
       [BATTLE_3V3]: 6,
       [BATTLE_4V4]: 8,
@@ -618,6 +621,48 @@ Lobby.methods = {
     };
 
     return trackOptions[this.type];
+  },
+  getBannedTracks() {
+    let bannedTracks;
+    if (!this.region) {
+      bannedTracks = {
+        [RACE_ITEMS_FFA]: [TRACK_HYPER_SPACEWAY, TRACK_SPYRO_CIRCUIT],
+        [RACE_ITEMS_DUOS]: [TRACK_HYPER_SPACEWAY, TRACK_SPYRO_CIRCUIT],
+        [RACE_ITEMS_3V3]: [TRACK_HYPER_SPACEWAY, TRACK_SPYRO_CIRCUIT],
+        [RACE_ITEMS_4V4]: [TRACK_HYPER_SPACEWAY, TRACK_SPYRO_CIRCUIT],
+        [RACE_SURVIVAL]: [TRACK_HYPER_SPACEWAY],
+        [RACE_KRUNKING]: [TRACK_HYPER_SPACEWAY],
+        [RACE_ITEMLESS_FFA]: [TRACK_HYPER_SPACEWAY, TRACK_MEGAMIX_MANIA],
+        [RACE_ITEMLESS_DUOS]: [TRACK_HYPER_SPACEWAY, TRACK_MEGAMIX_MANIA],
+        [RACE_ITEMLESS_4V4]: [TRACK_HYPER_SPACEWAY, TRACK_MEGAMIX_MANIA],
+        [BATTLE_FFA]: [],
+        [BATTLE_DUOS]: [],
+        [BATTLE_3V3]: [],
+        [BATTLE_4V4]: [],
+        [BATTLE_SURVIVAL]: [],
+        [CUSTOM]: [],
+      };
+    } else {
+      bannedTracks = {
+        [RACE_ITEMS_FFA]: [TRACK_SPYRO_CIRCUIT],
+        [RACE_ITEMS_DUOS]: [TRACK_SPYRO_CIRCUIT],
+        [RACE_ITEMS_3V3]: [TRACK_SPYRO_CIRCUIT],
+        [RACE_ITEMS_4V4]: [TRACK_SPYRO_CIRCUIT],
+        [RACE_SURVIVAL]: [],
+        [RACE_KRUNKING]: [],
+        [RACE_ITEMLESS_FFA]: [TRACK_MEGAMIX_MANIA],
+        [RACE_ITEMLESS_DUOS]: [TRACK_MEGAMIX_MANIA],
+        [RACE_ITEMLESS_4V4]: [TRACK_MEGAMIX_MANIA],
+        [BATTLE_FFA]: [],
+        [BATTLE_DUOS]: [],
+        [BATTLE_3V3]: [],
+        [BATTLE_4V4]: [],
+        [BATTLE_SURVIVAL]: [],
+        [CUSTOM]: [],
+      };
+    }
+
+    return bannedTracks[this.type];
   },
   canBeRanked() {
     // eslint-disable-next-line max-len
