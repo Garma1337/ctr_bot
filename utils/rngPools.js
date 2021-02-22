@@ -15,6 +15,7 @@ const {
   BATTLE_3V3,
   BATTLE_4V4,
   BATTLE_SURVIVAL,
+  CUSTOM,
 } = require('../db/models/lobby');
 
 const {
@@ -49,13 +50,14 @@ async function rngPools(doc) {
     case RACE_KRUNKING:
     case RACE_ITEMLESS_DUOS:
     case RACE_ITEMLESS_4V4:
+    case CUSTOM:
       if (doc.spicyTracks) {
         pools = [getRandomArrayElement(spicyPools)];
       } else {
         pools = (doc.trackCount % 4 === 0 ? itemPools : _4v4Pools);
 
         if (doc.isSurvival() || doc.type === RACE_KRUNKING) {
-          pools[1].push('Spyro Circuit'); // Make Spyro Circuit appear in Survival and Krunking
+          pools[1].push('Spyro Circuit');
         }
       }
 
@@ -69,7 +71,7 @@ async function rngPools(doc) {
         pools = [getRandomArrayElement(spicyPools)];
       } else {
         pools = (doc.trackCount % 4 === 0 ? itemPools : _4v4Pools);
-        pools[2].splice(7, 1); // Remove Spyro Circuit
+        pools[2].splice(7, 1);
       }
 
       break;

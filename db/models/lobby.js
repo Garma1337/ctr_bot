@@ -21,6 +21,7 @@ const BATTLE_DUOS = 'battle_duos';
 const BATTLE_3V3 = 'battle_3v3';
 const BATTLE_4V4 = 'battle_4v4';
 const BATTLE_SURVIVAL = 'battle_survival';
+const CUSTOM = 'custom';
 const SURVIVAL_STYLES = [
   'Items only',
   'Mixed',
@@ -41,6 +42,7 @@ const LEADERBOARDS = {
   [BATTLE_3V3]: null,
   [BATTLE_4V4]: '3H76QB',
   [BATTLE_SURVIVAL]: null,
+  [CUSTOM]: null,
 };
 const TRACK_OPTION_RNG = 'Full RNG';
 const TRACK_OPTION_POOLS = 'Pools';
@@ -62,6 +64,7 @@ module.exports.BATTLE_DUOS = BATTLE_DUOS;
 module.exports.BATTLE_3V3 = BATTLE_3V3;
 module.exports.BATTLE_4V4 = BATTLE_4V4;
 module.exports.BATTLE_SURVIVAL = BATTLE_SURVIVAL;
+module.exports.CUSTOM = CUSTOM;
 module.exports.SURVIVAL_STYLES = SURVIVAL_STYLES;
 module.exports.LEADERBOARDS = LEADERBOARDS;
 module.exports.TRACK_OPTION_RNG = TRACK_OPTION_RNG;
@@ -110,6 +113,7 @@ const Lobby = new Schema({
       BATTLE_3V3,
       BATTLE_4V4,
       BATTLE_SURVIVAL,
+      CUSTOM,
     ],
   },
   pools: {
@@ -166,7 +170,7 @@ const Lobby = new Schema({
 
 Lobby.methods = {
   isRacing() {
-    return !this.isBattle();
+    return (!this.isBattle() && !this.isCustom());
   },
   isItemless() {
     return [RACE_ITEMLESS_FFA, RACE_ITEMLESS_DUOS, RACE_ITEMLESS_4V4].includes(this.type);
@@ -198,6 +202,9 @@ Lobby.methods = {
   isSolos() {
     return !this.isTeams();
   },
+  isCustom() {
+    return this.type === CUSTOM;
+  },
   getMinimumRequiredPlayers() {
     const requirements = {
       [RACE_ITEMS_FFA]: 6,
@@ -209,11 +216,12 @@ Lobby.methods = {
       [RACE_ITEMLESS_FFA]: 4,
       [RACE_ITEMLESS_DUOS]: 6,
       [RACE_ITEMLESS_4V4]: 8,
-      [BATTLE_FFA]: 4,
+      [BATTLE_FFA]: 1,
       [BATTLE_DUOS]: 6,
       [BATTLE_3V3]: 6,
       [BATTLE_4V4]: 8,
       [BATTLE_SURVIVAL]: 8,
+      [CUSTOM]: 2,
     };
 
     return requirements[this.type];
@@ -237,6 +245,7 @@ Lobby.methods = {
       [BATTLE_3V3]: 6,
       [BATTLE_4V4]: 8,
       [BATTLE_SURVIVAL]: 8,
+      [CUSTOM]: 8,
     };
 
     return limits[this.type];
@@ -260,6 +269,7 @@ Lobby.methods = {
       [BATTLE_3V3]: 8,
       [BATTLE_4V4]: 8,
       [BATTLE_SURVIVAL]: 8,
+      [CUSTOM]: 8,
     };
 
     return trackCounts[this.type];
@@ -328,13 +338,17 @@ Lobby.methods = {
       }
     }
 
-    if (!this.isBattle() && !this.isRacing()) {
+    if (this.isCustom()) {
+      title += 'Custom';
+    }
+
+    if (!this.isBattle() && !this.isRacing() && !this.isCustom()) {
       title += UNKNOWN;
     }
 
     title += ' Lobby';
 
-    if (this.isRacing()) {
+    if (this.isRacing() || this.isCustom()) {
       if (this.draftTracks) {
         title += ' (Track Drafting)';
       } else if (this.spicyTracks) {
@@ -378,6 +392,7 @@ Lobby.methods = {
       [BATTLE_3V3]: 'https://static.wikia.nocookie.net/crashban/images/d/d1/CTRNF-TripleBowlingBomb.png',
       [BATTLE_4V4]: 'https://i.imgur.com/aLFsltt.png',
       [BATTLE_SURVIVAL]: 'https://static.wikia.nocookie.net/crashban/images/2/29/Jelly_crown_sticker.png',
+      [CUSTOM]: 'https://static.wikia.nocookie.net/crashban/images/5/5a/CTRNF-Master_Wheels.png',
     };
 
     return icons[this.type];
@@ -398,6 +413,7 @@ Lobby.methods = {
       [BATTLE_3V3]: config.roles.ranked_battle_3v3_role,
       [BATTLE_4V4]: config.roles.ranked_battle_4v4_role,
       [BATTLE_SURVIVAL]: config.roles.ranked_battle_survival_role,
+      [CUSTOM]: config.roles.ranked_custom_role,
     };
 
     return roleNames[this.type];
@@ -418,6 +434,7 @@ Lobby.methods = {
       [BATTLE_3V3]: 3355963, // Dark Grey
       [BATTLE_4V4]: 11299064, // Medium Purple
       [BATTLE_SURVIVAL]: 14530048, // Medium Yellow
+      [CUSTOM]: 7944547, // Dark Magenta
     };
 
     return colors[this.type];
@@ -442,14 +459,10 @@ Lobby.methods = {
     return LEADERBOARDS[this.type];
   },
   getRemindMinutes() {
-    let remindMinutesMax = 0;
-
-    // Lobby setup takes less time with only front row
-    if (this.players.length < 5) {
-      remindMinutesMax += 5;
-    } else {
-      remindMinutesMax += 10;
-    }
+    // 1. Adding allowed 2 Minute breaks between races, at most 3 times per lobby
+    // 2. Assuming every player takes 1.5 Minutes to join
+    // 3. Adding 1.5 Minutes per Race/Battle due to load screen
+    let remindMinutesMax = 6 + (this.players.length * 1.5) + (this.trackCount * 1.5);
 
     // Drafting takes 5 more minutes
     if (this.draftTracks) {
@@ -463,12 +476,6 @@ Lobby.methods = {
       // Battle is always using 6 minutes
       remindMinutesMax += (6 * this.trackCount);
     }
-
-    // Adding 1 Minute per Race/Battle due to load screen
-    remindMinutesMax += this.trackCount;
-
-    // Adding allowed 2 Minute breaks between races, at most 3 times per lobby
-    remindMinutesMax += 6;
 
     const remindMinutesMin = Math.round(remindMinutesMax * 0.8);
 
@@ -501,6 +508,7 @@ Lobby.methods = {
       [BATTLE_3V3]: 12,
       [BATTLE_4V4]: 12,
       [BATTLE_SURVIVAL]: 8,
+      [CUSTOM]: 37,
     };
 
     return maxTrackCount[this.type];
@@ -521,6 +529,7 @@ Lobby.methods = {
       [BATTLE_3V3]: [5, 8, 10, 12],
       [BATTLE_4V4]: [5, 8, 10, 12],
       [BATTLE_SURVIVAL]: [8],
+      [CUSTOM]: [5, 8, 10, 12, 15, 16, 20, 37],
     };
 
     return trackCountOptions[this.type];
@@ -541,6 +550,7 @@ Lobby.methods = {
       [BATTLE_3V3]: 1,
       [BATTLE_4V4]: 1,
       [BATTLE_SURVIVAL]: 1,
+      [CUSTOM]: 5,
     };
 
     return defaultLapCount[this.type];
@@ -627,6 +637,13 @@ Lobby.methods = {
       [BATTLE_SURVIVAL]: [
         TRACK_OPTION_RNG,
       ],
+      [CUSTOM]: [
+        TRACK_OPTION_RNG,
+        TRACK_OPTION_POOLS,
+        TRACK_OPTION_SPICY,
+        TRACK_OPTION_DRAFT,
+        TRACK_OPTION_IRON_MAN,
+      ],
     };
 
     return trackOptions[this.type];
@@ -645,11 +662,7 @@ Lobby.methods = {
     return 'https://i.imgur.com/cD0sLmQ.png';
   },
   getReactionEmote() {
-    if (this.ranked) {
-      return '✅';
-    }
-
-    return '☑️';
+    return '✅';
   },
 };
 

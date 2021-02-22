@@ -33,11 +33,7 @@ client.prefix = config.prefix;
 client.flags = flags;
 client.commands = new Discord.Collection();
 
-client.getEmote = (name) => {
-  const emote = client.emojis.cache.find((e) => e.name === name);
-  if (emote) return emote;
-  return name;
-};
+client.getEmote = (name, id) => `<:${name}:${id}>`;
 
 const commandFiles = fs.readdirSync('./commands').filter((file) => file.endsWith('.js'));
 
@@ -154,6 +150,7 @@ async function reactOnSignUp(message, oldMessage = null) {
       if (r.me) {
         r.remove();
       }
+
       if (r.emoji.name === '✅' || r.emoji.name === '❌') {
         r.users.fetch().then((users) => {
           users.forEach((reactionUser) => {

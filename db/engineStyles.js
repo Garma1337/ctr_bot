@@ -1,27 +1,29 @@
+const { client } = require('../bot');
+
 module.exports.engineStyles = [
   {
     name: 'Turning',
     uid: 'turn',
-    icon: '<:turning:806873116130541639>',
+    icon: client.getEmote('turn', '813098792886861874'),
   },
   {
     name: 'Balanced',
     uid: 'bal',
-    icon: '<:balanced:806873116139061258>',
+    icon: client.getEmote('balanced', '813098792638218262'),
   },
   {
     name: 'Acceleration',
     uid: 'accel',
-    icon: '<:accel:806873116369223740>',
+    icon: client.getEmote('accel', '813098792622227468'),
   },
   {
     name: 'Drift',
     uid: 'drift',
-    icon: '<:drift:806873116222554142>',
+    icon: client.getEmote('drift', '813098792907440178'),
   },
   {
     name: 'Speed',
     uid: 'speed',
-    icon: '<:speed:806873115975614515>',
+    icon: client.getEmote('speed', '813098792907046922'),
   },
 ];

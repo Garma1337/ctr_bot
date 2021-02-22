@@ -1,3 +1,17 @@
+const { client } = require('../bot');
+
+const turboCanister = client.getEmote('turboCanister', '813098480339124285');
+const superEngine = client.getEmote('superEngine', '813098478825766933');
+const tripleBomb = client.getEmote('tripleBomb', '813098480477536276');
+const greenBeaker = client.getEmote('greenBeaker', '813098480461283358');
+const greenShield = client.getEmote('greenShield', '813098480444506132');
+const tnt = client.getEmote('tnt', '813098480464560148');
+const invisibility = client.getEmote('invisibility', '813098478619721728');
+const missile = client.getEmote('missile', '813098480025075732');
+const bomb = client.getEmote('bomb', '813098480495099914');
+const akuMask = client.getEmote('akuMask', '813098480381329449');
+const tripleMissile = client.getEmote('tripleMissile', '813098480179347486');
+
 module.exports.battleModesFFA = [
   [
     {
@@ -6,7 +20,7 @@ module.exports.battleModesFFA = [
         'Game Mode: Limit Battle',
         'Type: Time',
         'Time Limit: 6 minutes',
-        'Power-ups: **DISABLED**: Beaker, Triple Missile and Triple Bomb',
+        `Power-ups: **DISABLED**: ${greenBeaker}, ${tripleMissile} and ${tripleBomb}`,
       ],
       maps: [],
     },
@@ -16,7 +30,7 @@ module.exports.battleModesFFA = [
         'Game Mode: Limit Battle',
         'Type: Time',
         'Time Limit: 6 minutes',
-        'Power-ups: **DISABLED**: TNT, Beaker, Mask, Super Engine, Triple Missile and Triple Bomb',
+        `Power-ups: **DISABLED**: ${tnt}, ${greenBeaker}, ${akuMask}, ${superEngine}, ${tripleMissile} and ${tripleBomb}`,
       ],
       maps: [],
     },
@@ -26,7 +40,7 @@ module.exports.battleModesFFA = [
         'Game Mode: Limit Battle',
         'Type: Time',
         'Time Limit: 6 minutes',
-        'Power-ups: **ENABLED ONLY**: Single Bomb',
+        `Power-ups: **ENABLED ONLY**: ${bomb}`,
       ],
       maps: [],
     },
@@ -38,7 +52,7 @@ module.exports.battleModesFFA = [
         'Game Mode: Last Kart Driving',
         'Life Limit: 9 lives',
         'Time Limit: 6 minutes',
-        'Power-ups: **DISABLED**: Beaker, Shield, Mask, Invisibility, Super Engine, Triple Missile and Triple Bomb',
+        `Power-ups: **DISABLED**: ${greenBeaker}, ${greenShield}, ${akuMask}, ${invisibility}, ${superEngine}, ${tripleMissile} and ${tripleBomb}`,
       ],
       maps: [],
     },
@@ -48,7 +62,7 @@ module.exports.battleModesFFA = [
         'Game Mode: Last Kart Driving',
         'Life Limit: 9 lives',
         'Time Limit: 6 minutes',
-        'Power-ups: **ENABLED ONLY**: Single Bomb and Turbo Canister',
+        `Power-ups: **ENABLED ONLY**: ${bomb} and ${turboCanister}`,
       ],
       maps: [],
     },
@@ -60,7 +74,7 @@ module.exports.battleModesFFA = [
         'Game Mode: Steal The Bacon',
         'Time Limit: 6 minutes',
         'Point Limit: 9 points',
-        'Power-ups: **ENABLED ONLY**: Single Bomb, Single Missile and Turbo Canister',
+        `Power-ups: **ENABLED ONLY**: ${bomb}, ${missile} and ${turboCanister}`,
       ],
       maps: [
         'Rampage Ruins',
@@ -76,7 +90,7 @@ module.exports.battleModesFFA = [
         'Game Mode: Steal The Bacon',
         'Time Limit: 6 minutes',
         'Point Limit: 9 points',
-        'Power-ups: **ENABLED ONLY**: Single Bomb, Single Missile and Invisibility',
+        `Power-ups: **ENABLED ONLY**: ${bomb}, ${missile} and ${invisibility}`,
       ],
       maps: [
         'Rampage Ruins',
@@ -97,7 +111,7 @@ module.exports.battleModes4v4 = [
         'Game Mode: Last Kart Driving',
         'Life Limit: 9 lives',
         'Time Limit: 6 minutes',
-        'Power-ups: **DISABLED**: Shield, Triple Missile and Triple Bomb',
+        `Power-ups: **DISABLED**: ${greenShield}, ${tripleMissile} and ${tripleBomb}`,
       ],
       maps: [],
     },
@@ -107,7 +121,7 @@ module.exports.battleModes4v4 = [
         'Game Mode: Last Kart Driving',
         'Life Limit: 9 lives',
         'Time Limit: 6 minutes',
-        'Power-ups: **DISABLED**: Beaker, Shield, Mask, Invisibility, Super Engine, Triple Missile and Triple Bomb',
+        `Power-ups: **DISABLED**: ${greenBeaker}, ${greenShield}, ${akuMask}, ${invisibility}, ${superEngine}, ${tripleMissile} and ${tripleBomb}`,
       ],
       maps: [],
     },
@@ -117,7 +131,7 @@ module.exports.battleModes4v4 = [
         'Game Mode: Last Kart Driving',
         'Life Limit: 9 lives',
         'Time Limit: 6 minutes',
-        'Power-ups: **ENABLED ONLY**: Single Bomb and Turbo Canister',
+        `Power-ups: **ENABLED ONLY**: ${bomb} and ${turboCanister}`,
       ],
       maps: [],
     },
@@ -127,7 +141,7 @@ module.exports.battleModes4v4 = [
         'Game Mode: Last Kart Driving',
         'Life Limit: 9 lives',
         'Time Limit: 6 minutes',
-        'Power-ups: **ENABLED ONLY**: Beaker, TNT, Turbo Canister',
+        `Power-ups: **ENABLED ONLY**: ${greenBeaker}, ${tnt} and ${turboCanister}`,
       ],
       maps: [
         'Nitro Court',
@@ -143,7 +157,7 @@ module.exports.battleModes4v4 = [
       settings: [
         'Game Mode: Crystal Grab',
         'Time Limit: 6 minutes',
-        'Power-ups: **DISABLED**: Shield, Mask, Invisibility, Triple Missile and Triple Bomb',
+        `Power-ups: **DISABLED**: ${greenShield}, ${akuMask}, ${invisibility}, ${tripleMissile} and ${tripleBomb}`,
       ],
       maps: [],
     },

@@ -17,6 +17,7 @@ const {
   BATTLE_3V3,
   BATTLE_4V4,
   BATTLE_SURVIVAL,
+  CUSTOM,
   SURVIVAL_STYLES,
   LEADERBOARDS,
   TRACK_OPTION_RNG,
@@ -765,7 +766,7 @@ function deleteLobby(doc, msg) {
 
   let endMessage = 'Lobby ended.';
 
-  if (doc.started) {
+  if (doc.started && doc.ranked) {
     endMessage += ' Don\'t forget to submit your scores.';
   }
 
@@ -795,7 +796,7 @@ function deleteLobby(doc, msg) {
 
 module.exports = {
   name: 'lobby',
-  description: 'Ranked lobbies',
+  description: 'Lobbies',
   guildOnly: true,
   aliases: ['mogi', 'l', 'lebby'],
   // eslint-disable-next-line consistent-return
@@ -826,26 +827,7 @@ module.exports = {
     }
 
     const { guild } = message;
-    const { user } = member;
-
-    const banned = await RankedBan.findOne({ discordId: user.id, guildId: guild.id });
-    if (banned) {
-      return sendAlertMessage(message.channel, 'You are currently banned from ranked lobbies.', 'warning');
-    }
-
-    const player = await Player.findOne({ discordId: user.id });
-    if (!player || !player.psn) {
-      return sendAlertMessage(message.channel, 'You need to set your PSN first by using `!set_psn`.', 'warning');
-    }
-
     const isStaff = isStaffMember(member);
-
-    // eslint-disable-next-line max-len
-    const hasRankedRole = member.roles.cache.find((r) => r.name.toLowerCase() === config.roles.ranked_verified_role.toLowerCase());
-
-    if (!isStaff && !hasRankedRole) {
-      return sendAlertMessage(message.channel, 'You don\'t have the `Ranked Verified` role to execute this command.', 'warning');
-    }
 
     if (!isStaff) {
       // eslint-disable-next-line max-len
@@ -894,7 +876,8 @@ module.exports = {
 13 - Survival
 
 **Misc. Modes**
-14 - Krunking`, 'info').then((confirmMessage) => {
+14 - Krunking
+15 - Custom`, 'info').then((confirmMessage) => {
           // eslint-disable-next-line consistent-return
           message.channel.awaitMessages(filter, options).then(async (collected) => {
             confirmMessage.delete();
@@ -950,6 +933,9 @@ module.exports = {
                   break;
                 case 14:
                   type = RACE_KRUNKING;
+                  break;
+                case 15:
+                  type = CUSTOM;
                   break;
                 default:
                   break;
@@ -2204,7 +2190,11 @@ client.on('messageDelete', async (message) => {
         // eslint-disable-next-line max-len
         const channel = client.guilds.cache.get(room.guild).channels.cache.find((c) => c.name.toLowerCase() === getRoomName(room.number).toLowerCase());
         if (channel && message.channel.id !== channel.id) {
-          sendAlertMessage(channel, 'Lobby ended. Don\'t forget to submit your scores.', 'success');
+          if (doc.ranked) {
+            sendAlertMessage(channel, 'Lobby ended. Don\'t forget to submit your scores.', 'success');
+          } else {
+            sendAlertMessage(channel, 'Lobby ended.', 'success');
+          }
         }
 
         room.lobby = null;
@@ -2217,7 +2207,12 @@ client.on('messageDelete', async (message) => {
 });
 
 const findRoomAndSendMessage = (doc, ping = false) => {
-  const message = 'Don\'t forget to close the lobby with `!lobby end` and submit your scores.';
+  let message;
+  if (doc.ranked) {
+    message = 'Don\'t forget to close the lobby with `!lobby end` and submit your scores.';
+  } else {
+    message = 'Don\'t forget to close the lobby with `!lobby end`.';
+  }
 
   let pings = [];
   if (ping) {
