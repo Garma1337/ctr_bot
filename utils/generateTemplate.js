@@ -13,6 +13,7 @@ const {
   BATTLE_3V3,
   BATTLE_4V4,
   BATTLE_SURVIVAL,
+  CUSTOM,
 } = require('../db/models/lobby');
 
 const { Player } = require('../db/models/player');
@@ -89,6 +90,10 @@ async function generateTemplate(players, doc) {
       title += 'Match # - Battle Survival\n';
       numberOfMaps = 1;
       break;
+    case CUSTOM:
+      title += 'Match # - Custom\n';
+      numberOfMaps = 1;
+      break;
     default:
       break;
   }
@@ -120,7 +125,7 @@ async function generateTemplate(players, doc) {
   for (const x of playerDocs) {
     const rank = await Rank.findOne({ name: x.psn });
 
-    let mmr = 1200;
+    let mmr = doc.getDefaultRank();
     if (rank && rank[doc.type] && rank[doc.type].rank) {
       mmr = parseInt(rank[doc.type].rank, 10);
     }

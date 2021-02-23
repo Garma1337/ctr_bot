@@ -403,7 +403,7 @@ client.on('message', (message) => {
     isStaff = isStaffMember(message.member);
     allowedChannels = message.guild.channels.cache.filter((c) => {
       const channels = config.channels.commands_allowed;
-      return channels.includes(c.name) || c.name.match(/^ranked-room-[0-9]{1,2}/i);
+      return channels.includes(c.name) || c.name.match(/^lobby-room-[0-9]{1,2}/i);
     }).sort((a, b) => a.rawPosition - b.rawPosition);
   }
 

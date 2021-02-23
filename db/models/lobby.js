@@ -664,6 +664,27 @@ Lobby.methods = {
 
     return bannedTracks[this.type];
   },
+  getDefaultRank() {
+    const defaultRanks = {
+      [RACE_ITEMS_FFA]: 1200,
+      [RACE_ITEMS_DUOS]: 1200,
+      [RACE_ITEMS_3V3]: 1200,
+      [RACE_ITEMS_4V4]: 1200,
+      [RACE_SURVIVAL]: 1200,
+      [RACE_KRUNKING]: 1200,
+      [RACE_ITEMLESS_FFA]: 1200,
+      [RACE_ITEMLESS_DUOS]: 1200,
+      [RACE_ITEMLESS_4V4]: 1200,
+      [BATTLE_FFA]: 1200,
+      [BATTLE_DUOS]: 1200,
+      [BATTLE_3V3]: 1200,
+      [BATTLE_4V4]: 1200,
+      [BATTLE_SURVIVAL]: 1200,
+      [CUSTOM]: 1200,
+    };
+
+    return defaultRanks[this.type];
+  },
   canBeRanked() {
     // eslint-disable-next-line max-len
     return (

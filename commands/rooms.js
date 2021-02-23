@@ -18,7 +18,7 @@ module.exports = {
         }
 
         const rooms = docs.map((doc) => {
-          const channelName = `ranked-room-${doc.number}`;
+          const channelName = `lobby-room-${doc.number}`;
           // eslint-disable-next-line max-len
           const channel = message.guild.channels.cache.find((c) => c.name.toLowerCase() === channelName.toLowerCase());
           let out = '';

@@ -56,8 +56,6 @@ const { rulesets } = require('../db/rulesets');
 
 const lock = new AsyncLock();
 
-const PLAYER_DEFAULT_RANK = 1200;
-const DEFAULT_RANK = PLAYER_DEFAULT_RANK;
 const NAT3 = 'NAT 3';
 const FORCE_START_COOLDOWN = 5;
 
@@ -69,13 +67,13 @@ function getFooter(doc) {
 }
 
 function getRoomName(number) {
-  return `ranked-room-${number}`;
+  return `lobby-room-${number}`;
 }
 
 async function getPlayerInfo(playerId, doc) {
   const p = await Player.findOne({ discordId: playerId });
   const rank = await Rank.findOne({ name: p.psn });
-  let rankValue = DEFAULT_RANK;
+  let rankValue = doc.getDefaultRank();
 
   if (rank) {
     rankValue = rank[doc.type].rank;
@@ -83,10 +81,10 @@ async function getPlayerInfo(playerId, doc) {
   }
 
   if (!rankValue) {
-    rankValue = DEFAULT_RANK;
+    rankValue = doc.getDefaultRank();
   }
 
-  const flag = p.flag ? ` ${p.flag}` : ':united_nations:';
+  const flag = p.flag !== undefined ? ` ${p.flag}` : ':united_nations:';
   const tag = `${flag} <@${playerId}>`;
 
   let { psn } = p;
@@ -168,7 +166,7 @@ async function getEmbed(doc, players, tracks, roomChannel) {
   };
 
   const psnsField = {
-    name: ':credit_card: PSN IDs & Ranks',
+    name: `:credit_card: PSN IDs${doc.ranked ? ' & Ranks' : ''}`,
     value: psnAndRanks,
     inline: true,
   };
@@ -354,15 +352,15 @@ function findRoom(lobby) {
 async function findRoomChannel(guildId, n) {
   const guild = client.guilds.cache.get(guildId);
   const channelName = getRoomName(n);
-  let category = guild.channels.cache.find((c) => c.name.toLowerCase() === config.channels.ranked_lobbies_category.toLowerCase() && c.type === 'category');
+  let category = guild.channels.cache.find((c) => c.name.toLowerCase() === config.channels.matchmaking_category.toLowerCase() && c.type === 'category');
   if (!category) {
-    category = await guild.channels.create(config.channels.ranked_lobbies_category, { type: 'category' });
+    category = await guild.channels.create(config.channels.matchmaking_category, { type: 'category' });
   }
 
   let channel = guild.channels.cache.find((c) => c.name === channelName);
   if (!channel) {
     const roleStaff = await createAndFindRole(guild, config.roles.staff_role);
-    const roleRanked = await createAndFindRole(guild, config.roles.ranked_role);
+    const roleRanked = await createAndFindRole(guild, config.roles.matchmaking_role);
     const roleRankedVerified = await createAndFindRole(guild, config.roles.ranked_verified_role);
 
     channel = await guild.channels.create(channelName, {
@@ -432,7 +430,7 @@ function startLobby(docId) {
                 const rankModels = await Rank.find({ name: { $in: psns } });
 
                 rankModels.forEach((r) => {
-                  let ranking = PLAYER_DEFAULT_RANK;
+                  let ranking = doc.getDefaultRank();
                   if (r[doc.type]) {
                     ranking = r[doc.type].rank;
                   }
@@ -844,7 +842,7 @@ module.exports = {
 
     if (!isStaff) {
       // eslint-disable-next-line max-len
-      if (!message.channel.parent || (message.channel.parent && message.channel.parent.name.toLowerCase() !== config.channels.ranked_lobbies_category.toLowerCase())) {
+      if (!message.channel.parent || (message.channel.parent && message.channel.parent.name.toLowerCase() !== config.channels.matchmaking_category.toLowerCase())) {
         return sendAlertMessage(message.channel, 'You can use this command only in the `Ranked Lobbies` category.', 'warning');
       }
     }
@@ -1314,7 +1312,7 @@ The value should be in the range of \`${diffMin} to ${diffMax}\`. The value defa
                     return diffDefault;
                   });
 
-                  playerRank = PLAYER_DEFAULT_RANK;
+                  playerRank = lobby.getDefaultRank();
 
                   const player = await Player.findOne({ discordId: message.author.id });
                   if (player && player.psn) {
@@ -1628,15 +1626,15 @@ async function tickCount(reaction, user) {
       });
 
       // eslint-disable-next-line max-len
-      const notificationChannel = guild.channels.cache.find((c) => c.name.toLowerCase() === config.channels.ranked_notifications_channel.toLowerCase());
-      const message = `You've been banned from ranked lobbies for ${banDuration.humanize()}.`;
+      const notificationChannel = guild.channels.cache.find((c) => c.name.toLowerCase() === config.channels.matchmaking_notifications_channel.toLowerCase());
+      const message = `You've been banned from matchmaking for ${banDuration.humanize()}.`;
 
       user.createDM().then((dm) => dm.send(message)).catch(() => { });
       sendAlertMessage(notificationChannel, message, 'warning', [user.id]);
     } else if (doc.tickCount === 3 || doc.tickCount === 5) {
       // eslint-disable-next-line max-len
-      const notificationChannel = guild.channels.cache.find((c) => c.name.toLowerCase() === config.channels.ranked_notifications_channel.toLowerCase());
-      const message = `I will ban you from ranked lobbies for ${banDuration.humanize()} if you continue to spam reactions.`;
+      const notificationChannel = guild.channels.cache.find((c) => c.name.toLowerCase() === config.channels.matchmaking_notifications_channel.toLowerCase());
+      const message = `I will ban you from matchmaking for ${banDuration.humanize()} if you continue to spam reactions.`;
 
       user.createDM().then((dm) => dm.send(message)).catch(() => { });
       sendAlertMessage(notificationChannel, message, 'warning', [user.id]);
@@ -1657,7 +1655,7 @@ async function restrictSoloQueue(doc, user, soloQueue) {
   }
 
   if (!doc.locked.$isEmpty()) {
-    let rank = PLAYER_DEFAULT_RANK;
+    let rank = doc.getDefaultRank();
 
     if (player && player.psn) {
       const playerRank = await Rank.findOne({ name: player.psn });
@@ -1775,10 +1773,10 @@ async function mogi(reaction, user, removed = false) {
     const { guild } = message;
 
     // eslint-disable-next-line max-len
-    let rankedNotifications = guild.channels.cache.find((c) => c.name.toLowerCase() === config.channels.ranked_notifications_channel.toLowerCase());
-    if (!rankedNotifications) {
+    let notificationChannel = guild.channels.cache.find((c) => c.name.toLowerCase() === config.channels.matchmaking_notifications_channel.toLowerCase());
+    if (!notificationChannel) {
       // eslint-disable-next-line max-len
-      rankedNotifications = await guild.channels.create(config.channels.ranked_notifications_channel);
+      notificationChannel = await guild.channels.create(config.channels.matchmaking_notifications_channel);
     }
 
     Lobby.findOne(conditions).then(async (doc) => {
@@ -1835,7 +1833,7 @@ async function mogi(reaction, user, removed = false) {
           if (doc.ranked && !doc.locked.$isEmpty() && doc.isSolos() && player.psn) {
             const playerRank = await Rank.findOne({ name: player.psn });
 
-            let rank = PLAYER_DEFAULT_RANK;
+            let rank = doc.getDefaultRank();
             if (playerRank && playerRank[doc.type]) {
               // eslint-disable-next-line prefer-destructuring
               rank = playerRank[doc.type].rank;
@@ -1922,8 +1920,8 @@ async function mogi(reaction, user, removed = false) {
                 if (doc.ranked && !doc.locked.$isEmpty()) {
                   const player = await Player.findOne({ discordId: user.id });
 
-                  let player1Rank = PLAYER_DEFAULT_RANK;
-                  let player2Rank = PLAYER_DEFAULT_RANK;
+                  let player1Rank = doc.getDefaultRank();
+                  let player2Rank = doc.getDefaultRank();
 
                   if (player && player.psn && partner && partner.psn) {
                     const playerRank = await Rank.findOne({ name: player.psn });
@@ -2041,7 +2039,7 @@ async function mogi(reaction, user, removed = false) {
                   if (doc.ranked && !doc.locked.$isEmpty()) {
                     const teammateRank = await Rank.findOne({ name: teammate.psn });
 
-                    let rank = PLAYER_DEFAULT_RANK;
+                    let rank = doc.getDefaultRank();
                     if (teammateRank && teammateRank[doc.type]) {
                       // eslint-disable-next-line prefer-destructuring
                       rank = teammateRank[doc.type].rank;
@@ -2122,7 +2120,7 @@ async function mogi(reaction, user, removed = false) {
 
             user.createDM().then((dmChannel) => sendAlertMessage(dmChannel, out, 'warning')).catch(() => { });
             // eslint-disable-next-line consistent-return
-            return sendAlertMessage(rankedNotifications, out, 'warning', [user.id]);
+            return sendAlertMessage(notificationChannel, out, 'warning', [user.id]);
           }
 
           // eslint-disable-next-line consistent-return
@@ -2272,10 +2270,10 @@ const checkOldLobbies = () => {
 
         if (guild) {
           // eslint-disable-next-line max-len
-          let notificationChannel = guild.channels.cache.find((c) => c.name.toLowerCase() === config.channels.ranked_notifications_channel.toLowerCase());
+          let notificationChannel = guild.channels.cache.find((c) => c.name.toLowerCase() === config.channels.matchmaking_notifications_channel.toLowerCase());
           if (!notificationChannel) {
             // eslint-disable-next-line max-len
-            notificationChannel = await guild.channels.create(config.channels.ranked_notifications_channel);
+            notificationChannel = await guild.channels.create(config.channels.matchmaking_notifications_channel);
           }
 
           if (minutes >= CLOSE_MINUTES) {
@@ -2385,7 +2383,7 @@ client.on('message', (message) => {
   const { roles } = message.mentions;
 
   // eslint-disable-next-line max-len
-  if (message.channel.parent && message.channel.parent.name.toLowerCase() === config.channels.ranked_lobbies_category.toLowerCase() && roles.find((r) => r.name.toLowerCase() === config.roles.tournament_staff_role.toLowerCase())) {
+  if (message.channel.parent && message.channel.parent.name.toLowerCase() === config.channels.matchmaking_category.toLowerCase() && roles.find((r) => r.name.toLowerCase() === config.roles.tournament_staff_role.toLowerCase())) {
     let rankedStaff = `@${config.roles.ranked_staff_role}`;
 
     sendAlertMessage(message.channel, `Incorrect staff ping. If you have a problem ping ${rankedStaff}.`, 'warning').then((m) => {
@@ -2501,8 +2499,8 @@ client.on('guildMemberUpdate', async (oldMember, newMember) => {
   }
 
   // eslint-disable-next-line max-len
-  if (!oldRoles.some((r) => r.name.toLowerCase() === config.roles.ranked_role.toLowerCase()) && newRoles.some((r) => r.name.toLowerCase() === config.roles.ranked_role.toLowerCase())) {
-    const promise = getConfigValue('ranked_welcome_message', config.default_ranked_welcome_message);
+  if (!oldRoles.some((r) => r.name.toLowerCase() === config.roles.matchmaking_role.toLowerCase()) && newRoles.some((r) => r.name.toLowerCase() === config.roles.matchmaking_role.toLowerCase())) {
+    const promise = getConfigValue('ranked_welcome_message', config.default_matchmaking_welcome_message);
     Promise.resolve(promise).then((welcomeMessage) => {
       newMember.createDM().then((dm) => {
         dm.send(welcomeMessage).then(DMCallback).catch(DMCatchCallback);
@@ -2513,11 +2511,12 @@ client.on('guildMemberUpdate', async (oldMember, newMember) => {
   // eslint-disable-next-line max-len
   if (newRoles.some((r) => r.name.toLowerCase() === config.roles.ranked_verified_role.toLowerCase())) {
     const { guild } = newMember;
+
     // eslint-disable-next-line max-len
-    let notificationChannel = guild.channels.cache.find((c) => c.name.toLowerCase() === config.channels.ranked_notifications_channel.toLowerCase());
+    let notificationChannel = guild.channels.cache.find((c) => c.name.toLowerCase() === config.channels.matchmaking_notifications_channel.toLowerCase());
     if (!notificationChannel) {
       // eslint-disable-next-line max-len
-      notificationChannel = await guild.channels.create(config.channels.ranked_notifications_channel);
+      notificationChannel = await guild.channels.create(config.channels.matchmaking_notifications_channel);
     }
 
     let rankedRules = `#${config.channels.ranked_rules_channel}`;
@@ -2528,18 +2527,18 @@ client.on('guildMemberUpdate', async (oldMember, newMember) => {
       rankedRules = rankedRulesChannel.toString();
     }
 
-    let rankedGuide = `#${config.channels.ranked_guide_channel}`;
+    let matchmakingGuide = `#${config.channels.matchmaking_guide_channel}`;
 
     // eslint-disable-next-line max-len
-    const rankedGuideChannel = guild.channels.cache.find((c) => c.name.toLowerCase() === config.channels.ranked_guide_channel.toLowerCase());
-    if (rankedGuideChannel) {
-      rankedGuide = rankedGuideChannel.toString();
+    const matchmakingGuideChannel = guild.channels.cache.find((c) => c.name.toLowerCase() === config.channels.matchmaking_guide_channel.toLowerCase());
+    if (matchmakingGuideChannel) {
+      matchmakingGuide = matchmakingGuideChannel.toString();
     }
 
     Player.findOne({ discordId: newMember.id }).then((doc) => {
       if (!doc || !doc.psn) {
-        sendAlertMessage(notificationChannel, `${newMember}, welcome to the ranked lobbies.
-Make sure to read the ${rankedRules} and ${rankedGuide} and set your PSN by using \`!set_psn\` before you can join any lobby.`, 'info');
+        sendAlertMessage(notificationChannel, `${newMember}, welcome to matchmaking.
+Make sure to read the ${rankedRules} and ${matchmakingGuide} and set your PSN by using \`!set_psn\` before you can join any lobby.`, 'info');
       }
     });
   }
@@ -2561,7 +2560,7 @@ function checkOldDuos() {
 
             if (guild) {
               // eslint-disable-next-line max-len
-              const notificationChannel = guild.channels.cache.find((c) => c.name.toLowerCase() === config.channels.ranked_notifications_channel.toLowerCase());
+              const notificationChannel = guild.channels.cache.find((c) => c.name.toLowerCase() === config.channels.matchmaking_notifications_channel.toLowerCase());
               const message = `Duo <@${duo.discord1}> & <@${duo.discord2}> was removed after ${teamDuration.humanize()}.`;
 
               sendAlertMessage(notificationChannel, message, 'info');
@@ -2589,7 +2588,7 @@ function checkOldTeams() {
 
             if (guild) {
               // eslint-disable-next-line max-len
-              const notificationChannel = guild.channels.cache.find((c) => c.name.toLowerCase() === config.channels.ranked_notifications_channel.toLowerCase());
+              const notificationChannel = guild.channels.cache.find((c) => c.name.toLowerCase() === config.channels.matchmaking_notifications_channel.toLowerCase());
               const teamPing = team.players.map((p) => `<@${p}>`).join(', ');
               const message = `Team ${teamPing} was removed after ${teamDuration.humanize()}.`;
 
