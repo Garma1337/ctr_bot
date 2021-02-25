@@ -3,8 +3,7 @@ const config = require('../config');
 const { Clan } = require('../db/models/clan');
 const { Player } = require('../db/models/player');
 const { Rank } = require('../db/models/rank');
-const calculateSuperScore = require('../utils/calculateSuperScore');
-const getConfigValue = require('../utils/getConfigValue');
+const generateSuperScoreRanking = require('../utils/generateSuperScoreRanking');
 const sendAlertMessage = require('../utils/sendAlertMessage');
 const { regions } = require('../db/regions');
 
@@ -258,9 +257,9 @@ module.exports = {
 
         /* Ranks */
         Rank.findOne({ name: psn }).then((rank) => {
-          const promise = getConfigValue('super_score_base_rank');
-          Promise.resolve(promise).then((baseRank) => {
+          generateSuperScoreRanking().then((superScoreRanking) => {
             let playerRanks;
+            const superScoreEntry = superScoreRanking.find((r) => r.psn === psn);
 
             if (!rank) {
               playerRanks = [
@@ -293,7 +292,7 @@ module.exports = {
                 `**Itemless FFA**: ${itemlessRanking !== '-' ? `#${itemlessRanking} - ${getRankingRating(rank, RACE_ITEMLESS_FFA)}` : '-'}`,
                 `**Battle FFA**: ${battleFFARanking !== '-' ? `#${battleFFARanking} - ${getRankingRating(rank, BATTLE_FFA)}` : '-'}`,
                 `**Battle 4 vs. 4**: ${battle4v4Ranking !== '-' ? `#${battle4v4Ranking} - ${getRankingRating(rank, BATTLE_4V4)}` : '-'}`,
-                `**Super Score**: ${calculateSuperScore(rank, baseRank)}`,
+                `**Super Score**: ${superScoreEntry ? `#${superScoreEntry.rank} - ${superScoreEntry.superScore}` : '-'}`,
               ];
             }
 

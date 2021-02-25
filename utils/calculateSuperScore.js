@@ -31,8 +31,8 @@ function calculateSuperScore(rank, baseRank = 500) {
   const battle4v4RankFraction = battle4v4Rank * 0.75;
 
   // eslint-disable-next-line max-len
-  const raceFraction = (itemsFFARankFraction + duosRankFraction + warRankFraction + itemlessFFARankFraction) * 0.8;
-  const battleFraction = (battleFFARankFraction + battle4v4RankFraction) * 0.2;
+  const raceFraction = (itemsFFARankFraction + duosRankFraction + warRankFraction + itemlessFFARankFraction) * 0.9;
+  const battleFraction = (battleFFARankFraction + battle4v4RankFraction) * 0.1;
 
   return Math.floor(raceFraction + battleFraction);
 }

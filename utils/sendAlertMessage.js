@@ -52,18 +52,32 @@ function sendAlertMessage(channel, content, type, mentionedUsers) {
   const emote = emotes[type];
   const heading = headings[type];
 
+  content = `\u200B\n${content}`;
+
   const embed = {
     color,
     fields: [
       {
         name: `${emote} ${heading}`,
-        value: `\u200B\n${content}`,
+        value: content,
       },
     ],
   };
 
   if (mentionedUsers.length <= 0) {
     return channel.send({ embed });
+  }
+
+  // Embed Field Values can only be up to 1024 characters
+  if (content.length > 1024) {
+    return channel.send({
+      files: [{
+        attachment: Buffer.from(content, 'utf-8'),
+        name: 'message.txt',
+      }],
+    }).then(() => {
+      channel.send('The output was too big, therefore the message is attached as a text file.');
+    });
   }
 
   return channel.send({

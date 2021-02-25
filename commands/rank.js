@@ -2,6 +2,7 @@ const { Player } = require('../db/models/player');
 const { Rank } = require('../db/models/rank');
 const calculateSuperScore = require('../utils/calculateSuperScore');
 const createPageableContent = require('../utils/createPageableContent');
+const generateSuperScoreRanking = require('../utils/generateSuperScoreRanking');
 const getConfigValue = require('../utils/getConfigValue');
 const sendAlertMessage = require('../utils/sendAlertMessage');
 
@@ -42,11 +43,12 @@ function sendMessage(message, rank) {
     });
   });
 
-  const promise = getConfigValue('super_score_base_rank');
-  Promise.resolve(promise).then((baseRank) => {
+  generateSuperScoreRanking().then((superScoreRanking) => {
+    const superScoreEntry = superScoreRanking.find((r) => r.psn === rank.name);
+
     fields.push({
       name: 'Super Score',
-      value: calculateSuperScore(rank, baseRank),
+      value: `${superScoreEntry ? `#${superScoreEntry.rank} - ${superScoreEntry.superScore}` : '-'}`,
       inline: true,
     });
 
@@ -65,49 +67,20 @@ module.exports = {
   guildOnly: true,
   cooldown: 10,
   async execute(message, args) {
-    const baseRank = await getConfigValue('super_score_base_rank');
-
     if (args.length) {
       if (args[0] === 'list') {
-        Player.find().then((players) => {
-          const rankedPlayers = [];
-          const psns = [];
-          const psnMapping = {};
-          const flagMapping = {};
+        generateSuperScoreRanking().then((superScoreRanking) => {
+          const elements = superScoreRanking.map((sr, i) => `**${i + 1}**. ${sr.flag} <@!${sr.discordId}>\n**PSN**: ${sr.psn}\n**Score**: ${sr.superScore}\n`);
 
-          players.forEach((p) => {
-            if (p.psn) {
-              psns.push(p.psn);
-              psnMapping[p.psn] = p.discordId;
-              flagMapping[p.psn] = p.flag;
-            }
-          });
-
-          Rank.find({ name: { $in: psns } }).then((playerRanks) => {
-            playerRanks.forEach((r) => {
-              const superScore = calculateSuperScore(r, baseRank);
-              const discordId = psnMapping[r.name];
-
-              rankedPlayers.push({
-                discordId,
-                psn: r.name.replace(/_/g, '\\_'),
-                flag: flagMapping[r.name],
-                superScore,
-              });
-            });
-
-            const sortedRanking = rankedPlayers.sort((a, b) => b.superScore - a.superScore).map((rp, i) => `**${i + 1}**. ${rp.flag} <@!${rp.discordId}>\n**PSN**: ${rp.psn}\n**Score**: ${rp.superScore}\n`);
-
-            createPageableContent(message.channel, message.author.id, {
-              outputType: 'embed',
-              elements: sortedRanking,
-              elementsPerPage: 5,
-              embedOptions: {
-                heading: 'Super Score Ranking',
-                image: 'https://static.wikia.nocookie.net/crashban/images/5/5a/CTRNF-Master_Wheels.png',
-              },
-              reactionCollectorOptions: { time: 3600000 },
-            });
+          createPageableContent(message.channel, message.author.id, {
+            outputType: 'embed',
+            elements,
+            elementsPerPage: 5,
+            embedOptions: {
+              heading: 'Super Score Ranking',
+              image: 'https://static.wikia.nocookie.net/crashban/images/5/5a/CTRNF-Master_Wheels.png',
+            },
+            reactionCollectorOptions: { time: 3600000 },
           });
         });
       } else {

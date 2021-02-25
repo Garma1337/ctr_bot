@@ -1797,7 +1797,8 @@ async function mogi(reaction, user, removed = false) {
             errors.push('You are banned.');
           }
 
-          if (member.roles.cache.find((r) => r.name.toLowerCase() === config.roles.muted_role)) {
+          // eslint-disable-next-line max-len
+          if (member.roles.cache.find((r) => r.name.toLowerCase() === config.roles.muted_role.toLowerCase())) {
             errors.push('You are muted.');
           }
 
