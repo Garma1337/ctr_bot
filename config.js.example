@@ -58,7 +58,6 @@ module.exports = {
     race_war_search_role: 'war',
     battle_war_search_role: 'battle war',
     instateam_role: 'instateam',
-    private_lobby_role: 'private lobby',
     matchmaking_role: 'Matchmaking',
     ranked_verified_role: 'ranked verified',
     ranked_ffa_role: 'ranked items',

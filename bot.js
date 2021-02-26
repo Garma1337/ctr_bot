@@ -313,39 +313,9 @@ function checkPings(message) {
   const now = new Date();
   const { guild } = message;
 
-  // ranked pings
-  const rankedRoles = [
-    config.roles.ranked_ffa_role.toLowerCase(),
-    config.roles.ranked_itemless_role.toLowerCase(),
-    config.roles.ranked_duos_role.toLowerCase(),
-    config.roles.ranked_3v3_role.toLowerCase(),
-    config.roles.ranked_4v4_role.toLowerCase(),
-    config.roles.ranked_survival_role.toLowerCase(),
-    config.roles.ranked_itemless_duos_role.toLowerCase(),
-    config.roles.ranked_battle_role.toLowerCase(),
-    config.roles.ranked_battle_4v4_role.toLowerCase(),
-  ];
-
-  if (roles.find((r) => rankedRoles.includes(r.name.toLowerCase()))) {
-    Cooldown.findOneAndUpdate(
-      { guildId: guild.id, discordId: message.author.id, name: 'ranked pings' },
-      { $inc: { count: 1 }, $set: { updatedAt: now } },
-      { upsert: true, new: true },
-    )
-      .then(async (doc) => {
-        if (doc.count >= 2) { // mute
-          await mute(member, message);
-        } else if (doc.count >= 1) {
-          sendAlertMessage(message.channel, `Please don't ping this role, or I will have to mute you for ${muteDuration.humanize()}.`, 'warning', [member.id]);
-        }
-      });
-  }
-
-  // war & private lobby pings
   const socialRoles = [
     config.roles.race_war_search_role.toLowerCase(),
     config.roles.battle_war_search_role.toLowerCase(),
-    config.roles.private_lobby_role.toLowerCase(),
     config.roles.instateam_role.toLowerCase(),
   ];
 
@@ -354,14 +324,13 @@ function checkPings(message) {
       { guildId: guild.id, discordId: message.author.id, name: 'pings' },
       { $inc: { count: 1 }, $set: { updatedAt: now } },
       { upsert: true, new: true },
-    )
-      .then(async (doc) => {
-        if (doc.count >= 3) { // mute
-          await mute(member, message);
-        } else if (doc.count >= 2) {
-          sendAlertMessage(message.channel, `Please don't ping people so often, or I will have to mute you for ${muteDuration.humanize()}.`, 'warning', [member.id]);
-        }
-      });
+    ).then(async (doc) => {
+      if (doc.count >= 3) { // mute
+        await mute(member, message);
+      } else if (doc.count >= 2) {
+        sendAlertMessage(message.channel, `Please don't ping people so often, or I will have to mute you for ${muteDuration.humanize()}.`, 'warning', [member.id]);
+      }
+    });
   }
 }
 
@@ -590,7 +559,6 @@ function checkDeletedPings(message) {
     const socialRoles = [
       config.roles.race_war_search_role.toLowerCase(),
       config.roles.battle_war_search_role.toLowerCase(),
-      config.roles.private_lobby_role.toLowerCase(),
       config.roles.instateam_role.toLowerCase(),
     ];
 
@@ -686,7 +654,7 @@ function checkMutes() {
       const guild = client.guilds.cache.get(doc.guildId);
       guild.members.fetch(doc.discordId).then((member) => {
         // eslint-disable-next-line max-len
-        const mutedRole = guild.roles.cache.find((r) => r.name.toLowerCase() === config.roles.muted_role);
+        const mutedRole = guild.roles.cache.find((r) => r.name.toLowerCase() === config.roles.muted_role.toLowerCase());
         if (mutedRole && member.roles.cache.has(mutedRole.id)) {
           member.roles.remove(mutedRole).then();
         }
