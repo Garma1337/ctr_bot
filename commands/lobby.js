@@ -567,18 +567,20 @@ ${playersText}`,
                       });
                     });
 
-                    roomChannel.send({
-                      embed: {
-                        color: doc.getColor(),
-                        description: '**Global Settings**\nTeams: None (4 for Steal The Bacon)\nAI: Disabled',
-                        author: {
-                          name: 'Battle Mode Settings',
+                    getConfigValue('battle_mode_settings_image', 'https://i.imgur.com/k56NKZc.jpg').then((image) => {
+                      roomChannel.send({
+                        embed: {
+                          color: doc.getColor(),
+                          description: '**Global Settings**\nTeams: None (4 for Steal The Bacon)\nAI: Disabled',
+                          author: {
+                            name: 'Battle Mode Settings',
+                          },
+                          image: {
+                            url: image,
+                          },
+                          fields: embedFields,
                         },
-                        image: {
-                          url: 'https://i.imgur.com/k56NKZc.jpg',
-                        },
-                        fields: embedFields,
-                      },
+                      });
                     });
                   }
 
