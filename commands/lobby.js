@@ -1808,10 +1808,6 @@ async function mogi(reaction, user, removed = false) {
             errors.push('You need to set your PSN. Example: `!set_psn ctr_tourney_bot`.');
           }
 
-          if (!player || !player.nat) {
-            errors.push('You need to set your NAT Type. Use `!set_nat` and then follow the bot instructions.');
-          }
-
           if (doc.region) {
             if (!player || !player.region) {
               errors.push('You need to set your region because the lobby you are trying to join is region locked. Use `!set_region` and then follow the bot instructions.');
@@ -1851,8 +1847,12 @@ async function mogi(reaction, user, removed = false) {
             }
           }
 
-          if (player && player.nat && doc.type === RACE_SURVIVAL && player.nat === NAT3) {
-            errors.push('You cannot join a survival lobby because you are NAT Type 3.');
+          if (doc.type === RACE_SURVIVAL) {
+            if (!player || !player.nat) {
+              errors.push('You need to set your NAT Type before you can join a survival lobby.');
+            } else if (player && player.nat && player.nat === NAT3) {
+              errors.push('You cannot join a survival lobby because you are NAT Type 3.');
+            }
           }
         }
 
@@ -1902,10 +1902,6 @@ async function mogi(reaction, user, removed = false) {
                 }
 
                 const partner = await Player.findOne({ discordId: savedPartner });
-
-                if (!partner || !partner.nat) {
-                  errors.push('Your partner needs to set their NAT Type. Use `!set_nat` and then follow the bot instructions.');
-                }
 
                 if (doc.region) {
                   if (!partner || !partner.region) {
@@ -2021,10 +2017,6 @@ async function mogi(reaction, user, removed = false) {
                 // eslint-disable-next-line guard-for-in
                 for (const i in teammates) {
                   const teammate = teammates[i];
-
-                  if (!teammate.nat) {
-                    errors.push(`Your teammate ${teammate.psn} needs to set their NAT Type. Use \`!set_nat\` and then follow the bot instructions.`);
-                  }
 
                   if (doc.region) {
                     if (!teammate.region) {
