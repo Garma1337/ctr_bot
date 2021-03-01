@@ -64,13 +64,15 @@ function sendAlertMessage(channel, content, type, mentionedUsers) {
     ],
   };
 
+  let pings;
   if (mentionedUsers.length <= 0) {
-    return channel.send({ embed });
+    pings = mentionedUsers.map((m) => `<@!${m}>`).join(', ');
   }
 
   // Embed Field Values can only be up to 1024 characters
   if (content.length > 1024) {
     return channel.send({
+      content: pings,
       files: [{
         attachment: Buffer.from(content, 'utf-8'),
         name: 'message.txt',
@@ -81,7 +83,7 @@ function sendAlertMessage(channel, content, type, mentionedUsers) {
   }
 
   return channel.send({
-    content: mentionedUsers.map((m) => `<@!${m}>`).join(', '),
+    content: pings,
     embed,
   });
 }
