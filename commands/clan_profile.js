@@ -1,4 +1,4 @@
-const Clan = require('../db/models/clan').default;
+const { Clan } = require('../db/models/clan');
 const isStaffMember = require('../utils/isStaffMember');
 const sendAlertMessage = require('../utils/sendAlertMessage');
 
