@@ -14,34 +14,77 @@ module.exports = {
 
     if (args.length) {
       number = Number(args[0]);
-
-      // eslint-disable-next-line no-restricted-globals
-      if (isNaN(number) || number < 1 || number > 40) {
-        return sendAlertMessage(message.channel, 'Please enter a number between 1 and 40', 'warning');
-      }
     }
 
-    fs.readFile('tracks.txt', 'utf8', (err, data) => {
-      if (err) {
-        throw err;
-      }
+    const limits = {
+      1: {
+        min: 1,
+        max: 40,
+      },
+      2: {
+        min: 1,
+        max: 12,
+      },
+    };
 
-      const tracks = data.trim().split('\n');
-      tracks.push('Retro Stadium');
+    const filter = (m) => m.author.id === message.author.id;
+    const options = { max: 1, time: 60000, errors: ['time'] };
 
-      const randomTracks = [];
+    sendAlertMessage(message.channel, `Select a pool to pick from. Waiting 1 minute
+\`\`\`1 - Race Tracks
+2 - Battle Maps\`\`\``, 'info').then((m) => {
+      // eslint-disable-next-line consistent-return
+      message.channel.awaitMessages(filter, options).then((collected) => {
+        m.delete();
 
-      for (let i = 0; i < number; i += 1) {
-        const randomTrack = getRandomArrayElement(tracks);
-        const index = tracks.findIndex((t) => t === randomTrack);
+        const collectedMessage = collected.first();
+        const { content } = collectedMessage;
+        const option = parseInt(content, 10);
 
-        // Prevent track from appearing twice
-        tracks.splice(index, 1);
+        if (![1, 2].includes(option)) {
+          return sendAlertMessage(message.channel, 'Invalid option.', 'warning');
+        }
 
-        randomTracks.push(randomTrack);
-      }
+        let file;
+        switch (option) {
+          case 1:
+            file = 'db/tracks.txt';
+            break;
+          case 2:
+            file = 'db/battle_maps.txt';
+            break;
+          default:
+            break;
+        }
 
-      sendAlertMessage(message.channel, `${randomTracks.map((r, i) => `${i + 1}. ${r}`).join('\n')}`, 'success');
+        // eslint-disable-next-line no-restricted-globals
+        if (isNaN(number) || number < limits[option].min || number > limits[option].max) {
+          return sendAlertMessage(message.channel, `Please enter a number between \`${limits[option].min}\` and \`${limits[option].max}\`.`, 'warning');
+        }
+
+        fs.readFile(file, 'utf8', (err, data) => {
+          if (err) {
+            throw err;
+          }
+
+          const tracks = data.trim().split('\n');
+          if (option === 1) {
+            tracks.push('Retro Stadium');
+          }
+
+          const randomTracks = [];
+
+          for (let i = 0; i < number; i += 1) {
+            const randomTrack = getRandomArrayElement(tracks);
+            const index = tracks.findIndex((t) => t === randomTrack);
+
+            tracks.splice(index, 1);
+            randomTracks.push(randomTrack);
+          }
+
+          sendAlertMessage(message.channel, `${randomTracks.map((r, i) => `${i + 1}. ${r}`).join('\n')}`, 'success');
+        });
+      });
     });
   },
 };

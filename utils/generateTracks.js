@@ -77,14 +77,16 @@ async function generateTracks(doc) {
       const remainder = doc.trackCount % pools.length;
 
       pools.forEach((p, i) => {
-        pools[i] = removeBannedTracks(pools[i], doc);
+        p = removeBannedTracks(p, doc);
 
         for (let x = 0; x < perPool; x += 1) {
-          const trackIndex = Math.floor(Math.random() * pools[i].length);
+          const trackIndex = Math.floor(Math.random() * p.length);
 
-          maps.push(pools[i][trackIndex]);
-          pools[i].splice(trackIndex, 1);
+          maps.push(p[trackIndex]);
+          p.splice(trackIndex, 1);
         }
+
+        pools[i] = p;
       });
 
       for (let x = 0; x < remainder; x += 1) {
