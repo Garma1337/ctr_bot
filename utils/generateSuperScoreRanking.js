@@ -30,7 +30,7 @@ async function generateSuperScoreRanking() {
   });
 
   superScores = superScores
-    .sort((a, b) => a.superScore + b.superScore)
+    .sort((a, b) => b.superScore - a.superScore)
     .map((s, i) => ({
       discordId: s.discordId,
       psn: s.psn,
