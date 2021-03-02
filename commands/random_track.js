@@ -7,11 +7,9 @@ module.exports = {
   description: 'Picks random tracks from the list of all tracks.',
   guildOnly: true,
   aliases: ['random_track'],
-  cooldown: 10,
   // eslint-disable-next-line consistent-return
   execute(message, args) {
     let number = 1;
-
     if (args.length) {
       number = Number(args[0]);
     }
@@ -84,6 +82,9 @@ module.exports = {
 
           sendAlertMessage(message.channel, `${randomTracks.map((r, i) => `${i + 1}. ${r}`).join('\n')}`, 'success');
         });
+      }).catch(() => {
+        m.delete();
+        sendAlertMessage(message.channel, 'Command cancelled.', 'error');
       });
     });
   },

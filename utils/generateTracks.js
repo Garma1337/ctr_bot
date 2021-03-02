@@ -70,13 +70,14 @@ async function generateTracks(doc) {
   }
 
   let maps = [];
+  const tmpPools = [...pools];
 
   if (!doc.isIronMan()) {
-    if (pools.length > 1) {
-      const perPool = Math.floor(doc.trackCount / pools.length);
-      const remainder = doc.trackCount % pools.length;
+    if (tmpPools.length > 1) {
+      const perPool = Math.floor(doc.trackCount / tmpPools.length);
+      const remainder = doc.trackCount % tmpPools.length;
 
-      pools.forEach((p, i) => {
+      tmpPools.forEach((p, i) => {
         p = removeBannedTracks(p, doc);
 
         for (let x = 0; x < perPool; x += 1) {
@@ -86,20 +87,20 @@ async function generateTracks(doc) {
           p.splice(trackIndex, 1);
         }
 
-        pools[i] = p;
+        tmpPools[i] = p;
       });
 
       for (let x = 0; x < remainder; x += 1) {
-        const poolIndex = Math.floor(Math.random() * pools.length);
-        const randomPool = removeBannedTracks(pools[poolIndex], doc);
+        const poolIndex = Math.floor(Math.random() * tmpPools.length);
+        const randomPool = removeBannedTracks(tmpPools[poolIndex], doc);
         const trackIndex = Math.floor(Math.random() * randomPool.length);
 
         maps.push(randomPool[trackIndex]);
-        pools[poolIndex].splice(trackIndex, 1);
-        pools.splice(poolIndex, 1);
+        tmpPools[poolIndex].splice(trackIndex, 1);
+        tmpPools.splice(poolIndex, 1);
       }
     } else {
-      const pool = removeBannedTracks(pools[0], doc);
+      const pool = removeBannedTracks(tmpPools[0], doc);
 
       for (let i = 0; i < doc.trackCount; i += 1) {
         const trackIndex = Math.floor(Math.random() * pool.length);
@@ -109,7 +110,7 @@ async function generateTracks(doc) {
       }
     }
   } else {
-    maps = pools[0];
+    maps = tmpPools[0];
   }
 
   maps = maps.map((m) => {
