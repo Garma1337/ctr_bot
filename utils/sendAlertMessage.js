@@ -64,8 +64,8 @@ function sendAlertMessage(channel, content, type, mentionedUsers) {
     ],
   };
 
-  let pings;
-  if (mentionedUsers.length <= 0) {
+  let pings = [];
+  if (mentionedUsers.length > 0) {
     pings = mentionedUsers.map((m) => `<@!${m}>`).join(', ');
   }
 

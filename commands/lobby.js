@@ -1874,6 +1874,7 @@ async function mogi(reaction, user, removed = false) {
               guild: guild.id,
               $or: [{ discord1: user.id }, { discord2: user.id }],
             });
+
             if (userSavedDuo) {
               if (!doc.allowPremadeTeams) {
                 errors.push('The lobby does not allow premade teams.');
@@ -1896,11 +1897,13 @@ async function mogi(reaction, user, removed = false) {
                   errors.push('Your partner is in another lobby.');
                 }
 
-                // eslint-disable-next-line max-len
-                const partnerBanned = await RankedBan.findOne({ discordId: savedPartner, guildId: guild.id });
-                if (partnerBanned) {
-                  userSavedDuo.delete();
-                  errors.push('Your partner is banned. The duo has been deleted.');
+                if (doc.ranked) {
+                  // eslint-disable-next-line max-len
+                  const partnerBanned = await RankedBan.findOne({ discordId: savedPartner, guildId: guild.id });
+                  if (partnerBanned) {
+                    userSavedDuo.delete();
+                    errors.push('Your partner is banned. The duo has been deleted.');
+                  }
                 }
 
                 const partner = await Player.findOne({ discordId: savedPartner });
@@ -1977,6 +1980,7 @@ async function mogi(reaction, user, removed = false) {
               guild: guild.id,
               players: user.id,
             });
+
             if (team) {
               if (doc.is3v3() && team.players.length === 4) {
                 errors.push('You cannot join a 3 vs. 3 lobby with a team of 4 players.');
@@ -2006,11 +2010,14 @@ async function mogi(reaction, user, removed = false) {
                   errors.push('One of your teammates is in another lobby.');
                 }
 
-                // eslint-disable-next-line max-len
-                const teammateBanned = await RankedBan.findOne({ discordId: teamPlayers, guildId: guild.id });
-                if (teammateBanned) {
-                  team.delete();
-                  errors.push('One of your teammates is banned. The team has been deleted.');
+                if (doc.ranked) {
+                  // eslint-disable-next-line max-len
+                  const teammateBanned = await RankedBan.findOne({ discordId: teamPlayers, guildId: guild.id });
+
+                  if (teammateBanned) {
+                    team.delete();
+                    errors.push('One of your teammates is banned. The team has been deleted.');
+                  }
                 }
 
                 const teammates = await Player.find({ discordId: { $in: teamPlayers } });
@@ -2134,9 +2141,9 @@ async function mogi(reaction, user, removed = false) {
                 embed: await getEmbed(doc),
               });
             }
-          }).catch(() => {
+          }).catch((error) => {
             // eslint-disable-next-line no-console
-            console.log('Unable to save lobby ...');
+            console.log(`Unable to save lobby: ${error}`);
           });
         }));
       }

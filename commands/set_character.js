@@ -9,7 +9,7 @@ module.exports = {
   guildOnly: true,
   execute(message, args) {
     // eslint-disable-next-line consistent-return
-    fs.readFile('characters.txt', 'utf8', (err, data) => {
+    fs.readFile('db/characters.txt', 'utf8', (err, data) => {
       if (err) {
         throw err;
       }
