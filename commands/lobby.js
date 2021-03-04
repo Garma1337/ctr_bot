@@ -199,7 +199,7 @@ async function getEmbed(doc, players, tracks, roomChannel) {
     inline: true,
   };
 
-  const settings = [];
+  const settings = [`**Max Players**: ${doc.maxPlayerCount}`];
 
   if (!doc.isCustom()) {
     settings.push(`**${doc.isRacing() ? 'Track Count' : 'Map Count'}**: ${doc.trackCount}`);
@@ -994,6 +994,35 @@ ${trackOptions.map((t, i) => `${i + 1} - ${t}${t !== TRACK_OPTION_IRON_MAN ? ` $
 
               lobby.pools = pools;
               lobby.draftTracks = draftTracks;
+
+              let maxPlayerCount = lobby.getMaximumPossiblePlayers();
+
+              // eslint-disable-next-line max-len
+              if (lobby.getMinimumRequiredPlayers() !== lobby.getMaximumPossiblePlayers() && custom) {
+                sentMessage = await sendAlertMessage(message.channel, `Select the maximum number of players. The number has to be any of \`${lobby.getMinimumRequiredPlayers()}\` to \`${lobby.getMaximumPossiblePlayers()}\`. Every other input will be counted as \`${lobby.getMaximumPossiblePlayers()}\` ${config.ranked_option_emote}.`, 'info');
+
+                // eslint-disable-next-line max-len,no-shadow
+                maxPlayerCount = await message.channel.awaitMessages(filter, options).then(async (collected) => {
+                  sentMessage.delete();
+
+                  collectedMessage = collected.first();
+                  // eslint-disable-next-line no-shadow
+                  const { content } = collectedMessage;
+
+                  choice = parseInt(content, 10);
+                  // eslint-disable-next-line max-len
+                  if (choice >= lobby.getMinimumRequiredPlayers() && choice <= lobby.getMaximumPossiblePlayers()) {
+                    return choice;
+                  }
+
+                  return lobby.getMaximumPossiblePlayers();
+                }).catch(() => {
+                  sentMessage.delete();
+                  return lobby.getMaximumPossiblePlayers();
+                });
+              }
+
+              lobby.maxPlayerCount = maxPlayerCount;
 
               // eslint-disable-next-line max-len
               let trackCount = (trackOption === TRACK_OPTION_IRON_MAN ? lobby.getMaxTrackCount() : lobby.getDefaultTrackCount());
@@ -1856,9 +1885,10 @@ async function mogi(reaction, user, removed = false) {
         // eslint-disable-next-line max-len,no-shadow
         lock.acquire(doc._id, async () => Lobby.findOne({ _id: doc._id }).then(async (doc) => {
           let players = Array.from(doc.players);
-
           const playersCount = players.length;
-          if (!removed && doc.hasMaximumAllowedPlayers()) {
+
+          // eslint-disable-next-line max-len
+          if (!removed && playersCount > doc.maxPlayerCount) {
             return;
           }
 
@@ -2124,7 +2154,7 @@ async function mogi(reaction, user, removed = false) {
           return doc.save().then(async () => {
             const count = players.length;
             if (count) {
-              if (doc.hasMaximumAllowedPlayers()) {
+              if (count >= doc.maxPlayerCount) {
                 startLobby(doc.id);
               } else {
                 message.edit({

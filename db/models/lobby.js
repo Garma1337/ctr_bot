@@ -125,8 +125,12 @@ const Lobby = new Schema({
     type: Boolean,
     default: false,
   },
-  trackCount: {
+  maxPlayerCount: Number,
+  trackCount: Number,
+  lapCount: {
     type: Number,
+    enum: [1, 3, 5, 7],
+    default: 5,
   },
   ruleset: {
     type: Number,
@@ -138,11 +142,6 @@ const Lobby = new Schema({
     type: String,
     enum: engineUids.concat(null),
     default: null,
-  },
-  lapCount: {
-    type: Number,
-    enum: [1, 3, 5, 7],
-    default: 5,
   },
   survivalStyle: {
     type: Number,
@@ -218,7 +217,7 @@ Lobby.methods = {
   },
   getMinimumRequiredPlayers() {
     const requirements = {
-      [RACE_ITEMS_FFA]: 6,
+      [RACE_ITEMS_FFA]: 4,
       [RACE_ITEMS_DUOS]: 6,
       [RACE_ITEMS_3V3]: 6,
       [RACE_ITEMS_4V4]: 8,
@@ -240,7 +239,7 @@ Lobby.methods = {
   hasMinimumRequiredPlayers() {
     return this.players.length >= this.getMinimumRequiredPlayers();
   },
-  getMaximumAllowedPlayers() {
+  getMaximumPossiblePlayers() {
     const limits = {
       [RACE_ITEMS_FFA]: 8,
       [RACE_ITEMS_DUOS]: 8,
@@ -248,10 +247,10 @@ Lobby.methods = {
       [RACE_ITEMS_4V4]: 8,
       [RACE_SURVIVAL]: 8,
       [RACE_KRUNKING]: 6,
-      [RACE_ITEMLESS_FFA]: 4,
+      [RACE_ITEMLESS_FFA]: 8,
       [RACE_ITEMLESS_DUOS]: 8,
       [RACE_ITEMLESS_4V4]: 8,
-      [BATTLE_FFA]: 4,
+      [BATTLE_FFA]: 8,
       [BATTLE_DUOS]: 8,
       [BATTLE_3V3]: 6,
       [BATTLE_4V4]: 8,
@@ -261,8 +260,8 @@ Lobby.methods = {
 
     return limits[this.type];
   },
-  hasMaximumAllowedPlayers() {
-    return this.players.length === this.getMaximumAllowedPlayers();
+  hasMaximumPossiblePlayers() {
+    return this.players.length === this.getMaximumPossiblePlayers();
   },
   getDefaultTrackCount() {
     const trackCounts = {
