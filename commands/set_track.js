@@ -1,4 +1,5 @@
 const fs = require('fs');
+const config = require('../config');
 const { Player } = require('../db/models/player');
 const sendAlertMessage = require('../utils/sendAlertMessage');
 
@@ -9,7 +10,7 @@ module.exports = {
   guildOnly: true,
   execute(message, args) {
     // eslint-disable-next-line consistent-return
-    fs.readFile('db/tracks.txt', 'utf8', (err, data) => {
+    fs.readFile(config.files.tracks_file, 'utf8', (err, data) => {
       if (err) {
         throw err;
       }

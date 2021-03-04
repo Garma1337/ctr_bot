@@ -401,54 +401,44 @@ function startLobby(docId) {
 
             let playersText = '';
             if (doc.isTeams()) {
-              let playersCopy = [...players];
-              if (players.length % 2 !== 0) {
-                throw new Error('Players count is not divisible by 2');
-              }
+              let soloPlayers = [...players];
 
               doc.teamList.forEach((team) => {
                 team.forEach((player) => {
-                  playersCopy = playersCopy.filter((p) => p !== player);
+                  soloPlayers = soloPlayers.filter((p) => p !== player);
                 });
               });
 
-              const shuffledPlayers = playersCopy.sort(() => Math.random() - 0.5);
+              soloPlayers = soloPlayers.sort(() => Math.random() - 0.5);
 
               const randomTeams = [];
-              let teamSize = 0;
-              if (doc.isDuos()) teamSize = 2;
-              if (doc.is3v3()) teamSize = 3;
-              if (doc.is4v4()) teamSize = 4;
-
-              const teamCount = shuffledPlayers.length / teamSize;
+              const teamCount = soloPlayers.length / doc.getTeamSize();
 
               // Balanced team making
-              if (shuffledPlayers.length > 0) {
-                const shuffledPlayerRanks = [];
-                const playerModels = await Player.find({ discordId: { $in: shuffledPlayers } });
-                const psns = playerModels.map((p) => p.psn);
-                const rankModels = await Rank.find({ name: { $in: psns } });
+              if (soloPlayers.length > 0) {
+                let soloPlayerRanks = [];
+                const soloPlayerModels = await Player.find({ discordId: { $in: soloPlayers } });
 
-                rankModels.forEach((r) => {
+                for (const soloPlayer of soloPlayerModels) {
+                  const rank = await Rank.findOne({ name: soloPlayer.psn });
+
                   let ranking = doc.getDefaultRank();
-                  if (r[doc.type]) {
-                    ranking = r[doc.type].rank;
+                  if (rank && rank[doc.type]) {
+                    ranking = rank[doc.type].rank;
                   }
 
-                  const player = playerModels.find((p) => p.psn === r.name);
-
-                  shuffledPlayerRanks.push({
-                    discordId: player.discordId,
+                  soloPlayerRanks.push({
+                    discordId: soloPlayer.discordId,
                     rank: ranking,
                   });
-                });
+                }
 
-                const sorted = shuffledPlayerRanks.sort((a, b) => a.rank - b.rank);
+                soloPlayerRanks = soloPlayerRanks.sort((a, b) => a.rank - b.rank);
 
-                if (teamSize === 2) {
+                if (doc.isDuos()) {
                   for (let i = 1; i <= teamCount; i += 1) {
-                    const firstPlayer = sorted.shift();
-                    const lastPlayer = sorted.pop();
+                    const firstPlayer = soloPlayerRanks.shift();
+                    const lastPlayer = soloPlayerRanks.pop();
 
                     randomTeams.push([
                       firstPlayer.discordId,
@@ -457,9 +447,9 @@ function startLobby(docId) {
                   }
                 }
 
-                if ([3, 4].includes(teamSize)) {
+                if (doc.isWar()) {
                   if (teamCount > 1) {
-                    const result = greedyPartition(sorted, teamSize, 'rank');
+                    const result = greedyPartition(soloPlayerRanks, doc.getTeamSize(), 'rank');
 
                     const playersA = result.A.map((a) => a.discordId);
                     const playersB = result.B.map((b) => b.discordId);
@@ -467,7 +457,7 @@ function startLobby(docId) {
                     randomTeams.push([...playersA]);
                     randomTeams.push([...playersB]);
                   } else {
-                    const discordIds = sorted.map((s) => s.discordId);
+                    const discordIds = soloPlayerRanks.map((s) => s.discordId);
                     randomTeams.push([...discordIds]);
                   }
                 }
@@ -870,22 +860,22 @@ module.exports = {
         return sendAlertMessage(message.channel, `Select the mode you want to play. Waiting 1 minute.
 
 **Item Race Modes**
-1 - FFA
-2 - Duos
-3 - 3 vs. 3
-4 - 4 vs. 4
-5 - Survival
+1 - FFA ${config.ranked_option_emote}
+2 - Duos ${config.ranked_option_emote}
+3 - 3 vs. 3 ${config.ranked_option_emote}
+4 - 4 vs. 4 ${config.ranked_option_emote}
+5 - Survival ${config.ranked_option_emote}
 
 **Itemless Race Modes**
-6 - FFA
+6 - FFA ${config.ranked_option_emote}
 7 - Duos
 8 - 4 vs. 4
 
 **Battle Modes**
-9 - FFA
+9 - FFA ${config.ranked_option_emote}
 10 - Duos
 11 - 3 vs. 3
-12 - 4 vs. 4
+12 - 4 vs. 4 ${config.ranked_option_emote}
 13 - Survival
 
 **Misc. Modes**
@@ -969,7 +959,8 @@ module.exports = {
 
               if (trackOptions.length > 1 && custom) {
                 sentMessage = await sendAlertMessage(message.channel, `Select track option. Waiting 1 minute.
-\`\`\`${trackOptions.map((t, i) => `${i + 1} - ${t}`).join('\n')}\`\`\``, 'info');
+
+${trackOptions.map((t, i) => `${i + 1} - ${t}${t !== TRACK_OPTION_IRON_MAN ? ` ${config.ranked_option_emote}` : ''}`).join('\n')}`, 'info');
 
                 // eslint-disable-next-line no-shadow,max-len
                 const trackOptionSelection = await message.channel.awaitMessages(filter, options).then(async (collected) => {
@@ -1009,7 +1000,7 @@ module.exports = {
 
               // eslint-disable-next-line max-len
               if (trackOption !== TRACK_OPTION_IRON_MAN && !draftTracks && !lobby.isSurvival() && lobby.getMaxTrackCount() > 0 && custom) {
-                sentMessage = await sendAlertMessage(message.channel, `Select the number of tracks. The number has to be any of \`1\` to \`${lobby.getMaxTrackCount()}\`.`, 'info');
+                sentMessage = await sendAlertMessage(message.channel, `Select the number of tracks. The number has to be any of \`1\` to \`${lobby.getMaxTrackCount()}\`. Every other input will be counted as \`${lobby.getDefaultTrackCount()}\` ${config.ranked_option_emote}.`, 'info');
 
                 // eslint-disable-next-line max-len,no-shadow
                 trackCount = await message.channel.awaitMessages(filter, options).then(async (collected) => {
@@ -1035,7 +1026,7 @@ module.exports = {
 
               let lapCount = lobby.getDefaultLapCount();
               if (!lobby.isBattle() && custom) {
-                sentMessage = await sendAlertMessage(message.channel, 'Select the number of laps. The number has to be `3`, `5` or `7`. Every other input will be counted as `5`.', 'info');
+                sentMessage = await sendAlertMessage(message.channel, `Select the number of laps. The number has to be \`3\`, \`5\` or \`7\`. Every other input will be counted as \`${lobby.getDefaultLapCount()}\` ${config.ranked_option_emote}.`, 'info');
 
                 // eslint-disable-next-line no-shadow,max-len
                 lapCount = await message.channel.awaitMessages(filter, options).then(async (collected) => {
@@ -1062,7 +1053,8 @@ module.exports = {
               let ruleset = 1;
               if (!lobby.isBattle() && custom) {
                 sentMessage = await sendAlertMessage(message.channel, `Select the ruleset. Waiting 1 minute.
-\`\`\`${rulesets.map((r, i) => `${i + 1} - ${r.name}`).join('\n')}\`\`\``, 'info');
+
+${rulesets.map((r, i) => `${i + 1} - ${r.name}${r.ranked ? ` ${config.ranked_option_emote}` : ''}`).join('\n')}`, 'info');
 
                 // eslint-disable-next-line max-len,no-shadow
                 ruleset = await message.channel.awaitMessages(filter, options).then(async (collected) => {
@@ -1086,8 +1078,9 @@ module.exports = {
               let region = null;
               if (custom) {
                 sentMessage = await sendAlertMessage(message.channel, `Select region lock. Waiting 1 minute.
-\`\`\`${regions.map((r, i) => `${i + 1} - ${r.description}`).join('\n')}
-${regions.length + 1} - No region lock\`\`\``, 'info');
+
+${regions.map((r, i) => `${i + 1} - ${r.description} ${config.ranked_option_emote}`).join('\n')}
+${regions.length + 1} - No region lock ${config.ranked_option_emote}`, 'info');
 
                 // eslint-disable-next-line max-len,no-shadow
                 region = await message.channel.awaitMessages(filter, options).then(async (collected) => {
@@ -1117,8 +1110,9 @@ ${regions.length + 1} - No region lock\`\`\``, 'info');
               const engineUids = engineStyles.map((e) => e.uid);
               if (!lobby.isBattle() && custom) {
                 sentMessage = await sendAlertMessage(message.channel, `Select an engine restriction. Waiting 1 minute.
-\`\`\`${engineStyles.map((e, i) => `${i + 1} - ${e.name}`).join('\n')}
-${engineStyles.length + 1} - No engine restriction\`\`\``, 'info');
+
+${engineStyles.map((e, i) => `${i + 1} - ${e.name}${e.ranked ? ` ${config.ranked_option_emote}` : ''}`).join('\n')}
+${engineStyles.length + 1} - No engine restriction ${config.ranked_option_emote}`, 'info');
 
                 // eslint-disable-next-line no-shadow,max-len
                 engineRestriction = await message.channel.awaitMessages(filter, options).then(async (collected) => {
@@ -1145,7 +1139,8 @@ ${engineStyles.length + 1} - No engine restriction\`\`\``, 'info');
               let survivalStyle = 1;
               if (lobby.isRacing() && lobby.isSurvival() && custom) {
                 sentMessage = await sendAlertMessage(message.channel, `Select a play style. Waiting 1 minute.
-\`\`\`${SURVIVAL_STYLES.map((s, i) => `${i + 1} - ${s}`).join('\n')}\`\`\``, 'info');
+
+${SURVIVAL_STYLES.map((s, i) => `${i + 1} - ${s} ${config.ranked_option_emote}`).join('\n')}`, 'info');
 
                 // eslint-disable-next-line max-len,no-shadow
                 survivalStyle = await message.channel.awaitMessages(filter, options).then(async (collected) => {
@@ -1176,7 +1171,7 @@ ${engineStyles.length + 1} - No engine restriction\`\`\``, 'info');
               let allowPremadeTeams = true;
               // eslint-disable-next-line max-len
               if (custom && lobby.isTeams()) {
-                sentMessage = await sendAlertMessage(message.channel, 'Do you want to allow premade teams? (yes / no)', 'info');
+                sentMessage = await sendAlertMessage(message.channel, `Do you want to allow premade teams? (yes / no) ${config.ranked_option_emote}`, 'info');
                 // eslint-disable-next-line max-len,no-shadow
                 allowPremadeTeams = await message.channel.awaitMessages(filter, options).then(async (collected) => {
                   sentMessage.delete();
@@ -1196,7 +1191,7 @@ ${engineStyles.length + 1} - No engine restriction\`\`\``, 'info');
 
               let reservedTeam = null;
               if (lobby.isTeams() && allowPremadeTeams && custom) {
-                sentMessage = await sendAlertMessage(message.channel, 'Do you want to reserve the lobby for an existing team? (yes / no)', 'info');
+                sentMessage = await sendAlertMessage(message.channel, `Do you want to reserve the lobby for an existing team? (yes / no) ${config.ranked_option_emote}`, 'info');
                 // eslint-disable-next-line max-len,no-shadow
                 const reserveLobby = await message.channel.awaitMessages(filter, options).then(async (collected) => {
                   sentMessage.delete();
@@ -1212,7 +1207,7 @@ ${engineStyles.length + 1} - No engine restriction\`\`\``, 'info');
                 });
 
                 if (reserveLobby) {
-                  sentMessage = await sendAlertMessage(message.channel, 'Please mention one of the team members.', 'info');
+                  sentMessage = await sendAlertMessage(message.channel, `Please mention one of the team members. ${config.ranked_option_emote}`, 'info');
                   // eslint-disable-next-line max-len,no-shadow
                   const discordId = await message.channel.awaitMessages(filter, options).then(async (collected) => {
                     sentMessage.delete();
@@ -1244,7 +1239,7 @@ ${engineStyles.length + 1} - No engine restriction\`\`\``, 'info');
 
               let ranked = lobby.canBeRanked();
               if (lobby.canBeRanked() && custom) {
-                sentMessage = await sendAlertMessage(message.channel, 'Do you want to create a ranked lobby? (yes / no)', 'info');
+                sentMessage = await sendAlertMessage(message.channel, `Do you want to create a ranked lobby? (yes / no) ${config.ranked_option_emote}`, 'info');
                 // eslint-disable-next-line max-len,no-shadow
                 ranked = await message.channel.awaitMessages(filter, options).then(async (collected) => {
                   sentMessage.delete();
@@ -1271,7 +1266,7 @@ ${engineStyles.length + 1} - No engine restriction\`\`\``, 'info');
               let playerRank = null;
 
               if (ranked && custom) {
-                sentMessage = await sendAlertMessage(message.channel, 'Do you want to put a rank restriction on your lobby? (yes / no)', 'info');
+                sentMessage = await sendAlertMessage(message.channel, `Do you want to put a rank restriction on your lobby? (yes / no) ${config.ranked_option_emote}`, 'info');
                 // eslint-disable-next-line max-len,no-shadow
                 mmrLock = await message.channel.awaitMessages(filter, options).then(async (collected) => {
                   sentMessage.delete();
@@ -1292,7 +1287,7 @@ ${engineStyles.length + 1} - No engine restriction\`\`\``, 'info');
                   const diffDefault = 350;
 
                   sentMessage = await sendAlertMessage(message.channel, `Select allowed rank difference. Waiting 1 minute.
-The value should be in the range of \`${diffMin} to ${diffMax}\`. The value defaults to \`${diffDefault}\` on any other input.`, 'info');
+The value should be in the range of \`${diffMin} to ${diffMax}\`. The value defaults to \`${diffDefault}\` on any other input. ${config.ranked_option_emote}`, 'info');
 
                   // eslint-disable-next-line max-len,no-shadow
                   rankDiff = await message.channel.awaitMessages(filter, options).then(async (collected) => {

@@ -10,6 +10,12 @@ module.exports = {
   ranked_verification_dm: `Your account has been verified. Enjoy ranked lobbies!`,
   wc_signup_message: 'Thank you for signing up for the World Cup!',
   draft_tool_url: '',
+  ranked_option_emote: ':medal:',
+  files: {
+    characters_file: 'db/characters.txt',
+    tracks_file: 'db/tracks.txt',
+    battle_maps_file: 'db/battle_maps.txt',
+  },
   channels: {
     suggestions_channel: 'suggestions',
     tourney_log_channel: 'tourney-bot-log',

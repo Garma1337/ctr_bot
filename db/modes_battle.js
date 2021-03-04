@@ -84,22 +84,6 @@ module.exports.battleModesFFA = [
         'Frozen Frenzy',
       ],
     },
-    {
-      name: 'Sneaky Steal The Bacon',
-      settings: [
-        'Game Mode: Steal The Bacon',
-        'Time Limit: 6 minutes',
-        'Point Limit: 9 points',
-        `Power-ups: **ENABLED ONLY**: ${bomb}, ${missile} and ${invisibility}`,
-      ],
-      maps: [
-        'Rampage Ruins',
-        'Nitro Court',
-        'Parking Lot',
-        'North Bowl',
-        'Frozen Frenzy',
-      ],
-    },
   ],
 ];
 

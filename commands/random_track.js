@@ -1,4 +1,5 @@
 const fs = require('fs');
+const config = require('../config');
 const getRandomArrayElement = require('../utils/getRandomArrayElement');
 const sendAlertMessage = require('../utils/sendAlertMessage');
 
@@ -46,10 +47,10 @@ module.exports = {
         let file;
         switch (option) {
           case 1:
-            file = 'db/tracks.txt';
+            file = config.files.tracks_file;
             break;
           case 2:
-            file = 'db/battle_maps.txt';
+            file = config.files.battle_maps_file;
             break;
           default:
             break;

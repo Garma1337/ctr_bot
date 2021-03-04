@@ -201,6 +201,21 @@ Lobby.methods = {
   isCustom() {
     return this.type === CUSTOM;
   },
+  getTeamSize() {
+    if (this.isDuos()) {
+      return 2;
+    }
+
+    if (this.is3v3()) {
+      return 3;
+    }
+
+    if (this.is4v4()) {
+      return 4;
+    }
+
+    return 1;
+  },
   getMinimumRequiredPlayers() {
     const requirements = {
       [RACE_ITEMS_FFA]: 6,
