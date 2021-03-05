@@ -75,13 +75,9 @@ async function getPlayerInfo(playerId, doc) {
   const rank = await Rank.findOne({ name: p.psn });
   let rankValue = doc.getDefaultRank();
 
-  if (rank) {
+  if (rank && rank[doc.type]) {
     rankValue = rank[doc.type].rank;
     rankValue = parseInt(rankValue, 10);
-  }
-
-  if (!rankValue) {
-    rankValue = doc.getDefaultRank();
   }
 
   const flag = p.flag !== undefined ? ` ${p.flag}` : ':united_nations:';
