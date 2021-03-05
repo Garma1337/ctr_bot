@@ -1,6 +1,7 @@
-const poolTracks3 = require('../db/pools/tracks_3');
-const poolTracks4 = require('../db/pools/tracks_4');
-const poolTracks5 = require('../db/pools/tracks_5');
+const poolItems3 = require('../db/pools/items_3');
+const poolItems4 = require('../db/pools/items_4');
+const poolItems5 = require('../db/pools/items_5');
+const poolItemless3 = require('../db/pools/itemless_3');
 const poolBattle3 = require('../db/pools/battle_3');
 const poolBattle4 = require('../db/pools/battle_4');
 const poolBattle5 = require('../db/pools/battle_5');
@@ -42,14 +43,16 @@ async function generateTracks(doc) {
   let pools;
 
   if (doc.isRacing()) {
-    if (doc.trackCount % 3 === 0) {
-      pools = poolTracks3;
+    if (doc.isItemless()) {
+      pools = poolItemless3;
+    } else if (doc.trackCount % 3 === 0) {
+      pools = poolItems3;
     } else if (doc.trackCount % 4 === 0) {
-      pools = poolTracks4;
+      pools = poolItems4;
     } else if (doc.trackCount % 5 === 0) {
-      pools = poolTracks5;
+      pools = poolItems5;
     } else {
-      pools = poolTracks4;
+      pools = poolItems4;
     }
   } else if (doc.isBattle()) {
     if (doc.trackCount % 3 === 0) {

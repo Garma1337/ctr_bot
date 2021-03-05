@@ -23,6 +23,7 @@ module.exports.battleModesFFA = [
         `Power-ups: **DISABLED**: ${greenBeaker}, ${tripleMissile} and ${tripleBomb}`,
       ],
       maps: [],
+      maxPlayers: 8,
     },
     {
       name: 'Balanced Limit Battle',
@@ -33,6 +34,7 @@ module.exports.battleModesFFA = [
         `Power-ups: **DISABLED**: ${tnt}, ${greenBeaker}, ${akuMask}, ${superEngine}, ${tripleMissile} and ${tripleBomb}`,
       ],
       maps: [],
+      maxPlayers: 8,
     },
     {
       name: 'Bomb Limit Battle',
@@ -43,6 +45,7 @@ module.exports.battleModesFFA = [
         `Power-ups: **ENABLED ONLY**: ${bomb}`,
       ],
       maps: [],
+      maxPlayers: 8,
     },
   ],
   [
@@ -55,6 +58,7 @@ module.exports.battleModesFFA = [
         `Power-ups: **DISABLED**: ${greenBeaker}, ${greenShield}, ${akuMask}, ${invisibility}, ${superEngine}, ${tripleMissile} and ${tripleBomb}`,
       ],
       maps: [],
+      maxPlayers: 8,
     },
     {
       name: 'Bomb Snipe Mode',
@@ -65,6 +69,7 @@ module.exports.battleModesFFA = [
         `Power-ups: **ENABLED ONLY**: ${bomb} and ${turboCanister}`,
       ],
       maps: [],
+      maxPlayers: 8,
     },
   ],
   [
@@ -83,6 +88,7 @@ module.exports.battleModesFFA = [
         'North Bowl',
         'Frozen Frenzy',
       ],
+      maxPlayers: 4,
     },
   ],
 ];
@@ -98,6 +104,7 @@ module.exports.battleModes4v4 = [
         `Power-ups: **DISABLED**: ${greenShield}, ${tripleMissile} and ${tripleBomb}`,
       ],
       maps: [],
+      maxPlayers: 8,
     },
     {
       name: 'Balanced Last Kart Driving',
@@ -108,6 +115,7 @@ module.exports.battleModes4v4 = [
         `Power-ups: **DISABLED**: ${greenBeaker}, ${greenShield}, ${akuMask}, ${invisibility}, ${superEngine}, ${tripleMissile} and ${tripleBomb}`,
       ],
       maps: [],
+      maxPlayers: 8,
     },
     {
       name: 'Bomb Snipe Mode',
@@ -118,6 +126,7 @@ module.exports.battleModes4v4 = [
         `Power-ups: **ENABLED ONLY**: ${bomb} and ${turboCanister}`,
       ],
       maps: [],
+      maxPlayers: 8,
     },
     {
       name: 'Minefield',
@@ -133,6 +142,7 @@ module.exports.battleModes4v4 = [
         'Lab Basement',
         'Frozen Frenzy',
       ],
+      maxPlayers: 8,
     },
   ],
   [
@@ -144,6 +154,7 @@ module.exports.battleModes4v4 = [
         `Power-ups: **DISABLED**: ${greenShield}, ${akuMask}, ${invisibility}, ${tripleMissile} and ${tripleBomb}`,
       ],
       maps: [],
+      maxPlayers: 8,
     },
   ],
 ];

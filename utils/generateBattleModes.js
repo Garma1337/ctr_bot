@@ -7,7 +7,7 @@ const {
   BATTLE_SURVIVAL,
 } = require('../db/models/lobby');
 
-async function generateBattleModes(type, maps) {
+async function generateBattleModes(type, maps, playerCount) {
   let list;
   if ([BATTLE_FFA, BATTLE_SURVIVAL].includes(type)) {
     list = battleModesFFA;
@@ -38,7 +38,8 @@ async function generateBattleModes(type, maps) {
       const mode = modes.find((m) => m.name === modeNames[rng]);
       const modeUsageCount = randomModes.filter((rm) => rm === modeNames[rng]).length;
 
-      if (modeUsageCount < maxModeUsage && (mode.maps.length < 1 || mode.maps.includes(maps[i]))) {
+      // eslint-disable-next-line max-len
+      if (modeUsageCount < maxModeUsage && (mode.maps.length < 1 || mode.maps.includes(maps[i])) && mode.maxPlayers >= playerCount) {
         randomModes.push(modeNames[rng]);
 
         break;

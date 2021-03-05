@@ -46,7 +46,7 @@ const getConfigValue = require('../utils/getConfigValue');
 const getRandomArrayElement = require('../utils/getRandomArrayElement');
 const greedyPartition = require('../utils/greedyPartition');
 const isStaffMember = require('../utils/isStaffMember');
-const rngModeBattle = require('../utils/generateBattleModes');
+const generateBattleModes = require('../utils/generateBattleModes');
 const sendAlertMessage = require('../utils/sendAlertMessage');
 const sendLogMessage = require('../utils/sendLogMessage');
 const { battleModesFFA, battleModes4v4 } = require('../db/modes_battle');
@@ -498,7 +498,7 @@ function startLobby(docId) {
 
             let modes = [];
             if (doc.isBattle()) {
-              modes = await rngModeBattle(doc.type, tracks.split('\n'));
+              modes = await generateBattleModes(doc.type, tracks.split('\n'), players.length);
 
               fields.push({
                 name: 'Modes',
