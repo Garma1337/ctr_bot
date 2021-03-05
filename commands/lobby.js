@@ -80,6 +80,10 @@ async function getPlayerInfo(playerId, doc) {
     rankValue = parseInt(rankValue, 10);
   }
 
+  if (!rankValue) {
+    rankValue = doc.getDefaultRank();
+  }
+
   const flag = p.flag !== undefined ? ` ${p.flag}` : ':united_nations:';
   const tag = `${flag} <@${playerId}>`;
 
