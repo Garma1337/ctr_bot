@@ -752,7 +752,7 @@ function changeRainbowRoleHue() {
   }
 }
 
-setInterval(changeRainbowRoleHue, 30000);
+new CronJob('* * * * *', changeRainbowRoleHue).start();
 
 try {
   db(() => {
