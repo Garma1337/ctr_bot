@@ -752,7 +752,7 @@ function changeRainbowRoleHue() {
   }
 }
 
-setInterval(changeRainbowRoleHue, 15000);
+setInterval(changeRainbowRoleHue, 30000);
 
 try {
   db(() => {
