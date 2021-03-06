@@ -745,8 +745,9 @@ function changeRainbowRoleHue() {
         }
       }
 
-      role.edit({
-        color: switchColor,
+      role.edit({ color: switchColor }).catch((error) => {
+        // eslint-disable-next-line no-console
+        console.log(`Unable to edit role: ${error}`);
       });
     });
   }
