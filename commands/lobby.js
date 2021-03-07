@@ -661,8 +661,8 @@ function confirmLobbyStart(doc, message, override = false) {
     return sendAlertMessage(message.channel, `The lobby \`${doc.id}\` has ${playersCount} players.\nYou cannot start Duos lobby with player count not divisible by 2.`, 'warning');
   }
 
-  if (!doc.hasMinimumRequiredPlayers()) {
-    return sendAlertMessage(message.channel, `You cannot start a ${doc.type} lobby with less than ${doc.getMinimumRequiredPlayers()} players.`, 'warning');
+  if (!doc.hasMinimumPlayerCount()) {
+    return sendAlertMessage(message.channel, `You cannot start a ${doc.type} lobby with less than ${doc.getMinimumPlayerCount()} players.`, 'warning');
   }
 
   if (override) {
@@ -995,11 +995,11 @@ ${trackOptions.map((t, i) => `${i + 1} - ${t}${t !== TRACK_OPTION_IRON_MAN ? ` $
               lobby.pools = pools;
               lobby.draftTracks = draftTracks;
 
-              let maxPlayerCount = lobby.getMaximumPossiblePlayers();
+              let maxPlayerCount = lobby.getDefaultPlayerCount();
 
               // eslint-disable-next-line max-len
-              if (lobby.getMinimumRequiredPlayers() !== lobby.getMaximumPossiblePlayers() && custom) {
-                sentMessage = await sendAlertMessage(message.channel, `Select the maximum number of players. The number has to be any of \`${lobby.getMinimumRequiredPlayers()}\` to \`${lobby.getMaximumPossiblePlayers()}\`. Every other input will be counted as \`${lobby.getMaximumPossiblePlayers()}\` ${config.ranked_option_emote}.`, 'info');
+              if (lobby.getMinimumPlayerCount() !== lobby.getMaxPlayerCount() && custom) {
+                sentMessage = await sendAlertMessage(message.channel, `Select the maximum number of players. The number has to be any of \`${lobby.getMinimumPlayerCount()}\` to \`${lobby.getMaxPlayerCount()}\`. Every other input will be counted as \`${lobby.getMaxPlayerCount()}\` ${config.ranked_option_emote}.`, 'info');
 
                 // eslint-disable-next-line max-len,no-shadow
                 maxPlayerCount = await message.channel.awaitMessages(filter, options).then(async (collected) => {
@@ -1011,14 +1011,14 @@ ${trackOptions.map((t, i) => `${i + 1} - ${t}${t !== TRACK_OPTION_IRON_MAN ? ` $
 
                   choice = parseInt(content, 10);
                   // eslint-disable-next-line max-len
-                  if (choice >= lobby.getMinimumRequiredPlayers() && choice <= lobby.getMaximumPossiblePlayers()) {
+                  if (choice >= lobby.getMinimumPlayerCount() && choice <= lobby.getMaxPlayerCount()) {
                     return choice;
                   }
 
-                  return lobby.getMaximumPossiblePlayers();
+                  return lobby.getDefaultPlayerCount();
                 }).catch(() => {
                   sentMessage.delete();
-                  return lobby.getMaximumPossiblePlayers();
+                  return lobby.getDefaultPlayerCount();
                 });
               }
 

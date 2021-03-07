@@ -753,7 +753,7 @@ function changeRainbowRoleHue() {
   }
 }
 
-new CronJob('* * * * *', changeRainbowRoleHue).start();
+new CronJob('*/2 * * * *', changeRainbowRoleHue).start();
 
 try {
   db(() => {

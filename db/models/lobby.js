@@ -215,8 +215,8 @@ Lobby.methods = {
 
     return 1;
   },
-  getMinimumRequiredPlayers() {
-    const requirements = {
+  getMinimumPlayerCount() {
+    const minimumPlayers = {
       [RACE_ITEMS_FFA]: 4,
       [RACE_ITEMS_DUOS]: 6,
       [RACE_ITEMS_3V3]: 6,
@@ -234,13 +234,31 @@ Lobby.methods = {
       [CUSTOM]: 2,
     };
 
-    return requirements[this.type];
+    return minimumPlayers[this.type];
   },
-  hasMinimumRequiredPlayers() {
-    return this.players.length >= this.getMinimumRequiredPlayers();
+  getDefaultPlayerCount() {
+    const defaultPlayers = {
+      [RACE_ITEMS_FFA]: 8,
+      [RACE_ITEMS_DUOS]: 8,
+      [RACE_ITEMS_3V3]: 6,
+      [RACE_ITEMS_4V4]: 8,
+      [RACE_SURVIVAL]: 8,
+      [RACE_KRUNKING]: 6,
+      [RACE_ITEMLESS_FFA]: 4,
+      [RACE_ITEMLESS_DUOS]: 8,
+      [RACE_ITEMLESS_4V4]: 8,
+      [BATTLE_FFA]: 4,
+      [BATTLE_DUOS]: 8,
+      [BATTLE_3V3]: 6,
+      [BATTLE_4V4]: 8,
+      [BATTLE_SURVIVAL]: 8,
+      [CUSTOM]: 8,
+    };
+
+    return defaultPlayers[this.type];
   },
-  getMaximumPossiblePlayers() {
-    const limits = {
+  getMaxPlayerCount() {
+    const maxPlayers = {
       [RACE_ITEMS_FFA]: 8,
       [RACE_ITEMS_DUOS]: 8,
       [RACE_ITEMS_3V3]: 6,
@@ -258,10 +276,13 @@ Lobby.methods = {
       [CUSTOM]: 8,
     };
 
-    return limits[this.type];
+    return maxPlayers[this.type];
   },
-  hasMaximumPossiblePlayers() {
-    return this.players.length === this.getMaximumPossiblePlayers();
+  hasMinimumPlayerCount() {
+    return this.players.length >= this.getMinimumPlayerCount();
+  },
+  hasMaxPlayerCount() {
+    return this.players.length === this.getMaxPlayerCount();
   },
   getDefaultTrackCount() {
     const trackCounts = {
