@@ -1,6 +1,6 @@
 const Discord = require('discord.js');
 const moment = require('moment-timezone');
-const { Schedule } = require('../db/models/scheduled_message');
+const { ScheduledMessage } = require('../db/models/scheduled_message');
 const sendAlertMessage = require('../utils/sendAlertMessage');
 
 module.exports = {
@@ -12,7 +12,7 @@ module.exports = {
     const newUsage = 'To add a new one: `!schedule add #channel 2020-01-01 00:00 CET`';
 
     if (args.length === 0) {
-      Schedule.find({ guild: message.guild.id, sent: false }).then((docs) => {
+      ScheduledMessage.find({ guild: message.guild.id, sent: false }).then((docs) => {
         if (docs.length) {
           const messages = docs.map((doc) => `\`${doc.id}\`: <#${doc.channel}> ${moment.tz(doc.date, 'UTC').format('YYYY-MM-DD h:mm A z')}`);
           sendAlertMessage(message.channel, `Current time: ${moment().utc().format('YYYY-MM-DD h:mm A z')}
@@ -85,7 +85,7 @@ I'm waiting 5 minutes. Type \`cancel\` to cancel.`, 'info').then(() => {
               throw new Error('cancel');
             }
 
-            const scheduledMessage = new Schedule();
+            const scheduledMessage = new ScheduledMessage();
             scheduledMessage.date = date;
             scheduledMessage.guild = message.guild.id;
             scheduledMessage.channel = channel.id;
@@ -101,7 +101,7 @@ I'm waiting 5 minutes. Type \`cancel\` to cancel.`, 'info').then(() => {
       case SHOW:
         id = args[1];
 
-        Schedule.findOne({ guild: message.guild.id, _id: id, sent: false }).then((doc) => {
+        ScheduledMessage.findOne({ guild: message.guild.id, _id: id, sent: false }).then((doc) => {
           if (doc) {
             sendAlertMessage(message.channel, `<#${doc.channel}> ${moment.tz(doc.date, 'UTC').format('YYYY-MM-DD h:mm A z')}\n\n${doc.message}`, 'info');
           } else {
@@ -113,7 +113,7 @@ I'm waiting 5 minutes. Type \`cancel\` to cancel.`, 'info').then(() => {
       case EDIT:
         id = args[1];
 
-        Schedule.findOne({ guild: message.guild.id, _id: id, sent: false }).then((doc) => {
+        ScheduledMessage.findOne({ guild: message.guild.id, _id: id, sent: false }).then((doc) => {
           if (doc) {
             sendAlertMessage(message.channel, `Editing <#${doc.channel}> ${moment.tz(doc.date, 'UTC').format('YYYY-MM-DD h:mm A z')}
 Send the new text of the message. Use \`{roleName}\` instead of real pings.
@@ -140,7 +140,7 @@ I'm waiting 1 minute. Type \`cancel\` to cancel.`, 'info').then(() => {
       case DELETE:
         id = args[1];
 
-        Schedule.findOne({ guild: message.guild.id, _id: id, sent: false }).then((doc) => {
+        ScheduledMessage.findOne({ guild: message.guild.id, _id: id, sent: false }).then((doc) => {
           if (doc) {
             doc.delete().then(() => {
               sendAlertMessage(message.channel, 'Scheduled message deleted.', 'success');
