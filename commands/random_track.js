@@ -31,7 +31,7 @@ module.exports = {
 
     sendAlertMessage(message.channel, `Select a pool to pick from. Waiting 1 minute
 \`\`\`1 - Race Tracks
-2 - Battle Maps\`\`\``, 'info').then((m) => {
+2 - Battle Arenas\`\`\``, 'info').then((m) => {
       // eslint-disable-next-line consistent-return
       message.channel.awaitMessages(filter, options).then((collected) => {
         m.delete();
@@ -50,7 +50,7 @@ module.exports = {
             file = config.files.tracks_file;
             break;
           case 2:
-            file = config.files.battle_maps_file;
+            file = config.files.battle_arenas_file;
             break;
           default:
             break;

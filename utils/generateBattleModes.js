@@ -1,5 +1,11 @@
-const { battleModesSolos, battleModesTeams } = require('../db/modes_battle');
 const {
+  battleModes1v1,
+  battleModesSolos,
+  battleModesTeams,
+} = require('../db/modes_battle');
+
+const {
+  BATTLE_1V1,
   BATTLE_FFA,
   BATTLE_DUOS,
   BATTLE_3V3,
@@ -7,9 +13,11 @@ const {
   BATTLE_SURVIVAL,
 } = require('../db/models/lobby');
 
-async function generateBattleModes(type, maps, playerCount) {
+async function generateBattleModes(type, arenas, playerCount) {
   let list;
-  if ([BATTLE_FFA, BATTLE_SURVIVAL].includes(type)) {
+  if (type === BATTLE_1V1) {
+    list = battleModes1v1;
+  } else if ([BATTLE_FFA, BATTLE_SURVIVAL].includes(type)) {
     list = battleModesSolos;
   } else if ([BATTLE_DUOS, BATTLE_3V3, BATTLE_4V4].includes(type)) {
     list = battleModesTeams;
@@ -27,7 +35,7 @@ async function generateBattleModes(type, maps, playerCount) {
     });
   });
 
-  const N = maps.length;
+  const N = arenas.length;
   const randomModes = [];
   const maxModeUsage = Math.ceil(N / modeNames.length);
 
@@ -39,7 +47,7 @@ async function generateBattleModes(type, maps, playerCount) {
       const modeUsageCount = randomModes.filter((rm) => rm === modeNames[rng]).length;
 
       // eslint-disable-next-line max-len
-      if (modeUsageCount < maxModeUsage && (mode.maps.length < 1 || mode.maps.includes(maps[i])) && mode.maxPlayers >= playerCount) {
+      if (modeUsageCount < maxModeUsage && (mode.arenas.length < 1 || mode.arenas.includes(arenas[i])) && mode.maxPlayers >= playerCount) {
         randomModes.push(modeNames[rng]);
 
         break;

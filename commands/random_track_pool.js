@@ -23,7 +23,7 @@ module.exports = {
 
     return sendAlertMessage(message.channel, `Select a pool to pick from. Waiting 1 minute.
 \`\`\`1 - Race Tracks
-2 - Battle Maps\`\`\``, 'info').then((confirmMessage) => {
+2 - Battle Arenas\`\`\``, 'info').then((confirmMessage) => {
       message.channel.awaitMessages(filter, options).then((collected) => {
         const collectedMessage = collected.first();
         const { content } = collectedMessage;
@@ -50,9 +50,9 @@ module.exports = {
             lobby.pools = true;
             lobby.trackCount = number;
 
-            generateTracks(lobby).then((maps) => {
+            generateTracks(lobby).then((tracks) => {
               m.delete();
-              sendAlertMessage(message.channel, `${maps.map((map, i) => `${i + 1}. ${map}`).join('\n')}`, 'success');
+              sendAlertMessage(message.channel, `${tracks.map((track, i) => `${i + 1}. ${track}`).join('\n')}`, 'success');
             });
           });
         } else {

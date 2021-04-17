@@ -8,6 +8,7 @@ const {
   RACE_ITEMLESS_FFA,
   RACE_ITEMLESS_DUOS,
   RACE_ITEMLESS_4V4,
+  BATTLE_1V1,
   BATTLE_FFA,
   BATTLE_DUOS,
   BATTLE_3V3,
@@ -73,6 +74,9 @@ async function generateTemplate(players, doc) {
       break;
     case RACE_ITEMLESS_4V4:
       title += '#title Match # - Itemless 4 vs. 4\n';
+      break;
+    case BATTLE_1V1:
+      title += 'Match # - Battle 1 vs. 1\n';
       break;
     case BATTLE_FFA:
       title += 'Match # - Battle FFA\n';

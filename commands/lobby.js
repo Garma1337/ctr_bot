@@ -12,6 +12,7 @@ const {
   RACE_ITEMLESS_FFA,
   RACE_ITEMLESS_DUOS,
   RACE_ITEMLESS_4V4,
+  BATTLE_1V1,
   BATTLE_FFA,
   BATTLE_DUOS,
   BATTLE_3V3,
@@ -65,7 +66,11 @@ const generateBattleModes = require('../utils/generateBattleModes');
 const sendAlertMessage = require('../utils/sendAlertMessage');
 const sendLogMessage = require('../utils/sendLogMessage');
 const shuffleArray = require('../utils/shuffleArray');
-const { battleModesSolos, battleModesTeams } = require('../db/modes_battle');
+const {
+  battleModes1v1,
+  battleModesSolos,
+  battleModesTeams,
+} = require('../db/modes_battle');
 const { engineStyles } = require('../db/engineStyles');
 const { regions } = require('../db/regions');
 const { rulesets } = require('../db/rulesets');
@@ -195,7 +200,7 @@ async function getEmbed(doc, players, tracks, roomChannel) {
   };
 
   const tracksField = {
-    name: `:motorway: ${doc.isRacing() ? 'Tracks' : 'Maps'}`,
+    name: `:motorway: ${doc.isRacing() ? 'Tracks' : 'Arenas'}`,
     value: tracks,
     inline: true,
   };
@@ -225,7 +230,7 @@ async function getEmbed(doc, players, tracks, roomChannel) {
   const settings = [`**Max Players**: ${doc.maxPlayerCount}`];
 
   if (!doc.isCustom()) {
-    settings.push(`**${doc.isRacing() ? 'Track Count' : 'Map Count'}**: ${doc.trackCount}`);
+    settings.push(`**${doc.isRacing() ? 'Track Count' : 'Arena Count'}**: ${doc.trackCount}`);
   }
 
   if (doc.isRacing()) {
@@ -466,7 +471,9 @@ async function getPlayerRanks(doc, players) {
 function sendBattleModeSettings(doc, roomChannel, modes) {
   let list;
 
-  if (!doc.isTeams()) {
+  if (doc.is1v1()) {
+    list = battleModes1v1;
+  } else if (!doc.isTeams()) {
     list = battleModesSolos;
   } else {
     list = battleModesTeams;
@@ -494,7 +501,7 @@ function sendBattleModeSettings(doc, roomChannel, modes) {
     roomChannel.send({
       embed: {
         color: doc.getColor(),
-        description: '**Global Settings**\nTeams: None (4 for Steal The Bacon)\nAI: Disabled',
+        description: '**Global Settings**\nAI: Disabled',
         author: {
           name: 'Battle Mode Settings',
         },
@@ -1016,15 +1023,16 @@ module.exports = {
 8 - 4 vs. 4 ${config.ranked_option_emote}
 
 **Battle Modes**
-9 - FFA ${config.ranked_option_emote}
-10 - Duos ${config.ranked_option_emote}
-11 - 3 vs. 3 ${config.ranked_option_emote}
-12 - 4 vs. 4 ${config.ranked_option_emote}
-13 - Survival
+9 - 1 vs. 1 ${config.ranked_option_emote}
+10 - FFA ${config.ranked_option_emote}
+11 - Duos ${config.ranked_option_emote}
+12 - 3 vs. 3 ${config.ranked_option_emote}
+13 - 4 vs. 4 ${config.ranked_option_emote}
+14 - Survival
 
 **Misc. Modes**
-14 - Krunking
-15 - Custom`, 'info').then((confirmMessage) => {
+15 - Krunking
+16 - Custom`, 'info').then((confirmMessage) => {
           // eslint-disable-next-line consistent-return
           message.channel.awaitMessages(filter, options).then(async (collected) => {
             confirmMessage.delete();
@@ -1034,7 +1042,7 @@ module.exports = {
 
             let sentMessage;
             let choice = parseInt(content, 10);
-            const modes = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
+            const modes = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
 
             if (modes.includes(choice)) {
               let type;
@@ -1064,24 +1072,27 @@ module.exports = {
                   type = RACE_ITEMLESS_4V4;
                   break;
                 case 9:
-                  type = BATTLE_FFA;
+                  type = BATTLE_1V1;
                   break;
                 case 10:
-                  type = BATTLE_DUOS;
+                  type = BATTLE_FFA;
                   break;
                 case 11:
-                  type = BATTLE_3V3;
+                  type = BATTLE_DUOS;
                   break;
                 case 12:
-                  type = BATTLE_4V4;
+                  type = BATTLE_3V3;
                   break;
                 case 13:
-                  type = BATTLE_SURVIVAL;
+                  type = BATTLE_4V4;
                   break;
                 case 14:
-                  type = RACE_KRUNKING;
+                  type = BATTLE_SURVIVAL;
                   break;
                 case 15:
+                  type = RACE_KRUNKING;
+                  break;
+                case 16:
                   type = CUSTOM;
                   break;
                 default:

@@ -12,6 +12,100 @@ const bomb = client.getEmote('bomb', '813098480495099914');
 const akuMask = client.getEmote('akuMask', '813098480381329449');
 const tripleMissile = client.getEmote('tripleMissile', '813098480179347486');
 
+module.exports.battleModes1v1 = [
+  [
+    {
+      name: 'Point Limit Battle',
+      settings: [
+        'Game Mode: Limit Battle',
+        'Type: Points',
+        'Point Limit: 10',
+        `Items: **ENABLED ONLY**: ${turboCanister}, ${greenShield}, ${invisibility}, ${missile} and ${bomb}`,
+        'Teams: None',
+      ],
+      arenas: [],
+      maxPlayers: 2,
+    },
+    {
+      name: 'Time Limit Battle',
+      settings: [
+        'Game Mode: Limit Battle',
+        'Type: Time',
+        'Time Limit: 6 minutes',
+        `Items: **ENABLED ONLY**: ${turboCanister}, ${greenShield}, ${invisibility}, ${missile} and ${bomb}`,
+        'Teams: None',
+      ],
+      arenas: [],
+      maxPlayers: 2,
+    },
+  ],
+  [
+    {
+      name: 'Bomb Snipe Mode',
+      settings: [
+        'Game Mode: Last Kart Driving',
+        'Life Limit: 9 lives',
+        'Time Limit: 6 minutes',
+        `Items: **ENABLED ONLY**: ${bomb} and ${turboCanister}`,
+        'Teams: None',
+      ],
+      arenas: [],
+      maxPlayers: 2,
+    },
+  ],
+  [
+    {
+      name: 'Crystal Grab',
+      settings: [
+        'Game Mode: Crystal Grab',
+        'Time Limit: 6 minutes',
+        `Items: **DISABLED**: ${greenShield}, ${akuMask}, ${invisibility}, ${tripleMissile} and ${tripleBomb}`,
+        'Teams: None',
+      ],
+      arenas: [],
+      maxPlayers: 2,
+    },
+  ],
+  [
+    {
+      name: 'Bomb Capture The Flag',
+      settings: [
+        'Game Mode: Capture The Flag',
+        'Time Limit: 6 minutes',
+        'Point Limit: 9 points',
+        `Items: **ENABLED ONLY**: ${bomb} and ${turboCanister}`,
+        'Teams: 2',
+      ],
+      arenas: [],
+      maxPlayers: 2,
+    },
+    {
+      name: 'Basic Capture The Flag',
+      settings: [
+        'Game Mode: Capture The Flag',
+        'Time Limit: 6 minutes',
+        'Point Limit: 9 points',
+        `Items: **DISABLED**: ${greenBeaker}, ${greenShield}, ${akuMask} and ${tripleMissile}`,
+        'Teams: 2',
+      ],
+      arenas: [],
+      maxPlayers: 2,
+    },
+    {
+      name: 'Balanced Capture The Flag',
+      settings: [
+        'Game Mode: Capture The Flag',
+        'Time Limit: 6 minutes',
+        'Point Limit: 9 points',
+        `Items: **ENABLED ONLY**: ${turboCanister}, ${missile} and ${bomb}`,
+        'Teams: 2',
+      ],
+      arenas: [],
+      maxPlayers: 2,
+    },
+  ],
+];
+
 module.exports.battleModesSolos = [
   [
     {
@@ -20,9 +114,10 @@ module.exports.battleModesSolos = [
         'Game Mode: Limit Battle',
         'Type: Time',
         'Time Limit: 6 minutes',
-        `Power-ups: **DISABLED**: ${greenBeaker}, ${tripleMissile} and ${tripleBomb}`,
+        `Items: **DISABLED**: ${greenBeaker}, ${tripleMissile} and ${tripleBomb}`,
+        'Teams: None',
       ],
-      maps: [],
+      arenas: [],
       maxPlayers: 8,
     },
     {
@@ -31,9 +126,10 @@ module.exports.battleModesSolos = [
         'Game Mode: Limit Battle',
         'Type: Time',
         'Time Limit: 6 minutes',
-        `Power-ups: **DISABLED**: ${tnt}, ${greenBeaker}, ${akuMask}, ${superEngine}, ${tripleMissile} and ${tripleBomb}`,
+        `Items: **DISABLED**: ${tnt}, ${greenBeaker}, ${akuMask}, ${superEngine}, ${tripleMissile} and ${tripleBomb}`,
+        'Teams: None',
       ],
-      maps: [],
+      arenas: [],
       maxPlayers: 8,
     },
     {
@@ -42,9 +138,10 @@ module.exports.battleModesSolos = [
         'Game Mode: Limit Battle',
         'Type: Time',
         'Time Limit: 6 minutes',
-        `Power-ups: **ENABLED ONLY**: ${bomb}`,
+        `Items: **ENABLED ONLY**: ${bomb}`,
+        'Teams: None',
       ],
-      maps: [],
+      arenas: [],
       maxPlayers: 8,
     },
   ],
@@ -55,9 +152,10 @@ module.exports.battleModesSolos = [
         'Game Mode: Last Kart Driving',
         'Life Limit: 9 lives',
         'Time Limit: 6 minutes',
-        `Power-ups: **DISABLED**: ${greenBeaker}, ${greenShield}, ${akuMask}, ${invisibility}, ${superEngine}, ${tripleMissile} and ${tripleBomb}`,
+        `Items: **DISABLED**: ${greenBeaker}, ${greenShield}, ${akuMask}, ${invisibility}, ${superEngine}, ${tripleMissile} and ${tripleBomb}`,
+        'Teams: None',
       ],
-      maps: [],
+      arenas: [],
       maxPlayers: 8,
     },
     {
@@ -66,9 +164,10 @@ module.exports.battleModesSolos = [
         'Game Mode: Last Kart Driving',
         'Life Limit: 9 lives',
         'Time Limit: 6 minutes',
-        `Power-ups: **ENABLED ONLY**: ${bomb} and ${turboCanister}`,
+        `Items: **ENABLED ONLY**: ${bomb} and ${turboCanister}`,
+        'Teams: None',
       ],
-      maps: [],
+      arenas: [],
       maxPlayers: 8,
     },
   ],
@@ -79,9 +178,10 @@ module.exports.battleModesSolos = [
         'Game Mode: Steal The Bacon',
         'Time Limit: 6 minutes',
         'Point Limit: 9 points',
-        `Power-ups: **ENABLED ONLY**: ${bomb}, ${missile} and ${turboCanister}`,
+        `Items: **ENABLED ONLY**: ${bomb}, ${missile} and ${turboCanister}`,
+        'Teams: 4',
       ],
-      maps: [
+      arenas: [
         'Rampage Ruins',
         'Nitro Court',
         'Parking Lot',
@@ -101,9 +201,10 @@ module.exports.battleModesTeams = [
         'Game Mode: Last Kart Driving',
         'Life Limit: 9 lives',
         'Time Limit: 6 minutes',
-        `Power-ups: **DISABLED**: ${greenShield}, ${tripleMissile} and ${tripleBomb}`,
+        `Items: **DISABLED**: ${greenShield}, ${tripleMissile} and ${tripleBomb}`,
+        'Teams: None',
       ],
-      maps: [],
+      arenas: [],
       maxPlayers: 8,
     },
     {
@@ -112,9 +213,10 @@ module.exports.battleModesTeams = [
         'Game Mode: Last Kart Driving',
         'Life Limit: 9 lives',
         'Time Limit: 6 minutes',
-        `Power-ups: **DISABLED**: ${greenBeaker}, ${greenShield}, ${akuMask}, ${invisibility}, ${superEngine}, ${tripleMissile} and ${tripleBomb}`,
+        `Items: **DISABLED**: ${greenBeaker}, ${greenShield}, ${akuMask}, ${invisibility}, ${superEngine}, ${tripleMissile} and ${tripleBomb}`,
+        'Teams: None',
       ],
-      maps: [],
+      arenas: [],
       maxPlayers: 8,
     },
     {
@@ -123,9 +225,10 @@ module.exports.battleModesTeams = [
         'Game Mode: Last Kart Driving',
         'Life Limit: 9 lives',
         'Time Limit: 6 minutes',
-        `Power-ups: **ENABLED ONLY**: ${bomb} and ${turboCanister}`,
+        `Items: **ENABLED ONLY**: ${bomb} and ${turboCanister}`,
+        'Teams: None',
       ],
-      maps: [],
+      arenas: [],
       maxPlayers: 8,
     },
     {
@@ -134,9 +237,10 @@ module.exports.battleModesTeams = [
         'Game Mode: Last Kart Driving',
         'Life Limit: 9 lives',
         'Time Limit: 6 minutes',
-        `Power-ups: **ENABLED ONLY**: ${greenBeaker}, ${tnt} and ${turboCanister}`,
+        `Items: **ENABLED ONLY**: ${greenBeaker}, ${tnt} and ${turboCanister}`,
+        'Teams: None',
       ],
-      maps: [
+      arenas: [
         'Nitro Court',
         'Parking Lot',
         'Lab Basement',
@@ -150,10 +254,11 @@ module.exports.battleModesTeams = [
       name: 'Crystal Grab',
       settings: [
         'Game Mode: Crystal Grab',
-        'Time Limit: 6 minutes',
-        `Power-ups: **DISABLED**: ${greenShield}, ${akuMask}, ${invisibility}, ${tripleMissile} and ${tripleBomb}`,
+        'Time Limit: 3 minutes',
+        `Items: **DISABLED**: ${greenShield}, ${akuMask}, ${invisibility}, ${tripleMissile} and ${tripleBomb}`,
+        'Teams: None',
       ],
-      maps: [],
+      arenas: [],
       maxPlayers: 8,
     },
   ],
