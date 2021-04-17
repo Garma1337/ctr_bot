@@ -145,11 +145,18 @@ async function getEmbed(doc, players, tracks, roomChannel) {
     playersText += '**Teams:**\n';
 
     doc.teamList.forEach((team, i) => {
-      playersText += `${i + 1}.`;
-      team.forEach((player, k) => {
+      let mmrSum = 0;
+
+      team.forEach((player) => {
+        const info = playersInfo[player];
+        mmrSum += info.rank;
+      });
+
+      playersText += `${i + 1}. (Rank: ${Math.floor(mmrSum / team.length)})\n`;
+      team.forEach((player) => {
         const info = playersInfo[player];
         const tag = info && info.tag;
-        playersText += `${k ? '⠀' : ''} ${tag}\n`;
+        playersText += `${tag}\n`;
         delete playersInfo[player];
       });
     });
@@ -399,12 +406,14 @@ async function getPlayersText(doc) {
   if (doc.isTeams()) {
     playersText += '**Teams:**\n';
 
-    for (const team of doc.teamList) {
-      const i = doc.teamList.indexOf(team);
+    // eslint-disable-next-line guard-for-in
+    for (const i in doc.teamList) {
+      const team = doc.teamList[i];
       let mmrSum = 0;
 
-      for (const p of team) {
-        const player = await Player.findOne({ discordId: p });
+      // eslint-disable-next-line guard-for-in
+      for (const p in team) {
+        const player = await Player.findOne({ discordId: team[p] });
         const rank = await Rank.findOne({ name: player.psn });
 
         let mmr = doc.getDefaultRank();
@@ -415,7 +424,7 @@ async function getPlayersText(doc) {
         mmrSum += mmr;
       }
 
-      playersText += `Team ${i + 1} (Elo: ${Math.floor(mmrSum / team.length)})\n`;
+      playersText += `${Number(i) + 1}. (Rank: ${Math.floor(mmrSum / team.length)})\n`;
 
       // eslint-disable-next-line no-loop-func
       team.forEach((p) => {
@@ -498,9 +507,9 @@ function sendBattleModeSettings(doc, roomChannel, modes) {
   });
 }
 
-function createBalancedTeams(doc, soloPlayers) {
+async function createBalancedTeams(doc, soloPlayers) {
   const randomTeams = [];
-  const playerRanks = getPlayerRanks(doc, soloPlayers);
+  const playerRanks = await getPlayerRanks(doc, soloPlayers);
   const teamCount = (soloPlayers.length / doc.getTeamSize());
 
   if (doc.isDuos()) {
@@ -619,15 +628,16 @@ function startLobby(docId) {
               }
 
               tracks = tracks.join('\n');
-              const { players } = doc;
-              const playersText = getPlayersText(doc);
 
               if (doc.isTeams()) {
-                const randomTeams = createBalancedTeams(doc, doc.getSoloPlayers());
+                const randomTeams = await createBalancedTeams(doc, doc.getSoloPlayers());
 
                 doc.teamList = Array.from(doc.teamList).concat(randomTeams);
                 doc = await doc.save();
               }
+
+              const { players } = doc;
+              const playersText = await getPlayersText(doc);
 
               const [PSNs, templateUrl, template] = await generateTemplate(players, doc);
 
@@ -1913,7 +1923,7 @@ async function restrictSoloQueue(doc, user, soloQueue) {
   }
 
   if (!doc.isBattle() && !doc.isItemless()) {
-    if (!player || (!player.discordVc && !player.ps4Vc)) {
+    if (!player || (player && !player.discordVc && !player.ps4Vc)) {
       errors.push('You are unable to use voice chat. Please set your voice chat options first by using `!set_voice_chat`.');
     }
 

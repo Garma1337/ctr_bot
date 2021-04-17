@@ -332,21 +332,21 @@ Lobby.methods = {
 
     if (this.isTournament()) {
       maxPlayers = {
-        [RACE_ITEMS_FFA]: 32,
-        [RACE_ITEMS_DUOS]: 32,
-        [RACE_ITEMS_3V3]: 24,
-        [RACE_ITEMS_4V4]: 32,
-        [RACE_SURVIVAL]: 32,
-        [RACE_KRUNKING]: 24,
+        [RACE_ITEMS_FFA]: 64,
+        [RACE_ITEMS_DUOS]: 64,
+        [RACE_ITEMS_3V3]: 48,
+        [RACE_ITEMS_4V4]: 64,
+        [RACE_SURVIVAL]: 64,
+        [RACE_KRUNKING]: 48,
         [RACE_ITEMLESS_FFA]: 32,
-        [RACE_ITEMLESS_DUOS]: 32,
-        [RACE_ITEMLESS_4V4]: 32,
-        [BATTLE_FFA]: 16,
-        [BATTLE_DUOS]: 16,
-        [BATTLE_3V3]: 24,
-        [BATTLE_4V4]: 32,
-        [BATTLE_SURVIVAL]: 32,
-        [CUSTOM]: 32,
+        [RACE_ITEMLESS_DUOS]: 64,
+        [RACE_ITEMLESS_4V4]: 64,
+        [BATTLE_FFA]: 32,
+        [BATTLE_DUOS]: 32,
+        [BATTLE_3V3]: 48,
+        [BATTLE_4V4]: 64,
+        [BATTLE_SURVIVAL]: 64,
+        [CUSTOM]: 64,
       };
     } else {
       maxPlayers = {

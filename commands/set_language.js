@@ -1,3 +1,4 @@
+const Discord = require('discord.js');
 const { Player } = require('../db/models/player');
 const isStaffMember = require('../utils/isStaffMember');
 const sendAlertMessage = require('../utils/sendAlertMessage');
@@ -31,7 +32,7 @@ module.exports = {
 
     let user;
 
-    if (isStaff && args.length === 1) {
+    if (isStaff && message.mentions.users.size > 0) {
       user = message.mentions.users.first();
     } else {
       user = message.author;
@@ -74,14 +75,16 @@ module.exports = {
 
     // eslint-disable-next-line guard-for-in
     for (const i in args) {
-      const language = serverLanguages.find((l) => l.char === args[i]);
+      if (!args[i].match(Discord.MessageMentions.USERS_PATTERN)) {
+        const language = serverLanguages.find((l) => l.char === args[i]);
 
-      if (!language) {
-        // eslint-disable-next-line consistent-return
-        return sendAlertMessage(message.channel, `${args[i]} is not a valid language flag.`, 'warning');
+        if (!language) {
+          // eslint-disable-next-line consistent-return
+          return sendAlertMessage(message.channel, `${args[i]} is not a valid language flag.`, 'warning');
+        }
+
+        emotes.push(language.emote);
       }
-
-      emotes.push(language.emote);
     }
 
     Player.findOne({ discordId: user.id }).then((player) => {
@@ -93,9 +96,9 @@ module.exports = {
       player.languages = emotes;
       player.save().then(() => {
         if (user.id === message.author.id) {
-          sendAlertMessage(message.channel, `Your languages have been set to ${args.join(', ')}.`, 'success');
+          sendAlertMessage(message.channel, `Your languages have been set to ${emotes.join(', ')}.`, 'success');
         } else {
-          sendAlertMessage(message.channel, `<@!${user.id}>'s languages have been set to ${args.join(', ')}.`, 'success');
+          sendAlertMessage(message.channel, `<@!${user.id}>'s languages have been set to ${emotes.join(', ')}.`, 'success');
         }
       }).catch((error) => {
         sendAlertMessage(message.channel, `Unable to update player. Error: ${error}`, 'error');
