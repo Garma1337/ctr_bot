@@ -1,4 +1,5 @@
 const { Player } = require('../db/models/player');
+const isStaffMember = require('../utils/isStaffMember');
 const sendAlertMessage = require('../utils/sendAlertMessage');
 const { serverLanguages } = require('../db/serverLanguages');
 
@@ -24,6 +25,16 @@ module.exports = {
       });
 
       return;
+    }
+
+    const isStaff = isStaffMember(message.member);
+
+    let user;
+
+    if (isStaff && args.length === 1) {
+      user = message.mentions.users.first();
+    } else {
+      user = message.author;
     }
 
     const languageList = serverLanguages.map((l) => `${l.emote} - ${l.name}`);
@@ -73,15 +84,19 @@ module.exports = {
       emotes.push(language.emote);
     }
 
-    Player.findOne({ discordId: message.author.id }).then((player) => {
+    Player.findOne({ discordId: user.id }).then((player) => {
       if (!player) {
         player = new Player();
-        player.discordId = message.author.id;
+        player.discordId = user.id;
       }
 
       player.languages = emotes;
       player.save().then(() => {
-        sendAlertMessage(message.channel, `Your languages have been set to ${args.join(', ')}.`, 'success');
+        if (user.id === message.author.id) {
+          sendAlertMessage(message.channel, `Your languages have been set to ${args.join(', ')}.`, 'success');
+        } else {
+          sendAlertMessage(message.channel, `<@!${user.id}>'s languages have been set to ${args.join(', ')}.`, 'success');
+        }
       }).catch((error) => {
         sendAlertMessage(message.channel, `Unable to update player. Error: ${error}`, 'error');
       });

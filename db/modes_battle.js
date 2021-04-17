@@ -12,7 +12,7 @@ const bomb = client.getEmote('bomb', '813098480495099914');
 const akuMask = client.getEmote('akuMask', '813098480381329449');
 const tripleMissile = client.getEmote('tripleMissile', '813098480179347486');
 
-module.exports.battleModesFFA = [
+module.exports.battleModesSolos = [
   [
     {
       name: 'Basic Limit Battle',
@@ -93,7 +93,7 @@ module.exports.battleModesFFA = [
   ],
 ];
 
-module.exports.battleModes4v4 = [
+module.exports.battleModesTeams = [
   [
     {
       name: 'Basic Last Kart Driving',

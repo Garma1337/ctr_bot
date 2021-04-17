@@ -1,4 +1,5 @@
 const { Player } = require('../db/models/player');
+const isStaffMember = require('../utils/isStaffMember');
 const sendAlertMessage = require('../utils/sendAlertMessage');
 const { consoles } = require('../db/consoles');
 
@@ -25,6 +26,16 @@ module.exports = {
       });
 
       return;
+    }
+
+    const isStaff = isStaffMember(message.member);
+
+    let user;
+
+    if (isStaff && args.length === 1) {
+      user = message.mentions.users.first();
+    } else {
+      user = message.author;
     }
 
     const emoteChars = consoles.map((c) => c.emote);
@@ -61,10 +72,10 @@ module.exports = {
         const console = consoles.find((c) => c.emote === reaction.emoji.name);
 
         if (console) {
-          Player.findOne({ discordId: message.author.id }).then((player) => {
+          Player.findOne({ discordId: user.id }).then((player) => {
             if (!player) {
               player = new Player();
-              player.discordId = message.author.id;
+              player.discordId = user.id;
               player.consoles = [];
             }
 
@@ -76,7 +87,11 @@ module.exports = {
 
             player.consoles = playerConsoles;
             player.save().then(() => {
-              sendAlertMessage(message.channel, `${console.name} has been added to your consoles.`, 'success');
+              if (user.id === message.author.id) {
+                sendAlertMessage(message.channel, `${console.name} has been added to your consoles.`, 'success');
+              } else {
+                sendAlertMessage(message.channel, `${console.name} has been added to <@!${user.id}>'s consoles.`, 'success');
+              }
             }).catch((error) => {
               sendAlertMessage(message.channel, `Unable to update player. Error: ${error}`, 'error');
             });
@@ -88,7 +103,7 @@ module.exports = {
         const console = consoles.find((c) => c.emote === reaction.emoji.name);
 
         if (console) {
-          Player.findOne({ discordId: message.author.id }).then((player) => {
+          Player.findOne({ discordId: user.id }).then((player) => {
             const playerConsoles = player.consoles;
 
             if (playerConsoles.includes(console.tag)) {
@@ -99,7 +114,11 @@ module.exports = {
             player.consoles = playerConsoles;
             player.save();
 
-            sendAlertMessage(message.channel, `${console.name} has been removed from your consoles.`, 'success');
+            if (user.id === message.author.id) {
+              sendAlertMessage(message.channel, `${console.name} has been removed from your consoles.`, 'success');
+            } else {
+              sendAlertMessage(message.channel, `${console.name} has been remove from <@!${user.id}>'s consoles.`, 'success');
+            }
           });
         }
       }));

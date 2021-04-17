@@ -571,17 +571,16 @@ function checkDeletedPings(message) {
 client.on('messageDelete', (message) => {
   checkDeletedPings(message);
 
-  SignupsChannel.findOne({ guild: message.guild.id, channel: message.channel.id })
-    .then((doc) => {
-      if (doc) {
-        setSignupsCountTopic(message.channel);
-        const msg = `Signup by ${message.author} in the ${message.channel} was deleted
+  SignupsChannel.findOne({ guild: message.guild.id, channel: message.channel.id }).then((doc) => {
+    if (doc) {
+      setSignupsCountTopic(message.channel);
+      const msg = `Signup by ${message.author} in the ${message.channel} was deleted
 
 **Message:**
 ${message.content}`;
-        sendLogMessage(message.guild, msg, true);
-      }
-    });
+      sendLogMessage(message.guild, msg, true);
+    }
+  });
 });
 
 client.on('presenceUpdate', (oldPresence, newPresence) => {

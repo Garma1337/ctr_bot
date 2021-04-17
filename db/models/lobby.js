@@ -1,11 +1,12 @@
 const mongoose = require('mongoose');
-const config = require('../../config');
 
 const { Schema, model } = mongoose;
 const { engineStyles } = require('../engineStyles');
 
 const engineUids = engineStyles.map((e) => e.uid);
 
+const LOBBY_MODE_STANDARD = 'standard';
+const LOBBY_MODE_TOURNAMENT = 'tournament';
 const UNKNOWN = 'unknown';
 const RACE_ITEMS_FFA = 'race_ffa';
 const RACE_ITEMS_DUOS = 'race_duos';
@@ -51,6 +52,19 @@ const TRACK_OPTION_IRON_MAN = 'Iron Man';
 const TRACK_DRAGON_MINES = 'Dragon Mines';
 const TRACK_HYPER_SPACEWAY = 'Hyper Spaceway';
 const TRACK_SPYRO_CIRCUIT = 'Spyro Circuit';
+const CUSTOM_OPTION_MODE = 'mode';
+const CUSTOM_OPTION_TRACK_POOL = 'track_pool';
+const CUSTOM_OPTION_PLAYERS = 'players';
+const CUSTOM_OPTION_TRACKS = 'tracks';
+const CUSTOM_OPTION_LAPS = 'lap';
+const CUSTOM_OPTION_RULESET = 'ruleset';
+const CUSTOM_OPTION_REGION = 'region';
+const CUSTOM_OPTION_ENGINE = 'engine';
+const CUSTOM_OPTION_SURVIVAL_STYLE = 'survival_style';
+const CUSTOM_OPTION_PREMADE_TEAMS = 'premade_teams';
+const CUSTOM_OPTION_RESERVE = 'reserve';
+const CUSTOM_OPTION_TYPE = 'type';
+const CUSTOM_OPTION_MMR_LOCK = 'mmr_lock';
 
 module.exports.RACE_FFA = RACE_ITEMS_FFA;
 module.exports.RACE_DUOS = RACE_ITEMS_DUOS;
@@ -73,6 +87,21 @@ module.exports.TRACK_OPTION_RNG = TRACK_OPTION_RNG;
 module.exports.TRACK_OPTION_POOLS = TRACK_OPTION_POOLS;
 module.exports.TRACK_OPTION_DRAFT = TRACK_OPTION_DRAFT;
 module.exports.TRACK_OPTION_IRON_MAN = TRACK_OPTION_IRON_MAN;
+module.exports.LOBBY_MODE_STANDARD = LOBBY_MODE_STANDARD;
+module.exports.LOBBY_MODE_TOURNAMENT = LOBBY_MODE_TOURNAMENT;
+module.exports.CUSTOM_OPTION_MODE = CUSTOM_OPTION_MODE;
+module.exports.CUSTOM_OPTION_TRACK_POOL = CUSTOM_OPTION_TRACK_POOL;
+module.exports.CUSTOM_OPTION_PLAYERS = CUSTOM_OPTION_PLAYERS;
+module.exports.CUSTOM_OPTION_TRACKS = CUSTOM_OPTION_TRACKS;
+module.exports.CUSTOM_OPTION_LAPS = CUSTOM_OPTION_LAPS;
+module.exports.CUSTOM_OPTION_RULESET = CUSTOM_OPTION_RULESET;
+module.exports.CUSTOM_OPTION_REGION = CUSTOM_OPTION_REGION;
+module.exports.CUSTOM_OPTION_ENGINE = CUSTOM_OPTION_ENGINE;
+module.exports.CUSTOM_OPTION_SURVIVAL_STYLE = CUSTOM_OPTION_SURVIVAL_STYLE;
+module.exports.CUSTOM_OPTION_PREMADE_TEAMS = CUSTOM_OPTION_PREMADE_TEAMS;
+module.exports.CUSTOM_OPTION_RESERVE = CUSTOM_OPTION_RESERVE;
+module.exports.CUSTOM_OPTION_TYPE = CUSTOM_OPTION_TYPE;
+module.exports.CUSTOM_OPTION_MMR_LOCK = CUSTOM_OPTION_MMR_LOCK;
 
 const Lobby = new Schema({
   date: {
@@ -161,9 +190,24 @@ const Lobby = new Schema({
     rank: Number,
     shift: Number,
   },
+  mode: {
+    type: String,
+    enum: [LOBBY_MODE_STANDARD, LOBBY_MODE_TOURNAMENT],
+  },
 });
 
 Lobby.methods = {
+  getSoloPlayers() {
+    let soloPlayers = [...this.players];
+
+    this.teamList.forEach((team) => {
+      team.forEach((player) => {
+        soloPlayers = soloPlayers.filter((p) => p !== player);
+      });
+    });
+
+    return soloPlayers;
+  },
   isRacing() {
     return (!this.isBattle() && !this.isCustom());
   },
@@ -216,27 +260,53 @@ Lobby.methods = {
     return 1;
   },
   getMinimumPlayerCount() {
-    const minimumPlayers = {
-      [RACE_ITEMS_FFA]: 4,
-      [RACE_ITEMS_DUOS]: 6,
-      [RACE_ITEMS_3V3]: 6,
-      [RACE_ITEMS_4V4]: 8,
-      [RACE_SURVIVAL]: 8,
-      [RACE_KRUNKING]: 6,
-      [RACE_ITEMLESS_FFA]: 4,
-      [RACE_ITEMLESS_DUOS]: 6,
-      [RACE_ITEMLESS_4V4]: 8,
-      [BATTLE_FFA]: 4,
-      [BATTLE_DUOS]: 6,
-      [BATTLE_3V3]: 6,
-      [BATTLE_4V4]: 8,
-      [BATTLE_SURVIVAL]: 8,
-      [CUSTOM]: 2,
-    };
+    let minimumPlayers;
+
+    if (this.isTournament()) {
+      minimumPlayers = {
+        [RACE_ITEMS_FFA]: 16,
+        [RACE_ITEMS_DUOS]: 16,
+        [RACE_ITEMS_3V3]: 12,
+        [RACE_ITEMS_4V4]: 16,
+        [RACE_SURVIVAL]: 16,
+        [RACE_KRUNKING]: 12,
+        [RACE_ITEMLESS_FFA]: 8,
+        [RACE_ITEMLESS_DUOS]: 16,
+        [RACE_ITEMLESS_4V4]: 16,
+        [BATTLE_FFA]: 8,
+        [BATTLE_DUOS]: 8,
+        [BATTLE_3V3]: 12,
+        [BATTLE_4V4]: 8,
+        [BATTLE_SURVIVAL]: 8,
+        [CUSTOM]: 4,
+      };
+    } else {
+      minimumPlayers = {
+        [RACE_ITEMS_FFA]: 4,
+        [RACE_ITEMS_DUOS]: 6,
+        [RACE_ITEMS_3V3]: 6,
+        [RACE_ITEMS_4V4]: 8,
+        [RACE_SURVIVAL]: 8,
+        [RACE_KRUNKING]: 6,
+        [RACE_ITEMLESS_FFA]: 4,
+        [RACE_ITEMLESS_DUOS]: 6,
+        [RACE_ITEMLESS_4V4]: 8,
+        [BATTLE_FFA]: 4,
+        [BATTLE_DUOS]: 4,
+        [BATTLE_3V3]: 6,
+        [BATTLE_4V4]: 8,
+        [BATTLE_SURVIVAL]: 8,
+        [CUSTOM]: 2,
+      };
+    }
 
     return minimumPlayers[this.type];
   },
   getDefaultPlayerCount() {
+    if (this.isTournament()) {
+      return this.getMinimumPlayerCount();
+    }
+
     const defaultPlayers = {
       [RACE_ITEMS_FFA]: 8,
       [RACE_ITEMS_DUOS]: 8,
@@ -248,7 +318,7 @@ Lobby.methods = {
       [RACE_ITEMLESS_DUOS]: 8,
       [RACE_ITEMLESS_4V4]: 8,
       [BATTLE_FFA]: 4,
-      [BATTLE_DUOS]: 8,
+      [BATTLE_DUOS]: 4,
       [BATTLE_3V3]: 6,
       [BATTLE_4V4]: 8,
       [BATTLE_SURVIVAL]: 8,
@@ -258,23 +328,45 @@ Lobby.methods = {
     return defaultPlayers[this.type];
   },
   getMaxPlayerCount() {
-    const maxPlayers = {
-      [RACE_ITEMS_FFA]: 8,
-      [RACE_ITEMS_DUOS]: 8,
-      [RACE_ITEMS_3V3]: 6,
-      [RACE_ITEMS_4V4]: 8,
-      [RACE_SURVIVAL]: 8,
-      [RACE_KRUNKING]: 6,
-      [RACE_ITEMLESS_FFA]: 8,
-      [RACE_ITEMLESS_DUOS]: 8,
-      [RACE_ITEMLESS_4V4]: 8,
-      [BATTLE_FFA]: 8,
-      [BATTLE_DUOS]: 8,
-      [BATTLE_3V3]: 6,
-      [BATTLE_4V4]: 8,
-      [BATTLE_SURVIVAL]: 8,
-      [CUSTOM]: 8,
-    };
+    let maxPlayers;
+
+    if (this.isTournament()) {
+      maxPlayers = {
+        [RACE_ITEMS_FFA]: 32,
+        [RACE_ITEMS_DUOS]: 32,
+        [RACE_ITEMS_3V3]: 24,
+        [RACE_ITEMS_4V4]: 32,
+        [RACE_SURVIVAL]: 32,
+        [RACE_KRUNKING]: 24,
+        [RACE_ITEMLESS_FFA]: 32,
+        [RACE_ITEMLESS_DUOS]: 32,
+        [RACE_ITEMLESS_4V4]: 32,
+        [BATTLE_FFA]: 16,
+        [BATTLE_DUOS]: 16,
+        [BATTLE_3V3]: 24,
+        [BATTLE_4V4]: 32,
+        [BATTLE_SURVIVAL]: 32,
+        [CUSTOM]: 32,
+      };
+    } else {
+      maxPlayers = {
+        [RACE_ITEMS_FFA]: 8,
+        [RACE_ITEMS_DUOS]: 8,
+        [RACE_ITEMS_3V3]: 6,
+        [RACE_ITEMS_4V4]: 8,
+        [RACE_SURVIVAL]: 8,
+        [RACE_KRUNKING]: 6,
+        [RACE_ITEMLESS_FFA]: 8,
+        [RACE_ITEMLESS_DUOS]: 8,
+        [RACE_ITEMLESS_4V4]: 8,
+        [BATTLE_FFA]: 8,
+        [BATTLE_DUOS]: 4,
+        [BATTLE_3V3]: 6,
+        [BATTLE_4V4]: 8,
+        [BATTLE_SURVIVAL]: 8,
+        [CUSTOM]: 8,
+      };
+    }
 
     return maxPlayers[this.type];
   },
@@ -296,8 +388,8 @@ Lobby.methods = {
       [RACE_ITEMLESS_DUOS]: 8,
       [RACE_ITEMLESS_4V4]: 8,
       [BATTLE_FFA]: 5,
-      [BATTLE_DUOS]: 5,
-      [BATTLE_3V3]: 8,
+      [BATTLE_DUOS]: 6,
+      [BATTLE_3V3]: 6,
       [BATTLE_4V4]: 8,
       [BATTLE_SURVIVAL]: 7,
       [CUSTOM]: 0,
@@ -377,7 +469,11 @@ Lobby.methods = {
       title += UNKNOWN;
     }
 
-    title += ' Lobby';
+    if (this.isTournament()) {
+      title += ' Tournament';
+    } else {
+      title += ' Lobby';
+    }
 
     if (this.isRacing()) {
       if (this.draftTracks) {
@@ -404,6 +500,10 @@ Lobby.methods = {
     return title;
   },
   getIcon() {
+    if (this.isTournament()) {
+      return 'https://static.wikia.nocookie.net/crashban/images/8/81/NitroFueledTrophyRender.png';
+    }
+
     const icons = {
       [RACE_ITEMS_FFA]: 'https://vignette.wikia.nocookie.net/crashban/images/3/32/CTRNF-BowlingBomb.png',
       [RACE_ITEMS_DUOS]: 'https://vignette.wikia.nocookie.net/crashban/images/8/83/CTRNF-AkuUka.png',
@@ -425,27 +525,40 @@ Lobby.methods = {
     return icons[this.type];
   },
   getRoleName() {
-    const roleNames = {
-      [RACE_ITEMS_FFA]: config.roles.ranked_ffa_role,
-      [RACE_ITEMS_DUOS]: config.roles.ranked_duos_role,
-      [RACE_ITEMS_3V3]: config.roles.ranked_3v3_role,
-      [RACE_ITEMS_4V4]: config.roles.ranked_4v4_role,
-      [RACE_SURVIVAL]: config.roles.ranked_survival_role,
-      [RACE_KRUNKING]: config.roles.ranked_krunking_role,
-      [RACE_ITEMLESS_FFA]: config.roles.ranked_itemless_role,
-      [RACE_ITEMLESS_DUOS]: config.roles.ranked_itemless_duos_role,
-      [RACE_ITEMLESS_4V4]: config.roles.ranked_itemless_4v4_role,
-      [BATTLE_FFA]: config.roles.ranked_battle_ffa_role,
-      [BATTLE_DUOS]: config.roles.ranked_battle_duos_role,
-      [BATTLE_3V3]: config.roles.ranked_battle_3v3_role,
-      [BATTLE_4V4]: config.roles.ranked_battle_4v4_role,
-      [BATTLE_SURVIVAL]: config.roles.ranked_battle_survival_role,
-      [CUSTOM]: config.roles.ranked_custom_role,
+    let roleName;
+    if (this.ranked) {
+      roleName = 'Ranked ';
+    } else {
+      roleName = 'Unranked ';
+    }
+
+    const modeNames = {
+      [RACE_ITEMS_FFA]: 'FFA',
+      [RACE_ITEMS_DUOS]: 'Duos',
+      [RACE_ITEMS_3V3]: '3v3',
+      [RACE_ITEMS_4V4]: '4v4',
+      [RACE_SURVIVAL]: 'Survival',
+      [RACE_KRUNKING]: 'Krunking',
+      [RACE_ITEMLESS_FFA]: 'Itemless FFA',
+      [RACE_ITEMLESS_DUOS]: 'Itemless Duos',
+      [RACE_ITEMLESS_4V4]: 'Itemless 4v4',
+      [BATTLE_FFA]: 'Battle FFA',
+      [BATTLE_DUOS]: 'Battle Duos',
+      [BATTLE_3V3]: 'Battle 3v3',
+      [BATTLE_4V4]: 'Battle 4v4',
+      [BATTLE_SURVIVAL]: 'Battle Survival',
+      [CUSTOM]: 'Custom',
     };
 
-    return roleNames[this.type];
+    roleName += modeNames[this.type];
+
+    return roleName;
   },
   getColor() {
+    if (this.isTournament()) {
+      return 16318337; // Yellow
+    }
+
     const colors = {
       [RACE_ITEMS_FFA]: 3707391, // Medium Blue
       [RACE_ITEMS_DUOS]: 16732141, // Medium Pink
@@ -532,6 +645,10 @@ Lobby.methods = {
     ];
   },
   getMaxTrackCount() {
+    if (this.isTournament()) {
+      return this.getDefaultTrackCount();
+    }
+
     const maxTrackCount = {
       [RACE_ITEMS_FFA]: 37,
       [RACE_ITEMS_DUOS]: 37,
@@ -574,88 +691,31 @@ Lobby.methods = {
     return defaultLapCount[this.type];
   },
   isIronMan() {
-    return (this.trackCount === this.getMaxTrackCount() && !this.isSurvival());
+    // eslint-disable-next-line max-len
+    return (this.trackCount === this.getMaxTrackCount() && !this.isTournament() && !this.isSurvival());
   },
   getTrackOptions() {
-    const trackOptions = {
-      [RACE_ITEMS_FFA]: [
-        TRACK_OPTION_RNG,
-        TRACK_OPTION_POOLS,
-        TRACK_OPTION_IRON_MAN,
-      ],
-      [RACE_ITEMS_DUOS]: [
-        TRACK_OPTION_RNG,
-        TRACK_OPTION_POOLS,
-        TRACK_OPTION_IRON_MAN,
-      ],
-      [RACE_ITEMS_3V3]: [
-        TRACK_OPTION_RNG,
-        TRACK_OPTION_POOLS,
-        TRACK_OPTION_DRAFT,
-        TRACK_OPTION_IRON_MAN,
-      ],
-      [RACE_ITEMS_4V4]: [
-        TRACK_OPTION_RNG,
-        TRACK_OPTION_POOLS,
-        TRACK_OPTION_DRAFT,
-        TRACK_OPTION_IRON_MAN,
-      ],
-      [RACE_SURVIVAL]: [
-        TRACK_OPTION_RNG,
-        TRACK_OPTION_POOLS,
-      ],
-      [RACE_KRUNKING]: [
-        TRACK_OPTION_RNG,
-        TRACK_OPTION_POOLS,
-        TRACK_OPTION_DRAFT,
-        TRACK_OPTION_IRON_MAN,
-      ],
-      [RACE_ITEMLESS_FFA]: [
-        TRACK_OPTION_RNG,
-        TRACK_OPTION_POOLS,
-        TRACK_OPTION_IRON_MAN,
-      ],
-      [RACE_ITEMLESS_DUOS]: [
-        TRACK_OPTION_RNG,
-        TRACK_OPTION_POOLS,
-        TRACK_OPTION_IRON_MAN,
-      ],
-      [RACE_ITEMLESS_4V4]: [
-        TRACK_OPTION_RNG,
-        TRACK_OPTION_POOLS,
-        TRACK_OPTION_DRAFT,
-        TRACK_OPTION_IRON_MAN,
-      ],
-      [BATTLE_FFA]: [
-        TRACK_OPTION_RNG,
-        TRACK_OPTION_POOLS,
-        TRACK_OPTION_IRON_MAN,
-      ],
-      [BATTLE_DUOS]: [
-        TRACK_OPTION_RNG,
-        TRACK_OPTION_POOLS,
-        TRACK_OPTION_IRON_MAN,
-      ],
-      [BATTLE_3V3]: [
-        TRACK_OPTION_RNG,
-        TRACK_OPTION_POOLS,
-        TRACK_OPTION_DRAFT,
-        TRACK_OPTION_IRON_MAN,
-      ],
-      [BATTLE_4V4]: [
-        TRACK_OPTION_RNG,
-        TRACK_OPTION_POOLS,
-        TRACK_OPTION_DRAFT,
-        TRACK_OPTION_IRON_MAN,
-      ],
-      [BATTLE_SURVIVAL]: [
-        TRACK_OPTION_RNG,
-        TRACK_OPTION_POOLS,
-      ],
-      [CUSTOM]: [],
-    };
+    if (this.isCustom()) {
+      return [];
+    }
 
-    return trackOptions[this.type];
+    // all lobby types at least have full rng and pools
+    const trackOptions = [
+      TRACK_OPTION_RNG,
+      TRACK_OPTION_POOLS,
+    ];
+
+    if (this.isStandard()) {
+      // Iron Man is available for all lobby types except tournaments
+      trackOptions.push(TRACK_OPTION_IRON_MAN);
+    }
+
+    if (this.isWar()) {
+      // drafting for all 3 vs. 3 / 4 vs. 4 modes
+      trackOptions.push(TRACK_OPTION_DRAFT);
+    }
+
+    return trackOptions;
   },
   getBannedTracks() {
     let bannedTracks;
@@ -726,7 +786,6 @@ Lobby.methods = {
       (this.lapCount === this.getDefaultLapCount() || this.isBattle())
       && this.engineRestriction === null
       && this.trackCount === this.getDefaultTrackCount()
-      && this.ruleset === 1
       && this.hasLeaderboard()
     );
   },
@@ -735,6 +794,33 @@ Lobby.methods = {
   },
   getReactionEmote() {
     return '✅';
+  },
+  isStandard() {
+    return this.mode === LOBBY_MODE_STANDARD;
+  },
+  isTournament() {
+    return this.mode === LOBBY_MODE_TOURNAMENT;
+  },
+  hasTournamentsEnabled() {
+    const enabled = {
+      [RACE_ITEMS_FFA]: true,
+      [RACE_ITEMS_DUOS]: false,
+      [RACE_ITEMS_3V3]: false,
+      [RACE_ITEMS_4V4]: false,
+      [RACE_SURVIVAL]: false,
+      [RACE_KRUNKING]: false,
+      [RACE_ITEMLESS_FFA]: true,
+      [RACE_ITEMLESS_DUOS]: false,
+      [RACE_ITEMLESS_4V4]: false,
+      [BATTLE_FFA]: false,
+      [BATTLE_DUOS]: false,
+      [BATTLE_3V3]: false,
+      [BATTLE_4V4]: false,
+      [BATTLE_SURVIVAL]: false,
+      [CUSTOM]: false,
+    };
+
+    return enabled[this.type];
   },
 };
 

@@ -68,7 +68,7 @@ module.exports = {
             psnMapping[p.discordId] = p.psn;
           }
 
-          if (p.flag) {
+          if (p.flag !== '🇺🇳') {
             if (!countryMembers[p.flag]) {
               countryMembers[p.flag] = {
                 flag: p.flag,

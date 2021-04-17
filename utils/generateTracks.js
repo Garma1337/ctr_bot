@@ -1,3 +1,4 @@
+const shuffleArray = require('./shuffleArray');
 const poolItems3 = require('../db/pools/items_3');
 const poolItems4 = require('../db/pools/items_4');
 const poolItems5 = require('../db/pools/items_5');
@@ -5,19 +6,6 @@ const poolItemless3 = require('../db/pools/itemless_3');
 const poolBattle3 = require('../db/pools/battle_3');
 const poolBattle4 = require('../db/pools/battle_4');
 const poolBattle5 = require('../db/pools/battle_5');
-
-/**
- * shuffles an array
- * @param array
- */
-function shuffle(array) {
-  for (let i = array.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [array[i], array[j]] = [array[j], array[i]];
-  }
-
-  return array;
-}
 
 /**
  * Removes banned tracks from the track pool
@@ -36,7 +24,7 @@ function removeBannedTracks(pool, doc) {
  * @returns Array
  */
 async function generateTracks(doc) {
-  if (doc.trackCount <= 0) {
+  if (doc.trackCount <= 0 || doc.isCustom() || doc.isTournament()) {
     return ['-'];
   }
 
@@ -124,7 +112,7 @@ async function generateTracks(doc) {
     return m;
   });
 
-  return shuffle(maps);
+  return shuffleArray(maps);
 }
 
 module.exports = generateTracks;

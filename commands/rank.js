@@ -1,9 +1,7 @@
 const { Player } = require('../db/models/player');
 const { Rank } = require('../db/models/rank');
-const calculateSuperScore = require('../utils/calculateSuperScore');
 const createPageableContent = require('../utils/createPageableContent');
 const generateSuperScoreRanking = require('../utils/generateSuperScoreRanking');
-const getConfigValue = require('../utils/getConfigValue');
 const sendAlertMessage = require('../utils/sendAlertMessage');
 
 const {
@@ -91,6 +89,11 @@ module.exports = {
           psn = args[0];
         } else {
           const player = await Player.findOne({ discordId: user.id });
+
+          if (!player) {
+            return sendAlertMessage(message.channel, `<@!${user.id}> has not played any ranked matches yet.`, 'warning');
+          }
+
           psn = player.psn || '-';
         }
 

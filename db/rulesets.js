@@ -2,7 +2,7 @@ module.exports.rulesets = [
   {
     uid: 'ag',
     name: 'Anything Goes',
-    ranked: false,
+    ranked: true,
   },
   {
     uid: 'def',
@@ -12,6 +12,6 @@ module.exports.rulesets = [
   {
     uid: 'nmg',
     name: 'No Major Glitches',
-    ranked: false,
+    ranked: true,
   },
 ];

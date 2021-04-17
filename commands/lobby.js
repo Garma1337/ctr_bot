@@ -24,6 +24,21 @@ const {
   TRACK_OPTION_POOLS,
   TRACK_OPTION_DRAFT,
   TRACK_OPTION_IRON_MAN,
+  LOBBY_MODE_STANDARD,
+  LOBBY_MODE_TOURNAMENT,
+  CUSTOM_OPTION_MODE,
+  CUSTOM_OPTION_TRACK_POOL,
+  CUSTOM_OPTION_PLAYERS,
+  CUSTOM_OPTION_TRACKS,
+  CUSTOM_OPTION_LAPS,
+  CUSTOM_OPTION_RULESET,
+  CUSTOM_OPTION_REGION,
+  CUSTOM_OPTION_ENGINE,
+  CUSTOM_OPTION_SURVIVAL_STYLE,
+  CUSTOM_OPTION_PREMADE_TEAMS,
+  CUSTOM_OPTION_RESERVE,
+  CUSTOM_OPTION_TYPE,
+  CUSTOM_OPTION_MMR_LOCK,
 } = require('../db/models/lobby');
 const config = require('../config.js');
 const { Cooldown } = require('../db/models/cooldown');
@@ -49,7 +64,8 @@ const isStaffMember = require('../utils/isStaffMember');
 const generateBattleModes = require('../utils/generateBattleModes');
 const sendAlertMessage = require('../utils/sendAlertMessage');
 const sendLogMessage = require('../utils/sendLogMessage');
-const { battleModesFFA, battleModes4v4 } = require('../db/modes_battle');
+const shuffleArray = require('../utils/shuffleArray');
+const { battleModesSolos, battleModesTeams } = require('../db/modes_battle');
 const { engineStyles } = require('../db/engineStyles');
 const { regions } = require('../db/regions');
 const { rulesets } = require('../db/rulesets');
@@ -360,7 +376,7 @@ async function findRoomChannel(guildId, n) {
   let channel = guild.channels.cache.find((c) => c.name === channelName);
   if (!channel) {
     const roleStaff = await createAndFindRole(guild, config.roles.staff_role);
-    const roleRanked = await createAndFindRole(guild, config.roles.matchmaking_role);
+    const roleMatchmaking = await createAndFindRole(guild, config.roles.matchmaking_role);
     const roleRankedVerified = await createAndFindRole(guild, config.roles.ranked_verified_role);
 
     channel = await guild.channels.create(channelName, {
@@ -369,12 +385,211 @@ async function findRoomChannel(guildId, n) {
     });
 
     await channel.createOverwrite(roleStaff, { VIEW_CHANNEL: true });
-    await channel.createOverwrite(roleRanked, { VIEW_CHANNEL: true });
+    await channel.createOverwrite(roleMatchmaking, { VIEW_CHANNEL: true });
     await channel.createOverwrite(roleRankedVerified, { VIEW_CHANNEL: true });
     await channel.createOverwrite(guild.roles.everyone, { VIEW_CHANNEL: false });
   }
 
   return channel;
+}
+
+async function getPlayersText(doc) {
+  let playersText = '';
+
+  if (doc.isTeams()) {
+    playersText += '**Teams:**\n';
+
+    for (const team of doc.teamList) {
+      const i = doc.teamList.indexOf(team);
+      let mmrSum = 0;
+
+      for (const p of team) {
+        const player = await Player.findOne({ discordId: p });
+        const rank = await Rank.findOne({ name: player.psn });
+
+        let mmr = doc.getDefaultRank();
+        if (rank && rank[doc.type] && rank[doc.type].rank) {
+          mmr = rank[doc.type].rank;
+        }
+
+        mmrSum += mmr;
+      }
+
+      playersText += `Team ${i + 1} (Elo: ${Math.floor(mmrSum / team.length)})\n`;
+
+      // eslint-disable-next-line no-loop-func
+      team.forEach((p) => {
+        playersText += `<@${p}>\n`;
+      });
+    }
+  } else {
+    playersText = doc.players.map((u, i) => `${i + 1}. <@${u}>`).join('\n');
+  }
+
+  return playersText;
+}
+
+async function getPlayerRanks(doc, players) {
+  players = players.sort(() => Math.random() - 0.5);
+  const playerRanks = [];
+
+  if (players.length > 0) {
+    const playerModels = await Player.find({ discordId: { $in: players } });
+
+    for (const player of playerModels) {
+      const rank = await Rank.findOne({ name: player.psn });
+
+      let ranking = doc.getDefaultRank();
+      if (rank && rank[doc.type]) {
+        ranking = rank[doc.type].rank;
+      }
+
+      playerRanks.push({
+        discordId: player.discordId,
+        rank: ranking,
+      });
+    }
+  }
+
+  return playerRanks.sort((a, b) => a.rank - b.rank);
+}
+
+function sendBattleModeSettings(doc, roomChannel, modes) {
+  let list;
+
+  if (!doc.isTeams()) {
+    list = battleModesSolos;
+  } else {
+    list = battleModesTeams;
+  }
+
+  const embedFields = [];
+  const entries = [];
+
+  modes.forEach((mode) => {
+    list.forEach((battleMode) => {
+      const entry = battleMode.find((element) => element.name === mode);
+
+      if (entry !== undefined && !entries.find((e) => e === mode)) {
+        embedFields.push({
+          name: mode,
+          value: entry.settings.join('\n'),
+        });
+
+        entries.push(mode);
+      }
+    });
+  });
+
+  getConfigValue('battle_mode_settings_image', 'https://i.imgur.com/k56NKZc.jpg').then((image) => {
+    roomChannel.send({
+      embed: {
+        color: doc.getColor(),
+        description: '**Global Settings**\nTeams: None (4 for Steal The Bacon)\nAI: Disabled',
+        author: {
+          name: 'Battle Mode Settings',
+        },
+        image: {
+          url: image,
+        },
+        fields: embedFields,
+      },
+    });
+  });
+}
+
+function createBalancedTeams(doc, soloPlayers) {
+  const randomTeams = [];
+  const playerRanks = getPlayerRanks(doc, soloPlayers);
+  const teamCount = (soloPlayers.length / doc.getTeamSize());
+
+  if (doc.isDuos()) {
+    for (let i = 1; i <= teamCount; i += 1) {
+      const firstPlayer = playerRanks.shift();
+      const lastPlayer = playerRanks.pop();
+
+      randomTeams.push([
+        firstPlayer.discordId,
+        lastPlayer.discordId,
+      ]);
+    }
+  } else if (doc.isWar()) {
+    if (teamCount > 1) {
+      const result = greedyPartition(playerRanks, doc.getTeamSize(), 'rank');
+
+      const playersA = result.A.map((a) => a.discordId);
+      const playersB = result.B.map((b) => b.discordId);
+
+      randomTeams.push([...playersA]);
+      randomTeams.push([...playersB]);
+    } else {
+      const discordIds = playerRanks.map((s) => s.discordId);
+      randomTeams.push([...discordIds]);
+    }
+  }
+
+  return randomTeams;
+}
+
+async function setupTournamentRound(doc, roomChannel) {
+  /* Create tracks based on the underlying format */
+  const lobby = doc;
+  lobby.mode = LOBBY_MODE_STANDARD;
+
+  const tracks = await generateTracks(lobby);
+
+  if (doc.isSolos()) {
+    const lobbyCount = doc.players.length / doc.getDefaultPlayerCount();
+    const shuffledPlayers = shuffleArray(doc.players);
+    const lobbyData = [];
+
+    // eslint-disable-next-line no-plusplus
+    for (let i = 1; i <= lobbyCount; i++) {
+      const players = [];
+
+      // eslint-disable-next-line no-plusplus
+      for (let x = 1; x <= doc.getDefaultPlayerCount(); x++) {
+        players.push(shuffledPlayers.shift());
+      }
+
+      const [PSNs, templateUrl, template] = await generateTemplate(players, doc);
+
+      lobbyData.push({
+        players,
+        PSNs,
+        templateUrl,
+        number: i,
+        tracks,
+        template,
+      });
+    }
+
+    lobbyData.forEach((l) => {
+      const embed = {
+        color: doc.getColor(),
+        title: `Lobby ${l.number}`,
+        fields: [
+          {
+            name: 'PSN IDs & Ranks',
+            value: l.PSNs.join('\n'),
+            inline: true,
+          },
+          {
+            name: 'Tracks',
+            value: tracks.join('\n'),
+            inline: true,
+          },
+          {
+            name: 'Score Template',
+            value: `${l.template}\n\n[Open template on gb.hlorenzi.com](${l.templateUrl})`,
+          },
+        ],
+      };
+
+      const pings = doc.players.map((m) => `<@!${m}>`).join(', ');
+      roomChannel.send({ content: pings, embed });
+    });
+  }
 }
 
 function startLobby(docId) {
@@ -385,251 +600,149 @@ function startLobby(docId) {
       generateTracks(doc).then((tracks) => {
         findRoom(doc).then((room) => {
           findRoomChannel(doc.guild, room.number).then(async (roomChannel) => {
-            const trackCount = tracks.length;
-
-            // Display track column but blank all tracks
-            if (doc.isWar() && doc.draftTracks) {
-              tracks = [];
-
-              for (let i = 1; i <= trackCount; i += 1) {
-                tracks.push('*N/A*');
-              }
-            }
-
-            tracks = tracks.join('\n');
-            const { players } = doc;
-
-            let playersText = '';
-            if (doc.isTeams()) {
-              let soloPlayers = [...players];
-
-              doc.teamList.forEach((team) => {
-                team.forEach((player) => {
-                  soloPlayers = soloPlayers.filter((p) => p !== player);
+            if (doc.isTournament()) {
+              sendAlertMessage(roomChannel, `The ${doc.getTitle()} is starting!`, 'info', doc.players).then(async () => {
+                await message.edit({
+                  embed: await getEmbed(doc, doc.players, tracks, roomChannel),
                 });
-              });
 
-              soloPlayers = soloPlayers.sort(() => Math.random() - 0.5);
-
-              const randomTeams = [];
-              const teamCount = soloPlayers.length / doc.getTeamSize();
-
-              // Balanced team making
-              if (soloPlayers.length > 0) {
-                let soloPlayerRanks = [];
-                const soloPlayerModels = await Player.find({ discordId: { $in: soloPlayers } });
-
-                for (const soloPlayer of soloPlayerModels) {
-                  const rank = await Rank.findOne({ name: soloPlayer.psn });
-
-                  let ranking = doc.getDefaultRank();
-                  if (rank && rank[doc.type]) {
-                    ranking = rank[doc.type].rank;
-                  }
-
-                  soloPlayerRanks.push({
-                    discordId: soloPlayer.discordId,
-                    rank: ranking,
-                  });
-                }
-
-                soloPlayerRanks = soloPlayerRanks.sort((a, b) => a.rank - b.rank);
-
-                if (doc.isDuos()) {
-                  for (let i = 1; i <= teamCount; i += 1) {
-                    const firstPlayer = soloPlayerRanks.shift();
-                    const lastPlayer = soloPlayerRanks.pop();
-
-                    randomTeams.push([
-                      firstPlayer.discordId,
-                      lastPlayer.discordId,
-                    ]);
-                  }
-                }
-
-                if (doc.isWar()) {
-                  if (teamCount > 1) {
-                    const result = greedyPartition(soloPlayerRanks, doc.getTeamSize(), 'rank');
-
-                    const playersA = result.A.map((a) => a.discordId);
-                    const playersB = result.B.map((b) => b.discordId);
-
-                    randomTeams.push([...playersA]);
-                    randomTeams.push([...playersB]);
-                  } else {
-                    const discordIds = soloPlayerRanks.map((s) => s.discordId);
-                    randomTeams.push([...discordIds]);
-                  }
-                }
-              }
-
-              doc.teamList = Array.from(doc.teamList).concat(randomTeams);
-              doc = await doc.save();
-
-              playersText += '**Teams:**\n';
-              doc.teamList.forEach((team, i) => {
-                playersText += `${i + 1}.`;
-                team.forEach((player, k) => {
-                  playersText += `${k ? '⠀' : ''} <@${player}>\n`;
-                });
+                await setupTournamentRound(doc, roomChannel);
               });
             } else {
-              playersText = players.map((u, i) => `${i + 1}. <@${u}>`).join('\n');
-            }
+              // Display track column but blank all tracks
+              if (doc.isWar() && doc.draftTracks) {
+                tracks = [];
 
-            const [PSNs, templateUrl, template] = await generateTemplate(players, doc);
+                for (let i = 1; i <= doc.trackCount; i += 1) {
+                  tracks.push('*N/A*');
+                }
+              }
 
-            await message.edit({
-              embed: await getEmbed(doc, players, tracks, roomChannel),
-            });
+              tracks = tracks.join('\n');
+              const { players } = doc;
+              const playersText = getPlayersText(doc);
 
-            const fields = [
-              {
-                name: 'PSN IDs & Ranks',
-                value: PSNs.join('\n'),
-                inline: true,
-              },
-              {
-                name: 'Tracks',
-                value: tracks,
-                inline: true,
-              },
-            ];
+              if (doc.isTeams()) {
+                const randomTeams = createBalancedTeams(doc, doc.getSoloPlayers());
 
-            let modes = [];
-            if (doc.isBattle()) {
-              modes = await generateBattleModes(doc.type, tracks.split('\n'), players.length);
+                doc.teamList = Array.from(doc.teamList).concat(randomTeams);
+                doc = await doc.save();
+              }
 
-              fields.push({
-                name: 'Modes',
-                value: modes.join('\n'),
-                inline: true,
+              const [PSNs, templateUrl, template] = await generateTemplate(players, doc);
+
+              await message.edit({
+                embed: await getEmbed(doc, players, tracks, roomChannel),
               });
-            }
 
-            roomChannel.send({
-              content: `**The ${doc.getTitle()} has started**
+              const fields = [
+                {
+                  name: 'PSN IDs & Ranks',
+                  value: PSNs.join('\n'),
+                  inline: true,
+                },
+                {
+                  name: 'Tracks',
+                  value: tracks,
+                  inline: true,
+                },
+              ];
+
+              let modes = [];
+              if (doc.isBattle()) {
+                modes = await generateBattleModes(doc.type, tracks.split('\n'), players.length);
+
+                fields.push({
+                  name: 'Modes',
+                  value: modes.join('\n'),
+                  inline: true,
+                });
+              }
+
+              roomChannel.send({
+                content: `**The ${doc.getTitle()} has started**
 Your room is ${roomChannel}.
 Use \`!lobby end\` when your match is done.
 ${playersText}`,
-              embed: {
-                color: doc.getColor(),
-                title: `The ${doc.getTitle()} has started`,
-                fields,
-              },
-            }).then((m) => {
-              roomChannel.messages.fetchPinned().then((pinnedMessages) => {
-                pinnedMessages.forEach((pinnedMessage) => pinnedMessage.unpin());
-                m.pin();
+                embed: {
+                  color: doc.getColor(),
+                  title: `The ${doc.getTitle()} has started`,
+                  fields,
+                },
+              }).then((m) => {
+                roomChannel.messages.fetchPinned().then((pinnedMessages) => {
+                  pinnedMessages.forEach((pinnedMessage) => pinnedMessage.unpin());
+                  m.pin();
 
-                roomChannel.send({
-                  embed: {
-                    color: doc.getColor(),
-                    title: 'Scores Template',
-                    description: `\`\`\`${template}\`\`\`
+                  roomChannel.send({
+                    embed: {
+                      color: doc.getColor(),
+                      title: 'Score Template',
+                      description: `\`\`\`${template}\`\`\`
   [Open template on gb.hlorenzi.com](${templateUrl})`,
-                  },
-                }).then(() => {
-                  if (doc.isBattle()) {
-                    let list;
-
-                    if (!doc.isTeams()) {
-                      list = battleModesFFA;
-                    } else {
-                      list = battleModes4v4;
+                    },
+                  }).then(() => {
+                    if (doc.isBattle()) {
+                      sendBattleModeSettings(doc, roomChannel, modes);
                     }
 
-                    const embedFields = [];
-                    const entries = [];
+                    if (doc.ranked) {
+                      sendAlertMessage(roomChannel, `Report any rule violations to ranked staff by sending a DM to <@!${config.bot_user_id}>.`, 'info');
+                    }
 
-                    modes.forEach((mode) => {
-                      list.forEach((battleMode) => {
-                        const entry = battleMode.find((element) => element.name === mode);
+                    // eslint-disable-next-line no-shadow
+                    sendAlertMessage(roomChannel, 'Select a scorekeeper. The scorekeeper can react to this message to make others aware that he is keeping scores. If nobody reacts to this message within 5 minutes the lobby will be ended automatically.', 'info').then((m) => {
+                      setTimeout(() => {
+                        sendAlertMessage(roomChannel, 'Don\'t forget to select your scorekeeper because otherwise the lobby will be ended soon.', 'info');
+                      }, 240000);
 
-                        if (entry !== undefined && !entries.find((e) => e === mode)) {
-                          embedFields.push({
-                            name: mode,
-                            value: entry.settings.join('\n'),
-                          });
+                      m.react('✅');
 
-                          entries.push(mode);
+                      const filter = (r, u) => ['✅'].includes(r.emoji.name) && doc.players.includes(u.id);
+                      const options = { max: 1, time: 300000, errors: ['time'] };
+
+                      m.awaitReactions(filter, options).then((collected) => {
+                        const reaction = collected.first();
+                        const user = reaction.users.cache.last();
+
+                        m.delete();
+                        sendAlertMessage(roomChannel, `<@!${user.id}> has volunteered to do scores. Please make sure you keep the lobby updated about mid-match scores.`, 'success');
+                      }).catch(() => {
+                        // eslint-disable-next-line no-use-before-define
+                        deleteLobby(doc);
+                        m.delete();
+                        sendAlertMessage(roomChannel, 'The lobby was ended automatically because nobody volunteered to keep scores.', 'warning');
+                      });
+                    });
+
+                    if (doc.isWar() && doc.draftTracks) {
+                      const teams = ['A', 'B'];
+
+                      // eslint-disable-next-line max-len
+                      const captainAPromise = client.guilds.cache.get(doc.guild).members.fetch(getRandomArrayElement(doc.teamList[0]));
+                      // eslint-disable-next-line max-len
+                      const captainBPromise = client.guilds.cache.get(doc.guild).members.fetch(getRandomArrayElement(doc.teamList[1]));
+
+                      Promise.all([captainAPromise, captainBPromise]).then((captains) => {
+                        switch (doc.type) {
+                          case RACE_3V3:
+                            createDraft(roomChannel, '1', teams, captains);
+                            break;
+                          case RACE_4V4:
+                            createDraft(roomChannel, '0', teams, captains);
+                            break;
+                          case BATTLE_4V4:
+                            createDraftv2(roomChannel, 2, 0, 4, 30, captains);
+                            break;
+                          default:
+                            break;
                         }
                       });
-                    });
-
-                    getConfigValue('battle_mode_settings_image', 'https://i.imgur.com/k56NKZc.jpg').then((image) => {
-                      roomChannel.send({
-                        embed: {
-                          color: doc.getColor(),
-                          description: '**Global Settings**\nTeams: None (4 for Steal The Bacon)\nAI: Disabled',
-                          author: {
-                            name: 'Battle Mode Settings',
-                          },
-                          image: {
-                            url: image,
-                          },
-                          fields: embedFields,
-                        },
-                      });
-                    });
-                  }
-
-                  if (doc.ranked) {
-                    sendAlertMessage(roomChannel, `Report any rule violations to ranked staff by sending a DM to <@!${config.bot_user_id}>.`, 'info').then(() => {
-                      // eslint-disable-next-line no-shadow
-                      sendAlertMessage(roomChannel, 'Select a scorekeeper. The scorekeeper can react to this message to make others aware that he is keeping scores. If nobody reacts to this message within 5 minutes the lobby will be ended automatically.', 'info').then((m) => {
-                        setTimeout(() => {
-                          sendAlertMessage(roomChannel, 'Don\'t forget to select your scorekeeper because otherwise the lobby will be ended soon.', 'info');
-                        }, 240000);
-
-                        m.react('✅');
-
-                        const filter = (r, u) => ['✅'].includes(r.emoji.name) && doc.players.includes(u.id);
-                        const options = { max: 1, time: 300000, errors: ['time'] };
-
-                        m.awaitReactions(filter, options).then((collected) => {
-                          const reaction = collected.first();
-                          const user = reaction.users.cache.last();
-
-                          m.delete();
-                          sendAlertMessage(roomChannel, `<@!${user.id}> has volunteered to do scores. Please make sure you keep the lobby updated about mid-match scores.`, 'success');
-                        }).catch(() => {
-                          // eslint-disable-next-line no-use-before-define
-                          deleteLobby(doc);
-                          m.delete();
-                          sendAlertMessage(roomChannel, 'The lobby was ended automatically because nobody volunteered to keep scores.', 'warning');
-                        });
-                      });
-                    });
-                  }
-
-                  if (doc.isWar() && doc.draftTracks) {
-                    const teams = ['A', 'B'];
-
-                    // eslint-disable-next-line max-len
-                    const captainAPromise = client.guilds.cache.get(doc.guild).members.fetch(getRandomArrayElement(doc.teamList[0]));
-                    // eslint-disable-next-line max-len
-                    const captainBPromise = client.guilds.cache.get(doc.guild).members.fetch(getRandomArrayElement(doc.teamList[1]));
-
-                    Promise.all([captainAPromise, captainBPromise]).then((captains) => {
-                      switch (doc.type) {
-                        case RACE_3V3:
-                          createDraft(roomChannel, '1', teams, captains);
-                          break;
-                        case RACE_4V4:
-                          createDraft(roomChannel, '0', teams, captains);
-                          break;
-                        case BATTLE_4V4:
-                          createDraftv2(roomChannel, 2, 0, 4, 30, captains);
-                          break;
-                        default:
-                          break;
-                      }
-                    });
-                  }
+                    }
+                  });
                 });
               });
-            });
+            }
           });
         });
       });
@@ -805,7 +918,7 @@ module.exports = {
   // eslint-disable-next-line consistent-return
   async execute(message, args) {
     let action = args[0];
-    let custom = false;
+    let custom = [];
 
     if (!action) {
       action = 'new';
@@ -813,7 +926,28 @@ module.exports = {
 
     if (action === 'custom') {
       action = 'new';
-      custom = true;
+
+      args.shift();
+      custom = args;
+
+      if (args.length <= 0) {
+        // show all options by default
+        custom = [
+          CUSTOM_OPTION_MODE,
+          CUSTOM_OPTION_TRACK_POOL,
+          CUSTOM_OPTION_PLAYERS,
+          CUSTOM_OPTION_TRACKS,
+          CUSTOM_OPTION_LAPS,
+          CUSTOM_OPTION_RULESET,
+          CUSTOM_OPTION_REGION,
+          CUSTOM_OPTION_ENGINE,
+          CUSTOM_OPTION_SURVIVAL_STYLE,
+          CUSTOM_OPTION_PREMADE_TEAMS,
+          CUSTOM_OPTION_RESERVE,
+          CUSTOM_OPTION_TYPE,
+          CUSTOM_OPTION_MMR_LOCK,
+        ];
+      }
     }
 
     const lobbyID = args[1];
@@ -950,6 +1084,42 @@ module.exports = {
               lobby.creator = message.author.id;
               lobby.type = type;
 
+              const lobbyModes = [
+                LOBBY_MODE_STANDARD,
+                LOBBY_MODE_TOURNAMENT,
+              ];
+
+              let mode = LOBBY_MODE_STANDARD;
+
+              if (lobby.hasTournamentsEnabled() && custom.includes(CUSTOM_OPTION_MODE)) {
+                sentMessage = await sendAlertMessage(message.channel, `Select the lobby mode. Waiting 1 minute.
+
+1 - Standard Lobby ${config.ranked_option_emote}
+2 - Tournament ${config.ranked_option_emote}`, 'info');
+
+                // eslint-disable-next-line no-shadow,max-len
+                mode = await message.channel.awaitMessages(filter, options).then(async (collected) => {
+                  sentMessage.delete();
+
+                  collectedMessage = collected.first();
+                  // eslint-disable-next-line no-shadow
+                  const { content } = collectedMessage;
+
+                  // eslint-disable-next-line no-shadow
+                  const choice = parseInt(content, 10) - 1;
+                  if (lobbyModes[choice]) {
+                    return lobbyModes[choice];
+                  }
+
+                  return LOBBY_MODE_STANDARD;
+                }).catch(() => {
+                  sentMessage.delete();
+                  return LOBBY_MODE_STANDARD;
+                });
+              }
+
+              lobby.mode = mode;
+
               const trackOptions = lobby.getTrackOptions();
 
               // eslint-disable-next-line max-len
@@ -957,7 +1127,7 @@ module.exports = {
               let pools = ![RACE_FFA, BATTLE_FFA].includes(type);
               let draftTracks = false;
 
-              if (trackOptions.length > 1 && custom) {
+              if (trackOptions.length > 1 && custom.includes(CUSTOM_OPTION_TRACK_POOL)) {
                 sentMessage = await sendAlertMessage(message.channel, `Select track option. Waiting 1 minute.
 
 ${trackOptions.map((t, i) => `${i + 1} - ${t}${t !== TRACK_OPTION_IRON_MAN ? ` ${config.ranked_option_emote}` : ''}`).join('\n')}`, 'info');
@@ -998,7 +1168,7 @@ ${trackOptions.map((t, i) => `${i + 1} - ${t}${t !== TRACK_OPTION_IRON_MAN ? ` $
               let maxPlayerCount = lobby.getDefaultPlayerCount();
 
               // eslint-disable-next-line max-len
-              if (lobby.getMinimumPlayerCount() !== lobby.getMaxPlayerCount() && custom) {
+              if (lobby.getMinimumPlayerCount() !== lobby.getMaxPlayerCount() && custom.includes(CUSTOM_OPTION_PLAYERS)) {
                 sentMessage = await sendAlertMessage(message.channel, `Select the maximum number of players. The number has to be any of \`${lobby.getMinimumPlayerCount()}\` to \`${lobby.getMaxPlayerCount()}\`. Every other input will be counted as \`${lobby.getMaxPlayerCount()}\` ${config.ranked_option_emote}.`, 'info');
 
                 // eslint-disable-next-line max-len,no-shadow
@@ -1028,7 +1198,7 @@ ${trackOptions.map((t, i) => `${i + 1} - ${t}${t !== TRACK_OPTION_IRON_MAN ? ` $
               let trackCount = (trackOption === TRACK_OPTION_IRON_MAN ? lobby.getMaxTrackCount() : lobby.getDefaultTrackCount());
 
               // eslint-disable-next-line max-len
-              if (trackOption !== TRACK_OPTION_IRON_MAN && !draftTracks && !lobby.isSurvival() && lobby.getMaxTrackCount() > 0 && custom) {
+              if (trackOption !== TRACK_OPTION_IRON_MAN && !draftTracks && !lobby.isSurvival() && lobby.getMaxTrackCount() > 0 && custom.includes(CUSTOM_OPTION_TRACKS)) {
                 sentMessage = await sendAlertMessage(message.channel, `Select the number of tracks. The number has to be any of \`1\` to \`${lobby.getMaxTrackCount()}\`. Every other input will be counted as \`${lobby.getDefaultTrackCount()}\` ${config.ranked_option_emote}.`, 'info');
 
                 // eslint-disable-next-line max-len,no-shadow
@@ -1054,7 +1224,7 @@ ${trackOptions.map((t, i) => `${i + 1} - ${t}${t !== TRACK_OPTION_IRON_MAN ? ` $
               lobby.trackCount = trackCount;
 
               let lapCount = lobby.getDefaultLapCount();
-              if (!lobby.isBattle() && custom) {
+              if (!lobby.isBattle() && custom.includes(CUSTOM_OPTION_LAPS)) {
                 sentMessage = await sendAlertMessage(message.channel, `Select the number of laps. The number has to be \`3\`, \`5\` or \`7\`. Every other input will be counted as \`${lobby.getDefaultLapCount()}\` ${config.ranked_option_emote}.`, 'info');
 
                 // eslint-disable-next-line no-shadow,max-len
@@ -1080,7 +1250,7 @@ ${trackOptions.map((t, i) => `${i + 1} - ${t}${t !== TRACK_OPTION_IRON_MAN ? ` $
               lobby.lapCount = lapCount;
 
               let ruleset = 1;
-              if (!lobby.isBattle() && custom) {
+              if (!lobby.isBattle() && custom.includes(CUSTOM_OPTION_RULESET)) {
                 sentMessage = await sendAlertMessage(message.channel, `Select the ruleset. Waiting 1 minute.
 
 ${rulesets.map((r, i) => `${i + 1} - ${r.name}${r.ranked ? ` ${config.ranked_option_emote}` : ''}`).join('\n')}`, 'info');
@@ -1105,7 +1275,7 @@ ${rulesets.map((r, i) => `${i + 1} - ${r.name}${r.ranked ? ` ${config.ranked_opt
               lobby.ruleset = ruleset;
 
               let region = null;
-              if (custom) {
+              if (custom.includes(CUSTOM_OPTION_REGION)) {
                 sentMessage = await sendAlertMessage(message.channel, `Select region lock. Waiting 1 minute.
 
 ${regions.map((r, i) => `${i + 1} - ${r.description} ${config.ranked_option_emote}`).join('\n')}
@@ -1137,7 +1307,7 @@ ${regions.length + 1} - No region lock ${config.ranked_option_emote}`, 'info');
 
               let engineRestriction = null;
               const engineUids = engineStyles.map((e) => e.uid);
-              if (!lobby.isBattle() && custom) {
+              if (!lobby.isBattle() && custom.includes(CUSTOM_OPTION_ENGINE)) {
                 sentMessage = await sendAlertMessage(message.channel, `Select an engine restriction. Waiting 1 minute.
 
 ${engineStyles.map((e, i) => `${i + 1} - ${e.name}${e.ranked ? ` ${config.ranked_option_emote}` : ''}`).join('\n')}
@@ -1166,7 +1336,9 @@ ${engineStyles.length + 1} - No engine restriction ${config.ranked_option_emote}
               lobby.engineRestriction = engineRestriction;
 
               let survivalStyle = 1;
-              if (lobby.isRacing() && lobby.isSurvival() && custom) {
+
+              // eslint-disable-next-line max-len
+              if (lobby.isRacing() && lobby.isSurvival() && custom.includes(CUSTOM_OPTION_SURVIVAL_STYLE)) {
                 sentMessage = await sendAlertMessage(message.channel, `Select a play style. Waiting 1 minute.
 
 ${SURVIVAL_STYLES.map((s, i) => `${i + 1} - ${s} ${config.ranked_option_emote}`).join('\n')}`, 'info');
@@ -1199,7 +1371,7 @@ ${SURVIVAL_STYLES.map((s, i) => `${i + 1} - ${s} ${config.ranked_option_emote}`)
 
               let allowPremadeTeams = true;
               // eslint-disable-next-line max-len
-              if (custom && lobby.isTeams()) {
+              if (lobby.isTeams() && custom.includes(CUSTOM_OPTION_PREMADE_TEAMS)) {
                 sentMessage = await sendAlertMessage(message.channel, `Do you want to allow premade teams? (yes / no) ${config.ranked_option_emote}`, 'info');
                 // eslint-disable-next-line max-len,no-shadow
                 allowPremadeTeams = await message.channel.awaitMessages(filter, options).then(async (collected) => {
@@ -1219,7 +1391,7 @@ ${SURVIVAL_STYLES.map((s, i) => `${i + 1} - ${s} ${config.ranked_option_emote}`)
               lobby.allowPremadeTeams = allowPremadeTeams;
 
               let reservedTeam = null;
-              if (lobby.isTeams() && allowPremadeTeams && custom) {
+              if (lobby.isTeams() && allowPremadeTeams && custom.includes(CUSTOM_OPTION_RESERVE)) {
                 sentMessage = await sendAlertMessage(message.channel, `Do you want to reserve the lobby for an existing team? (yes / no) ${config.ranked_option_emote}`, 'info');
                 // eslint-disable-next-line max-len,no-shadow
                 const reserveLobby = await message.channel.awaitMessages(filter, options).then(async (collected) => {
@@ -1267,7 +1439,7 @@ ${SURVIVAL_STYLES.map((s, i) => `${i + 1} - ${s} ${config.ranked_option_emote}`)
               lobby.reservedTeam = reservedTeam;
 
               let ranked = lobby.canBeRanked();
-              if (lobby.canBeRanked() && custom) {
+              if (lobby.canBeRanked() && custom.includes(CUSTOM_OPTION_TYPE)) {
                 sentMessage = await sendAlertMessage(message.channel, `Do you want to create a ranked lobby? (yes / no) ${config.ranked_option_emote}`, 'info');
                 // eslint-disable-next-line max-len,no-shadow
                 ranked = await message.channel.awaitMessages(filter, options).then(async (collected) => {
@@ -1284,7 +1456,7 @@ ${SURVIVAL_STYLES.map((s, i) => `${i + 1} - ${s} ${config.ranked_option_emote}`)
                   return (content.toLowerCase() !== 'no');
                 }).catch(() => {
                   sentMessage.delete();
-                  return true;
+                  return lobby.canBeRanked();
                 });
               }
 
@@ -1294,7 +1466,7 @@ ${SURVIVAL_STYLES.map((s, i) => `${i + 1} - ${s} ${config.ranked_option_emote}`)
               let rankDiff = null;
               let playerRank = null;
 
-              if (ranked && custom) {
+              if (ranked && custom.includes(CUSTOM_OPTION_MMR_LOCK)) {
                 sentMessage = await sendAlertMessage(message.channel, `Do you want to put a rank restriction on your lobby? (yes / no) ${config.ranked_option_emote}`, 'info');
                 // eslint-disable-next-line max-len,no-shadow
                 mmrLock = await message.channel.awaitMessages(filter, options).then(async (collected) => {
@@ -1365,28 +1537,26 @@ The value should be in the range of \`${diffMin} to ${diffMax}\`. The value defa
               );
 
               lobby.save().then(async (doc) => {
-                const role = await createAndFindRole(guild, doc.getRoleName());
+                const role = await createAndFindRole(guild, lobby.getRoleName());
 
                 let channel;
-                let ping = null;
                 if (lobby.ranked) {
                   // eslint-disable-next-line max-len
                   channel = guild.channels.cache.find((c) => c.name === config.channels.ranked_lobbies_channel);
-                  ping = role;
                 } else {
                   // eslint-disable-next-line max-len
                   channel = guild.channels.cache.find((c) => c.name === config.channels.unranked_lobbies_channel);
                 }
 
                 channel.send({
-                  content: ping,
+                  content: role,
                   embed: await getEmbed(doc),
                 }).then((m) => {
                   doc.channel = m.channel.id;
                   doc.message = m.id;
                   doc.save().then(() => {
-                    m.react(doc.getReactionEmote());
-                    sendAlertMessage(message.channel, `${doc.getTitle()} has been created. Don't forget to react with ${doc.getReactionEmote()}`, 'success');
+                    m.react(lobby.getReactionEmote());
+                    sendAlertMessage(message.channel, `${lobby.getTitle()} has been created. Don't forget to react with ${lobby.getReactionEmote()}`, 'success');
                   });
                 });
               });
@@ -1561,6 +1731,46 @@ The value should be in the range of \`${diffMin} to ${diffMax}\`. The value defa
             }
           }).catch(() => {
             sendAlertMessage(message.channel, 'Something went wrong when removing you from the lobby.', 'error');
+          });
+        });
+        break;
+      case 'advance':
+        // eslint-disable-next-line consistent-return
+        findLobby(lobbyID, isStaff, message, (doc) => {
+          if (!doc) {
+            return sendAlertMessage(message.channel, 'You are not in a tournament lobby.', 'warning');
+          }
+
+          if (!isStaff && doc.creator !== message.author.id) {
+            return sendAlertMessage(message.channel, 'You need to be either a staff member or the lobby creator to use this command.', 'warning');
+          }
+
+          const users = message.mentions.users.map((u) => u.id);
+          const lobby = doc;
+          lobby.mode = LOBBY_MODE_STANDARD;
+
+          let advanceCount;
+          if (doc.players.length <= lobby.getDefaultPlayerCount()) {
+            advanceCount = doc.getTeamSize();
+          } else {
+            advanceCount = doc.players.length / 2;
+          }
+
+          if (users.length !== advanceCount) {
+            return sendAlertMessage(message.channel, `You need to mention ${advanceCount} players.`, 'warning');
+          }
+
+          doc.players = doc.players.filter((p) => users.includes(p));
+          doc.save().then(() => {
+            if (advanceCount === doc.getTeamSize()) {
+              sendAlertMessage(message.channel, `The winner of the tournament is <@${doc.players.join(',')}>!`, 'success');
+              deleteLobby(doc, message);
+            } else {
+              sendAlertMessage(message.channel, 'The next round is starting!', 'success');
+              setupTournamentRound(doc, message.channel);
+            }
+          }).catch(() => {
+            sendAlertMessage(message.channel, 'Something went wrong when advancing players.', 'error');
           });
         });
         break;

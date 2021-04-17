@@ -1,4 +1,4 @@
-const { battleModesFFA, battleModes4v4 } = require('../db/modes_battle');
+const { battleModesSolos, battleModesTeams } = require('../db/modes_battle');
 const {
   BATTLE_FFA,
   BATTLE_DUOS,
@@ -10,11 +10,11 @@ const {
 async function generateBattleModes(type, maps, playerCount) {
   let list;
   if ([BATTLE_FFA, BATTLE_SURVIVAL].includes(type)) {
-    list = battleModesFFA;
+    list = battleModesSolos;
   } else if ([BATTLE_DUOS, BATTLE_3V3, BATTLE_4V4].includes(type)) {
-    list = battleModes4v4;
+    list = battleModesTeams;
   } else {
-    list = battleModesFFA;
+    list = battleModesSolos;
   }
 
   const modes = [];
