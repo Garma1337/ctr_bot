@@ -6,24 +6,16 @@ const sendAlertMessage = require('../utils/sendAlertMessage');
 
 const {
   RACE_FFA,
-  RACE_DUOS,
-  RACE_3V3,
-  RACE_4V4,
   RACE_SURVIVAL,
   RACE_ITEMLESS_FFA,
   BATTLE_FFA,
-  BATTLE_4V4,
 } = require('../db/models/lobby');
 
 const ranks = {
-  [RACE_FFA]: 'Items FFA',
-  [RACE_DUOS]: 'Duos',
-  [RACE_3V3]: '3 vs. 3',
-  [RACE_4V4]: '4 vs. 4',
+  [RACE_FFA]: 'Items Racing',
+  [RACE_ITEMLESS_FFA]: 'Itemless Racing',
+  [BATTLE_FFA]: 'Battle Mode',
   [RACE_SURVIVAL]: 'Survival',
-  [RACE_ITEMLESS_FFA]: 'Itemless FFA',
-  [BATTLE_FFA]: 'Battle FFA',
-  [BATTLE_4V4]: 'Battle 4 vs. 4',
 };
 
 function sendMessage(message, rank) {

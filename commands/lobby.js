@@ -1012,13 +1012,13 @@ module.exports = {
 
 **Itemless Race Modes**
 6 - FFA ${config.ranked_option_emote}
-7 - Duos
-8 - 4 vs. 4
+7 - Duos ${config.ranked_option_emote}
+8 - 4 vs. 4 ${config.ranked_option_emote}
 
 **Battle Modes**
 9 - FFA ${config.ranked_option_emote}
-10 - Duos
-11 - 3 vs. 3
+10 - Duos ${config.ranked_option_emote}
+11 - 3 vs. 3 ${config.ranked_option_emote}
 12 - 4 vs. 4 ${config.ranked_option_emote}
 13 - Survival
 

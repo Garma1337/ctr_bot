@@ -9,13 +9,9 @@ const { regions } = require('../db/regions');
 
 const {
   RACE_FFA,
-  RACE_DUOS,
-  RACE_3V3,
-  RACE_4V4,
   RACE_SURVIVAL,
   RACE_ITEMLESS_FFA,
   BATTLE_FFA,
-  BATTLE_4V4,
 } = require('../db/models/lobby');
 
 /**
@@ -263,35 +259,23 @@ module.exports = {
 
             if (!rank) {
               playerRanks = [
-                '**Items FFA**: -',
-                '**Duos**: -',
-                '**3 vs. 3**: -',
-                '**4 vs. 4**: -',
+                '**Items Racing**: -',
+                '**Itemless Racing**: -',
+                '**Battle Mode**: -',
                 '**Survival**: -',
-                '**Itemless FFA**: -',
-                '**Battle FFA**: -',
-                '**Battle 4 vs. 4**: -',
                 '**Super Score**: -',
               ];
             } else {
               const itemsRanking = getRankingPosition(rank, RACE_FFA);
-              const duosRanking = getRankingPosition(rank, RACE_DUOS);
-              const _3v3Ranking = getRankingPosition(rank, RACE_3V3);
-              const _4v4Ranking = getRankingPosition(rank, RACE_4V4);
-              const survivalRanking = getRankingPosition(rank, RACE_SURVIVAL);
               const itemlessRanking = getRankingPosition(rank, RACE_ITEMLESS_FFA);
-              const battleFFARanking = getRankingPosition(rank, BATTLE_FFA);
-              const battle4v4Ranking = getRankingPosition(rank, BATTLE_4V4);
+              const battleModeRanking = getRankingPosition(rank, BATTLE_FFA);
+              const survivalRanking = getRankingPosition(rank, RACE_SURVIVAL);
 
               playerRanks = [
-                `**Items FFA**: ${itemsRanking !== '-' ? `#${itemsRanking} - ${getRankingRating(rank, RACE_FFA)}` : '-'}`,
-                `**Duos**: ${duosRanking !== '-' ? `#${duosRanking} - ${getRankingRating(rank, RACE_DUOS)}` : '-'}`,
-                `**3 vs. 3**: ${_3v3Ranking !== '-' ? `#${_3v3Ranking} - ${getRankingRating(rank, RACE_3V3)}` : '-'}`,
-                `**4 vs. 4**: ${_4v4Ranking !== '-' ? `#${_4v4Ranking} - ${getRankingRating(rank, RACE_4V4)}` : '-'}`,
+                `**Items Racing**: ${itemsRanking !== '-' ? `#${itemsRanking} - ${getRankingRating(rank, RACE_FFA)}` : '-'}`,
+                `**Itemless Racing**: ${itemlessRanking !== '-' ? `#${itemlessRanking} - ${getRankingRating(rank, RACE_ITEMLESS_FFA)}` : '-'}`,
+                `**Battle Mode**: ${battleModeRanking !== '-' ? `#${battleModeRanking} - ${getRankingRating(rank, BATTLE_FFA)}` : '-'}`,
                 `**Survival**: ${survivalRanking !== '-' ? `#${survivalRanking} - ${getRankingRating(rank, RACE_SURVIVAL)}` : '-'}`,
-                `**Itemless FFA**: ${itemlessRanking !== '-' ? `#${itemlessRanking} - ${getRankingRating(rank, RACE_ITEMLESS_FFA)}` : '-'}`,
-                `**Battle FFA**: ${battleFFARanking !== '-' ? `#${battleFFARanking} - ${getRankingRating(rank, BATTLE_FFA)}` : '-'}`,
-                `**Battle 4 vs. 4**: ${battle4v4Ranking !== '-' ? `#${battle4v4Ranking} - ${getRankingRating(rank, BATTLE_4V4)}` : '-'}`,
                 `**Super Score**: ${superScoreEntry ? `#${superScoreEntry.rank} - ${superScoreEntry.superScore}` : '-'}`,
               ];
             }
@@ -304,30 +288,6 @@ module.exports = {
 
             /* Achievements */
             const achievements = [];
-
-            if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === config.roles.admin_role.toLowerCase()) || guildMember.hasPermission(['ADMINISTRATOR'])) {
-              achievements.push('Administrator');
-            }
-
-            // eslint-disable-next-line max-len
-            if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === config.roles.staff_role.toLowerCase())) {
-              achievements.push('Staff Member');
-            }
-
-            // eslint-disable-next-line max-len
-            if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === config.roles.bot_developer_role.toLowerCase())) {
-              achievements.push('Bot Developer');
-            }
-
-            // eslint-disable-next-line max-len
-            if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === config.roles.media_staff_role.toLowerCase())) {
-              achievements.push('Media Staff');
-            }
-
-            // eslint-disable-next-line max-len
-            if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === config.roles.ctr_staff_role.toLowerCase())) {
-              achievements.push('CrashTeamRanking Staff');
-            }
 
             // eslint-disable-next-line max-len
             if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === config.roles.donator_role.toLowerCase())) {
@@ -352,11 +312,6 @@ module.exports = {
             // eslint-disable-next-line max-len
             if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === config.roles.challenge_master_role.toLowerCase())) {
               achievements.push('Challenge Master');
-            }
-
-            // eslint-disable-next-line max-len
-            if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === config.roles.captain_role.toLowerCase())) {
-              achievements.push('Captain');
             }
 
             // eslint-disable-next-line max-len
