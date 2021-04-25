@@ -44,7 +44,7 @@ const LEADERBOARDS = {
   [BATTLE_DUOS]: 'FxCWI1',
   [BATTLE_3V3]: 'FxCWI1',
   [BATTLE_4V4]: 'FxCWI1',
-  [BATTLE_SURVIVAL]: null,
+  [BATTLE_SURVIVAL]: 'bt470o',
   [CUSTOM]: null,
 };
 const TRACK_OPTION_RNG = 'Full RNG';
@@ -241,10 +241,10 @@ Lobby.methods = {
     return [RACE_SURVIVAL, BATTLE_SURVIVAL].includes(this.type);
   },
   isTeams() {
-    return (this.isDuos() || this.isWar());
+    return (this.isDuos() || this.is3v3() || this.is4v4());
   },
   isWar() {
-    return (this.is3v3() || this.is4v4());
+    return (this.is1v1() || this.type === BATTLE_DUOS || this.is3v3() || this.is4v4());
   },
   isSolos() {
     return !this.isTeams();
@@ -400,7 +400,7 @@ Lobby.methods = {
       [RACE_ITEMLESS_FFA]: 6,
       [RACE_ITEMLESS_DUOS]: 8,
       [RACE_ITEMLESS_4V4]: 8,
-      [BATTLE_1V1]: 5,
+      [BATTLE_1V1]: 6,
       [BATTLE_FFA]: 5,
       [BATTLE_DUOS]: 6,
       [BATTLE_3V3]: 6,

@@ -735,10 +735,20 @@ ${playersText}`,
                     if (doc.isWar() && doc.draftTracks) {
                       const teams = ['A', 'B'];
 
-                      // eslint-disable-next-line max-len
-                      const captainAPromise = client.guilds.cache.get(doc.guild).members.fetch(getRandomArrayElement(doc.teamList[0]));
-                      // eslint-disable-next-line max-len
-                      const captainBPromise = client.guilds.cache.get(doc.guild).members.fetch(getRandomArrayElement(doc.teamList[1]));
+                      let captainAPromise;
+                      let captainBPromise;
+
+                      if (!doc.is1v1()) {
+                        // eslint-disable-next-line max-len
+                        captainAPromise = client.guilds.cache.get(doc.guild).members.fetch(getRandomArrayElement(doc.teamList[0]));
+                        // eslint-disable-next-line max-len
+                        captainBPromise = client.guilds.cache.get(doc.guild).members.fetch(getRandomArrayElement(doc.teamList[1]));
+                      } else {
+                        // eslint-disable-next-line max-len
+                        captainAPromise = client.guilds.cache.get(doc.guild).members.fetch(doc.players[0]);
+                        // eslint-disable-next-line max-len
+                        captainBPromise = client.guilds.cache.get(doc.guild).members.fetch(doc.players[1]);
+                      }
 
                       Promise.all([captainAPromise, captainBPromise]).then((captains) => {
                         switch (doc.type) {
@@ -747,6 +757,12 @@ ${playersText}`,
                             break;
                           case RACE_4V4:
                             createDraft(roomChannel, '0', teams, captains);
+                            break;
+                          case BATTLE_1V1:
+                            createDraftv2(roomChannel, 2, 0, 3, 30, captains);
+                            break;
+                          case BATTLE_DUOS:
+                            createDraftv2(roomChannel, 2, 0, 3, 30, captains);
                             break;
                           case BATTLE_4V4:
                             createDraftv2(roomChannel, 2, 0, 4, 30, captains);
@@ -1028,7 +1044,7 @@ module.exports = {
 11 - Duos ${config.ranked_option_emote}
 12 - 3 vs. 3 ${config.ranked_option_emote}
 13 - 4 vs. 4 ${config.ranked_option_emote}
-14 - Survival
+14 - Survival ${config.ranked_option_emote}
 
 **Misc. Modes**
 15 - Krunking
@@ -1412,7 +1428,9 @@ ${SURVIVAL_STYLES.map((s, i) => `${i + 1} - ${s} ${config.ranked_option_emote}`)
               lobby.allowPremadeTeams = allowPremadeTeams;
 
               let reservedTeam = null;
-              if (lobby.isTeams() && allowPremadeTeams && custom.includes(CUSTOM_OPTION_RESERVE)) {
+
+              // eslint-disable-next-line max-len
+              if (lobby.isWar() && !lobby.is1v1() && allowPremadeTeams && custom.includes(CUSTOM_OPTION_RESERVE)) {
                 sentMessage = await sendAlertMessage(message.channel, `Do you want to reserve the lobby for an existing team? (yes / no) ${config.ranked_option_emote}`, 'info');
                 // eslint-disable-next-line max-len,no-shadow
                 const reserveLobby = await message.channel.awaitMessages(filter, options).then(async (collected) => {
@@ -1805,6 +1823,14 @@ The value should be in the range of \`${diffMin} to ${diffMax}\`. The value defa
           sendAlertMessage(message.channel, 'All ranks have been updated.', 'success');
         });
         break;
+      case 'get_decay':
+        if (!isStaff) {
+          return sendAlertMessage(message.channel, 'You need to be a staff member to use this command.', 'warning');
+        }
+
+        // eslint-disable-next-line no-use-before-define
+        await getDecay(message.channel);
+        break;
       case 'force_add':
         // eslint-disable-next-line consistent-return
         findLobby(lobbyID, isStaff, message, (doc) => {
@@ -1907,7 +1933,7 @@ async function restrictSoloQueue(doc, user, soloQueue) {
     if (![doc.creator, doc.reservedTeam].includes(user.id)) {
       errors.push(`This lobby is reserved for <@!${doc.creator}>'s and <@!${doc.reservedTeam}>'s teams.`);
     } else {
-      errors.push('This lobby is reserved for your team. Please set your team members first.');
+      errors.push('This lobby is reserved for your team. Please set your team members or partner first.');
     }
   }
 
@@ -2206,6 +2232,13 @@ async function mogi(reaction, user, removed = false) {
                   }
                 }
 
+                const duoPlayerIds = [userSavedDuo.discord1, userSavedDuo.discord2];
+
+                // eslint-disable-next-line max-len
+                if (doc.reservedTeam && !duoPlayerIds.includes(doc.creator) && !duoPlayerIds.includes(doc.reservedTeam)) {
+                  errors.push(`The lobby is reserved for <@!${doc.creator}>'s and <@!${doc.reservedTeam}>'s teams.`);
+                }
+
                 if (playersCount === 7) {
                   const soloQueue = players.filter((p) => !doc.teamList.flat().includes(p));
                   const lastSoloQueuePlayer = soloQueue.pop();
@@ -2231,7 +2264,7 @@ async function mogi(reaction, user, removed = false) {
               }
             }
             doc.teamList = teamList;
-          } else if (doc.isWar()) {
+          } else if (doc.isWar() && !doc.is1v1()) {
             const team = await Team.findOne({
               guild: guild.id,
               players: user.id,
@@ -2517,31 +2550,37 @@ const checkOldLobbies = () => {
   });
 
   Lobby.find({ started: false }).then((docs) => {
+    // eslint-disable-next-line consistent-return
     docs.forEach(async (doc) => {
-      const minutes = diffMinutes(new Date(), doc.date);
+      const guild = client.guilds.cache.get(doc.guild);
 
-      const remindMinutes = [55];
-      const CLOSE_MINUTES = 60;
-
-      if (remindMinutes.includes(minutes) || minutes >= CLOSE_MINUTES) {
-        const guild = client.guilds.cache.get(doc.guild);
-
-        if (guild) {
+      if (guild) {
+        // eslint-disable-next-line max-len
+        let notificationChannel = guild.channels.cache.find((c) => c.name.toLowerCase() === config.channels.matchmaking_notifications_channel.toLowerCase());
+        if (!notificationChannel) {
           // eslint-disable-next-line max-len
-          let notificationChannel = guild.channels.cache.find((c) => c.name.toLowerCase() === config.channels.matchmaking_notifications_channel.toLowerCase());
-          if (!notificationChannel) {
-            // eslint-disable-next-line max-len
-            notificationChannel = await guild.channels.create(config.channels.matchmaking_notifications_channel);
+          notificationChannel = await guild.channels.create(config.channels.matchmaking_notifications_channel);
+        }
+
+        const minutes = diffMinutes(new Date(), doc.date);
+
+        if (doc.players.length <= 0 && minutes >= 5) {
+          deleteLobby(doc);
+          return sendAlertMessage(notificationChannel, `Your lobby \`${doc.id}\` has been deleted because it was empty for more than 5 minutes.`, 'info', [doc.creator]);
+        }
+
+        const remindMinutes = [55];
+        const closeMinutes = 60;
+
+        if (remindMinutes.includes(minutes) || minutes >= closeMinutes) {
+          if (minutes >= closeMinutes) {
+            const duration = moment.duration(closeMinutes, 'minutes').humanize();
+            deleteLobby(doc);
+            return sendAlertMessage(notificationChannel, `Your lobby \`${doc.id}\` has been deleted because it wasn't started in ${duration}.`, 'info', [doc.creator]);
           }
 
-          if (minutes >= CLOSE_MINUTES) {
-            const duration = moment.duration(CLOSE_MINUTES, 'minutes').humanize();
-            deleteLobby(doc);
-            sendAlertMessage(notificationChannel, `Your lobby \`${doc.id}\` has been deleted because it wasn't started in ${duration}.`, 'info', [doc.creator]);
-          } else {
-            const duration = moment.duration(CLOSE_MINUTES - minutes, 'minutes').humanize();
-            sendAlertMessage(notificationChannel, `Your lobby \`${doc.id}\` will be deleted in ${duration} if it will not be started.`, 'warning', [doc.creator]);
-          }
+          const duration = moment.duration(closeMinutes - minutes, 'minutes').humanize();
+          return sendAlertMessage(notificationChannel, `Your lobby \`${doc.id}\` will be deleted in ${duration} if it will not be started.`, 'warning', [doc.creator]);
         }
       }
     });
@@ -2689,7 +2728,7 @@ function getBoardRequestData(teamId) {
 }
 
 // update cached ranks
-async function getRanks(doc, options) {
+async function getRanks(options) {
   const url = 'https://gb.hlorenzi.com/api/v1/graphql';
 
   const ranks = {};
@@ -2706,13 +2745,60 @@ async function getRanks(doc, options) {
         if (!(name in ranks)) {
           ranks[name] = { name };
         }
-        ranks[name][key] = { rank: p.rating, position: p.ranking };
+        ranks[name][key] = {
+          rank: p.rating,
+          position: p.ranking,
+          lastActivity: (p.lastActivityDate / 1000),
+        };
       });
     }
   }
 
   await Rank.deleteMany();
   await Rank.insertMany(Object.values(ranks), options);
+}
+
+async function getDecay() {
+  const boards = {
+    [RACE_FFA]: 'Items Racing',
+    [RACE_SURVIVAL]: 'Survival',
+    [RACE_ITEMLESS_FFA]: 'Itemless Racing',
+    [BATTLE_FFA]: 'Battle Mode',
+  };
+
+  const ranks = await Rank.find();
+  const decay = {};
+
+  ranks.forEach((r) => {
+    // eslint-disable-next-line guard-for-in
+    for (const key in boards) {
+      if (!decay[key]) {
+        decay[key] = [];
+      }
+
+      // eslint-disable-next-line no-prototype-builtins
+      if (key in r && r[key].rank !== undefined) {
+        const now = moment();
+        const lastActivity = moment.unix(r[key].lastActivity);
+        const playedDaysAgo = now.diff(lastActivity, 'days');
+
+        if (playedDaysAgo > 14) {
+          const rankDiff = Math.floor(r[key].rank - 1200);
+          let decayValue = Math.floor(rankDiff * 0.01 * playedDaysAgo);
+          let sign = '-';
+
+          if (r[key].rank < 1200) {
+            decayValue *= -1;
+            sign = '+';
+          }
+
+          decay[key].push(`${r.name} !${sign}${decayValue}`);
+        }
+      }
+    }
+  });
+
+  console.log(decay);
 }
 
 new CronJob('0/15 * * * *', getRanks).start();
