@@ -152,6 +152,10 @@ async function getEmbed(doc, players, tracks, roomChannel) {
     playersText += '**Teams:**\n';
 
     doc.teamList.forEach((team, i) => {
+      if (team.players.length <= 0) {
+        return;
+      }
+
       let mmrSum = 0;
 
       team.forEach((player) => {
@@ -159,7 +163,7 @@ async function getEmbed(doc, players, tracks, roomChannel) {
         mmrSum += info.rank;
       });
 
-      playersText += `${i + 1}. (Rank: ${Math.floor(mmrSum / team.length)})\n`;
+      playersText += `**Team ${i + 1} (Rating: ${Math.floor(mmrSum / team.length)})**\n`;
       team.forEach((player) => {
         const info = playersInfo[player];
         const tag = info && info.tag;
