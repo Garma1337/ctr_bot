@@ -45,6 +45,7 @@ const config = require('../config.js');
 const { Cooldown } = require('../db/models/cooldown');
 const { Counter } = require('../db/models/counter');
 const { Duo } = require('../db/models/duo');
+const { FinishedLobby } = require('../db/models/finished_lobby');
 const { Lobby } = require('../db/models/lobby');
 const { Player } = require('../db/models/player');
 const { Rank } = require('../db/models/rank');
@@ -227,27 +228,27 @@ async function getEmbed(doc, players, tracks, roomChannel) {
     inline: true,
   };
 
-  const settings = [`**Max Players**: ${doc.maxPlayerCount}`];
+  const settings = [`Max Players: ${doc.maxPlayerCount}`];
 
   if (!doc.isCustom()) {
-    settings.push(`**${doc.isRacing() ? 'Track Count' : 'Arena Count'}**: ${doc.trackCount}`);
+    settings.push(`${doc.isRacing() ? 'Track Count' : 'Arena Count'}: ${doc.trackCount}`);
   }
 
   if (doc.isRacing()) {
-    settings.push(`**Lap Count**: ${doc.lapCount}`);
-    settings.push(`**Ruleset**: ${ruleset.name}`);
+    settings.push(`Lap Count: ${doc.lapCount}`);
+    settings.push(`Ruleset: ${ruleset.name}`);
 
     if (engineRestriction) {
-      settings.push(`**Engine Style**: ${engineRestriction.icon}`);
+      settings.push(`Engine Style: ${engineRestriction.icon}`);
     }
 
     if (survivalStyle) {
-      settings.push(`**Survival Style**: ${survivalStyle}`);
+      settings.push(`Survival Style: ${survivalStyle}`);
     }
   }
 
   if (region) {
-    settings.push(`**Region**: ${region.description}`);
+    settings.push(`Region: ${region.description}`);
   }
 
   if (!doc.locked.$isEmpty()) {
@@ -255,14 +256,14 @@ async function getEmbed(doc, players, tracks, roomChannel) {
     const minRank = playerRank - doc.locked.shift;
     const maxRank = playerRank + doc.locked.shift;
 
-    settings.push(`**Rank Lock**: ${minRank} - ${maxRank}`);
+    settings.push(`Rank Lock: ${minRank} - ${maxRank}`);
   }
 
   if (doc.isTeams()) {
-    settings.push(`**Premade Teams**: ${doc.allowPremadeTeams ? 'Allowed' : 'Not allowed'}`);
+    settings.push(`Premade Teams: ${doc.allowPremadeTeams ? 'Allowed' : 'Not allowed'}`);
 
     if (doc.reservedTeam) {
-      settings.push(`**Team Reservation**: <@${doc.creator}> & <@${doc.reservedTeam}>`);
+      settings.push(`Team Reservation: <@${doc.creator}> & <@${doc.reservedTeam}>`);
     }
   }
 
@@ -548,6 +549,21 @@ async function createBalancedTeams(doc, soloPlayers) {
 }
 
 async function setupTournamentRound(doc, roomChannel) {
+  const engineRestriction = engineStyles.find((e) => e.uid === doc.engineRestriction);
+  const ruleset = rulesets.find((r, i) => i === doc.ruleset);
+
+  let settings = [];
+  if (doc.isRacing()) {
+    settings = [
+      `Lap Count: ${doc.lapCount}`,
+      `Ruleset: ${ruleset.name}`,
+    ];
+
+    if (engineRestriction) {
+      settings.push(`Engine Style: ${engineRestriction.icon}`);
+    }
+  }
+
   /* Create tracks based on the underlying format */
   const lobby = doc;
   lobby.mode = LOBBY_MODE_STANDARD;
@@ -576,6 +592,7 @@ async function setupTournamentRound(doc, roomChannel) {
         templateUrl,
         number: i,
         tracks,
+        settings,
         template,
       });
     }
@@ -595,12 +612,21 @@ async function setupTournamentRound(doc, roomChannel) {
             value: tracks.join('\n'),
             inline: true,
           },
-          {
-            name: 'Score Template',
-            value: `${l.template}\n\n[Open template on gb.hlorenzi.com](${l.templateUrl})`,
-          },
         ],
       };
+
+      if (settings.length > 0) {
+        embed.fields.push({
+          name: 'Settings',
+          value: settings.join('\n'),
+          inline: true,
+        });
+      }
+
+      embed.fields.push({
+        name: 'Score Template',
+        value: `${l.template}\n\n[Open template on gb.hlorenzi.com](${l.templateUrl})`,
+      });
 
       const pings = doc.players.map((m) => `<@!${m}>`).join(', ');
       roomChannel.send({ content: pings, embed });
@@ -672,6 +698,31 @@ function startLobby(docId) {
                 fields.push({
                   name: 'Modes',
                   value: modes.join('\n'),
+                  inline: true,
+                });
+              }
+
+              const engineRestriction = engineStyles.find((e) => e.uid === doc.engineRestriction);
+              const survivalStyle = SURVIVAL_STYLES.find((s, i) => i === doc.survivalStyle);
+              const ruleset = rulesets.find((r, i) => i === doc.ruleset);
+
+              if (doc.isRacing()) {
+                const settings = [
+                  `Lap Count: ${doc.lapCount}`,
+                  `Ruleset: ${ruleset.name}`,
+                ];
+
+                if (engineRestriction) {
+                  settings.push(`Engine Style: ${engineRestriction.icon}`);
+                }
+
+                if (survivalStyle) {
+                  settings.push(`Survival Style: ${survivalStyle}`);
+                }
+
+                fields.push({
+                  name: 'Settings',
+                  value: settings.join('\n'),
                   inline: true,
                 });
               }
@@ -934,9 +985,18 @@ function deleteLobby(doc, msg) {
     room.save();
   });
 
-  const promiseDocDelete = doc.delete();
+  const finishedLobby = new FinishedLobby();
+  finishedLobby.type = doc.type;
+  finishedLobby.ruleset = doc.ruleset;
+  finishedLobby.region = doc.region;
+  finishedLobby.engineRestriction = doc.engineRestriction;
+  finishedLobby.survivalStyle = doc.survivalStyle;
 
-  Promise.all([promiseMessageDelete, promiseDocDelete, roomDocDelete]).then(() => {
+  const promiseDocDelete = doc.delete();
+  const promiseSaveFinishedLobby = finishedLobby.save();
+
+  // eslint-disable-next-line max-len
+  Promise.all([promiseMessageDelete, promiseDocDelete, roomDocDelete, promiseSaveFinishedLobby]).then(() => {
     if (msg) {
       sendAlertMessage(msg.channel, endMessage, 'success');
     }
@@ -1828,7 +1888,7 @@ The value should be in the range of \`${diffMin} to ${diffMax}\`. The value defa
           return sendAlertMessage(message.channel, 'You need to be a staff member to use this command.', 'warning');
         }
 
-        // eslint-disable-next-line no-use-before-define
+        // eslint-disable-next-line no-use-before-define,no-case-declarations
         const decay = await getDecay(message.channel);
         message.channel.send(decay[RACE_FFA].join('\n'));
 
