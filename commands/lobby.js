@@ -2818,18 +2818,21 @@ async function getRanks(options) {
 
     if (id !== null) {
       const response = await axios.post(url, getBoardRequestData(id), { headers: { 'Content-Type': 'text/plain' } });
-      const { players } = response.data.data.team;
-      players.forEach((p) => {
-        const { name } = p;
-        if (!(name in ranks)) {
-          ranks[name] = { name };
-        }
-        ranks[name][key] = {
-          rank: p.rating,
-          position: p.ranking,
-          lastActivity: (p.lastActivityDate / 1000),
-        };
-      });
+
+      if (response.data.data.team !== null) {
+        const { players } = response.data.data.team;
+        players.forEach((p) => {
+          const { name } = p;
+          if (!(name in ranks)) {
+            ranks[name] = { name };
+          }
+          ranks[name][key] = {
+            rank: p.rating,
+            position: p.ranking,
+            lastActivity: (p.lastActivityDate / 1000),
+          };
+        });
+      }
     }
   }
 
