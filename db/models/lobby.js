@@ -35,18 +35,18 @@ const LEADERBOARDS = {
   [RACE_ITEMS_DUOS]: 'Ogi-V5',
   [RACE_ITEMS_3V3]: 'Ogi-V5',
   [RACE_ITEMS_4V4]: 'Ogi-V5',
-  [RACE_SURVIVAL]: null,
+  [RACE_SURVIVAL]: 'kN_Sbgn',
   [RACE_KRUNKING]: null,
   [RACE_ITEMLESS_FFA]: 'pHmJnI',
   [RACE_ITEMLESS_DUOS]: 'pHmJnI',
   [RACE_ITEMLESS_3V3]: 'pHmJnI',
   [RACE_ITEMLESS_4V4]: 'pHmJnI',
-  [BATTLE_1V1]: null,
-  [BATTLE_FFA]: null,
-  [BATTLE_DUOS]: null,
-  [BATTLE_3V3]: null,
-  [BATTLE_4V4]: null,
-  [BATTLE_SURVIVAL]: null,
+  [BATTLE_1V1]: 'xcqgSc',
+  [BATTLE_FFA]: 'xcqgSc',
+  [BATTLE_DUOS]: 'xcqgSc',
+  [BATTLE_3V3]: 'xcqgSc',
+  [BATTLE_4V4]: 'xcqgSc',
+  [BATTLE_SURVIVAL]: 'kN_Sbgn',
   [CUSTOM]: null,
 };
 const TRACK_OPTION_RNG = 'Full RNG';
@@ -411,7 +411,7 @@ Lobby.methods = {
       [RACE_ITEMLESS_DUOS]: 8,
       [RACE_ITEMLESS_3V3]: 6,
       [RACE_ITEMLESS_4V4]: 8,
-      [BATTLE_1V1]: 6,
+      [BATTLE_1V1]: 5,
       [BATTLE_FFA]: 5,
       [BATTLE_DUOS]: 6,
       [BATTLE_3V3]: 6,
@@ -749,8 +749,8 @@ Lobby.methods = {
       trackOptions.push(TRACK_OPTION_IRON_MAN);
     }
 
-    if (this.isWar()) {
-      // drafting for all 3 vs. 3 / 4 vs. 4 modes
+    if (this.isWar() && !this.is1v1()) {
+      // drafting for all 3 vs. 3 / 4 vs. 4 modes and battle duos
       trackOptions.push(TRACK_OPTION_DRAFT);
     }
 

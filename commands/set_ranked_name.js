@@ -59,12 +59,15 @@ module.exports = {
       }
 
       const violations = [];
-      const words = data.trim().split('\n');
-      words.forEach((w) => {
-        if (name.toLowerCase().includes(w.toLowerCase())) {
-          violations.push(w);
-        }
-      });
+
+      if (!isStaff) {
+        const words = data.trim().split('\n');
+        words.forEach((w) => {
+          if (name.toLowerCase().includes(w.toLowerCase())) {
+            violations.push(w);
+          }
+        });
+      }
 
       if (violations.length > 0) {
         return sendAlertMessage(message.channel, `This name cannot be used due to using profanity. Violations: ${violations.join(', ')}`, 'warning');
@@ -80,8 +83,12 @@ module.exports = {
           return sendAlertMessage(message.channel, 'This ranked name is already used by someone else.', 'warning');
         }
 
-        // eslint-disable-next-line no-shadow
+        // eslint-disable-next-line no-shadow,consistent-return
         Player.findOne({ discordId: user.id }).then((player) => {
+          if (player.rankedName && !isStaff) {
+            return sendAlertMessage(message.channel, 'You cannot change your ranked name. Please message a staff member.', 'warning');
+          }
+
           if (!player) {
             player = new Player();
             player.discordId = message.author.id;
