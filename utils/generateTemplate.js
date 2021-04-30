@@ -31,6 +31,7 @@ function getPlayerData(p) {
       flag = ` [${code}]`; // space in the beginning is needed
     }
   }
+
   return `${p.rankedName}${flag}`;
 }
 

@@ -52,6 +52,11 @@ module.exports = {
       return sendAlertMessage(message.channel, 'The ranked name needs to be at least 3 characters long.', 'warning');
     }
 
+    if (!name.match(/^[0-9a-zA-Z_-]+$/gi)) {
+      // eslint-disable-next-line consistent-return
+      return sendAlertMessage(message.channel, 'The ranked name can only consist of numbers, letters, underscore and minus.', 'warning');
+    }
+
     // eslint-disable-next-line consistent-return
     fs.readFile(config.files.badwords_file, 'utf8', (err, data) => {
       if (err) {
