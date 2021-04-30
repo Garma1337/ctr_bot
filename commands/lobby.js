@@ -630,7 +630,7 @@ async function setupTournamentRound(doc, roomChannel) {
 
       embed.fields.push({
         name: 'Score Template',
-        value: `\`\`\`${l.template}\`\`\`[Open template on gb.hlorenzi.com](${l.templateUrl})`,
+        value: `\`\`\`${l.template}\`\`\`\n[Open template on gb.hlorenzi.com](${l.templateUrl})`,
       });
 
       const pings = doc.players.map((m) => `<@!${m}>`).join(', ');

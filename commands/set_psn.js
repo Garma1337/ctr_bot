@@ -59,6 +59,9 @@ module.exports = {
             player.discordId = discordId;
             player.psn = PSN;
             promise = player.save();
+          } else {
+            doc.psn = PSN;
+            promise = doc.save();
           }
 
           promise.then(() => {
