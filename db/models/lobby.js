@@ -16,6 +16,7 @@ const RACE_SURVIVAL = 'race_survival';
 const RACE_KRUNKING = 'race_krunking';
 const RACE_ITEMLESS_FFA = 'race_itemless_ffa';
 const RACE_ITEMLESS_DUOS = 'race_itemless_duos';
+const RACE_ITEMLESS_3V3 = 'race_itemless_3v3';
 const RACE_ITEMLESS_4V4 = 'race_itemless_4v4';
 const BATTLE_1V1 = 'battle_1v1';
 const BATTLE_FFA = 'battle_ffa';
@@ -30,21 +31,22 @@ const SURVIVAL_STYLES = [
   'Itemless',
 ];
 const LEADERBOARDS = {
-  [RACE_ITEMS_FFA]: 'y4VYDV',
-  [RACE_ITEMS_DUOS]: 'y4VYDV',
-  [RACE_ITEMS_3V3]: 'y4VYDV',
-  [RACE_ITEMS_4V4]: 'y4VYDV',
-  [RACE_SURVIVAL]: 'bt470o',
+  [RACE_ITEMS_FFA]: 'Ogi-V5',
+  [RACE_ITEMS_DUOS]: 'Ogi-V5',
+  [RACE_ITEMS_3V3]: 'Ogi-V5',
+  [RACE_ITEMS_4V4]: 'Ogi-V5',
+  [RACE_SURVIVAL]: null,
   [RACE_KRUNKING]: null,
-  [RACE_ITEMLESS_FFA]: 'gh04-5',
-  [RACE_ITEMLESS_DUOS]: 'gh04-5',
-  [RACE_ITEMLESS_4V4]: 'gh04-5',
-  [BATTLE_1V1]: 'FxCWI1',
-  [BATTLE_FFA]: 'FxCWI1',
-  [BATTLE_DUOS]: 'FxCWI1',
-  [BATTLE_3V3]: 'FxCWI1',
-  [BATTLE_4V4]: 'FxCWI1',
-  [BATTLE_SURVIVAL]: 'bt470o',
+  [RACE_ITEMLESS_FFA]: 'pHmJnI',
+  [RACE_ITEMLESS_DUOS]: 'pHmJnI',
+  [RACE_ITEMLESS_3V3]: 'pHmJnI',
+  [RACE_ITEMLESS_4V4]: 'pHmJnI',
+  [BATTLE_1V1]: null,
+  [BATTLE_FFA]: null,
+  [BATTLE_DUOS]: null,
+  [BATTLE_3V3]: null,
+  [BATTLE_4V4]: null,
+  [BATTLE_SURVIVAL]: null,
   [CUSTOM]: null,
 };
 const TRACK_OPTION_RNG = 'Full RNG';
@@ -76,6 +78,7 @@ module.exports.RACE_SURVIVAL = RACE_SURVIVAL;
 module.exports.RACE_KRUNKING = RACE_KRUNKING;
 module.exports.RACE_ITEMLESS_FFA = RACE_ITEMLESS_FFA;
 module.exports.RACE_ITEMLESS_DUOS = RACE_ITEMLESS_DUOS;
+module.exports.RACE_ITEMLESS_3V3 = RACE_ITEMLESS_3V3;
 module.exports.RACE_ITEMLESS_4V4 = RACE_ITEMLESS_4V4;
 module.exports.BATTLE_1V1 = BATTLE_1V1;
 module.exports.BATTLE_FFA = BATTLE_FFA;
@@ -140,6 +143,7 @@ const Lobby = new Schema({
       RACE_KRUNKING,
       RACE_ITEMLESS_FFA,
       RACE_ITEMLESS_DUOS,
+      RACE_ITEMLESS_3V3,
       RACE_ITEMLESS_4V4,
       BATTLE_1V1,
       BATTLE_FFA,
@@ -216,7 +220,8 @@ Lobby.methods = {
     return (!this.isBattle() && !this.isCustom());
   },
   isItemless() {
-    return [RACE_ITEMLESS_FFA, RACE_ITEMLESS_DUOS, RACE_ITEMLESS_4V4].includes(this.type);
+    // eslint-disable-next-line max-len
+    return [RACE_ITEMLESS_FFA, RACE_ITEMLESS_DUOS, RACE_ITEMLESS_3V3, RACE_ITEMLESS_4V4].includes(this.type);
   },
   isBattle() {
     // eslint-disable-next-line max-len
@@ -232,7 +237,7 @@ Lobby.methods = {
     return [RACE_ITEMS_DUOS, RACE_ITEMLESS_DUOS, BATTLE_DUOS].includes(this.type);
   },
   is3v3() {
-    return [RACE_ITEMS_3V3, RACE_KRUNKING, BATTLE_3V3].includes(this.type);
+    return [RACE_ITEMS_3V3, RACE_KRUNKING, RACE_ITEMLESS_3V3, BATTLE_3V3].includes(this.type);
   },
   is4v4() {
     return [RACE_ITEMS_4V4, RACE_ITEMLESS_4V4, BATTLE_4V4].includes(this.type);
@@ -280,6 +285,7 @@ Lobby.methods = {
         [RACE_KRUNKING]: 12,
         [RACE_ITEMLESS_FFA]: 8,
         [RACE_ITEMLESS_DUOS]: 16,
+        [RACE_ITEMLESS_3V3]: 12,
         [RACE_ITEMLESS_4V4]: 16,
         [BATTLE_1V1]: 4,
         [BATTLE_FFA]: 8,
@@ -299,6 +305,7 @@ Lobby.methods = {
         [RACE_KRUNKING]: 6,
         [RACE_ITEMLESS_FFA]: 4,
         [RACE_ITEMLESS_DUOS]: 6,
+        [RACE_ITEMLESS_3V3]: 6,
         [RACE_ITEMLESS_4V4]: 8,
         [BATTLE_1V1]: 2,
         [BATTLE_FFA]: 4,
@@ -326,6 +333,7 @@ Lobby.methods = {
       [RACE_KRUNKING]: 6,
       [RACE_ITEMLESS_FFA]: 4,
       [RACE_ITEMLESS_DUOS]: 8,
+      [RACE_ITEMLESS_3V3]: 6,
       [RACE_ITEMLESS_4V4]: 8,
       [BATTLE_1V1]: 2,
       [BATTLE_FFA]: 4,
@@ -351,6 +359,7 @@ Lobby.methods = {
         [RACE_KRUNKING]: 48,
         [RACE_ITEMLESS_FFA]: 32,
         [RACE_ITEMLESS_DUOS]: 64,
+        [RACE_ITEMLESS_3V3]: 48,
         [RACE_ITEMLESS_4V4]: 64,
         [BATTLE_1V1]: 8,
         [BATTLE_FFA]: 32,
@@ -370,6 +379,7 @@ Lobby.methods = {
         [RACE_KRUNKING]: 6,
         [RACE_ITEMLESS_FFA]: 8,
         [RACE_ITEMLESS_DUOS]: 8,
+        [RACE_ITEMLESS_3V3]: 6,
         [RACE_ITEMLESS_4V4]: 8,
         [BATTLE_1V1]: 2,
         [BATTLE_FFA]: 8,
@@ -399,6 +409,7 @@ Lobby.methods = {
       [RACE_KRUNKING]: 5,
       [RACE_ITEMLESS_FFA]: 6,
       [RACE_ITEMLESS_DUOS]: 8,
+      [RACE_ITEMLESS_3V3]: 6,
       [RACE_ITEMLESS_4V4]: 8,
       [BATTLE_1V1]: 6,
       [BATTLE_FFA]: 5,
@@ -451,6 +462,8 @@ Lobby.methods = {
           title += 'Itemless FFA';
         } else if (this.isDuos()) {
           title += 'Itemless Duos';
+        } else if (this.is3v3()) {
+          title += 'Itemless 3 vs. 3';
         } else if (this.is4v4()) {
           title += 'Itemless 4 vs. 4';
         } else {
@@ -529,6 +542,7 @@ Lobby.methods = {
       [RACE_KRUNKING]: 'https://static.wikia.nocookie.net/crashban/images/8/81/CTRNF-Jurassic_Krunk_Icon.png',
       [RACE_ITEMLESS_FFA]: 'https://static.wikia.nocookie.net/crashban/images/b/b5/CTRNF-SuperEngine.png',
       [RACE_ITEMLESS_DUOS]: 'https://i.imgur.com/kTxPvij.png',
+      [RACE_ITEMLESS_3V3]: 'https://static.wikia.nocookie.net/crashban/images/7/70/CTRNF-NTropyClock.png',
       [RACE_ITEMLESS_4V4]: 'https://static.wikia.nocookie.net/crashban/images/1/12/NF_Purple_Retro_Kart.png',
       [BATTLE_1V1]: 'https://static.wikia.nocookie.net/crashban/images/b/b9/CTRNF-NitroCrate.png',
       [BATTLE_FFA]: 'https://vignette.wikia.nocookie.net/crashban/images/9/97/CTRNF-Invisibility.png',
@@ -558,6 +572,7 @@ Lobby.methods = {
       [RACE_KRUNKING]: 'Krunking',
       [RACE_ITEMLESS_FFA]: 'Itemless FFA',
       [RACE_ITEMLESS_DUOS]: 'Itemless Duos',
+      [RACE_ITEMLESS_3V3]: 'Itemless 3v3',
       [RACE_ITEMLESS_4V4]: 'Itemless 4v4',
       [BATTLE_1V1]: 'Battle 1v1',
       [BATTLE_FFA]: 'Battle FFA',
@@ -586,6 +601,7 @@ Lobby.methods = {
       [RACE_KRUNKING]: 3369831, // Dark Teal
       [RACE_ITEMLESS_FFA]: 16747320, // Medium Orange
       [RACE_ITEMLESS_DUOS]: 0, // Black
+      [RACE_ITEMLESS_3V3]: 15192972, // Beige
       [RACE_ITEMLESS_4V4]: 5650319, // Dark Purple
       [BATTLE_1V1]: 3704120, // Acid Green
       [BATTLE_FFA]: 15856113, // Silver
@@ -677,6 +693,7 @@ Lobby.methods = {
       [RACE_KRUNKING]: 37,
       [RACE_ITEMLESS_FFA]: 37,
       [RACE_ITEMLESS_DUOS]: 37,
+      [RACE_ITEMLESS_3V3]: 37,
       [RACE_ITEMLESS_4V4]: 37,
       [BATTLE_1V1]: 12,
       [BATTLE_FFA]: 12,
@@ -699,6 +716,7 @@ Lobby.methods = {
       [RACE_KRUNKING]: 5,
       [RACE_ITEMLESS_FFA]: 3,
       [RACE_ITEMLESS_DUOS]: 3,
+      [RACE_ITEMLESS_3V3]: 3,
       [RACE_ITEMLESS_4V4]: 3,
       [BATTLE_1V1]: 1,
       [BATTLE_FFA]: 1,
@@ -750,6 +768,7 @@ Lobby.methods = {
         [RACE_KRUNKING]: [TRACK_HYPER_SPACEWAY],
         [RACE_ITEMLESS_FFA]: [TRACK_DRAGON_MINES, TRACK_HYPER_SPACEWAY],
         [RACE_ITEMLESS_DUOS]: [TRACK_DRAGON_MINES, TRACK_HYPER_SPACEWAY],
+        [RACE_ITEMLESS_3V3]: [TRACK_DRAGON_MINES, TRACK_HYPER_SPACEWAY],
         [RACE_ITEMLESS_4V4]: [TRACK_DRAGON_MINES, TRACK_HYPER_SPACEWAY],
         [BATTLE_1V1]: [],
         [BATTLE_FFA]: [],
@@ -769,6 +788,7 @@ Lobby.methods = {
         [RACE_KRUNKING]: [],
         [RACE_ITEMLESS_FFA]: [TRACK_DRAGON_MINES],
         [RACE_ITEMLESS_DUOS]: [TRACK_DRAGON_MINES],
+        [RACE_ITEMLESS_3V3]: [TRACK_DRAGON_MINES],
         [RACE_ITEMLESS_4V4]: [TRACK_DRAGON_MINES],
         [BATTLE_1V1]: [],
         [BATTLE_FFA]: [],
@@ -792,6 +812,7 @@ Lobby.methods = {
       [RACE_KRUNKING]: 1200,
       [RACE_ITEMLESS_FFA]: 1200,
       [RACE_ITEMLESS_DUOS]: 1200,
+      [RACE_ITEMLESS_3V3]: 1200,
       [RACE_ITEMLESS_4V4]: 1200,
       [BATTLE_1V1]: 1200,
       [BATTLE_FFA]: 1200,
@@ -835,6 +856,7 @@ Lobby.methods = {
       [RACE_KRUNKING]: false,
       [RACE_ITEMLESS_FFA]: true,
       [RACE_ITEMLESS_DUOS]: false,
+      [RACE_ITEMLESS_3V3]: false,
       [RACE_ITEMLESS_4V4]: false,
       [BATTLE_1V1]: false,
       [BATTLE_FFA]: false,

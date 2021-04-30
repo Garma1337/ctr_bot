@@ -11,6 +11,7 @@ const {
   RACE_KRUNKING,
   RACE_ITEMLESS_FFA,
   RACE_ITEMLESS_DUOS,
+  RACE_ITEMLESS_3V3,
   RACE_ITEMLESS_4V4,
   BATTLE_1V1,
   BATTLE_FFA,
@@ -1096,19 +1097,20 @@ module.exports = {
 **Itemless Race Modes**
 6 - FFA ${config.ranked_option_emote}
 7 - Duos ${config.ranked_option_emote}
-8 - 4 vs. 4 ${config.ranked_option_emote}
+8 - 3 vs. 3 ${config.ranked_option_emote}
+9 - 4 vs. 4 ${config.ranked_option_emote}
 
 **Battle Modes**
-9 - 1 vs. 1 ${config.ranked_option_emote}
-10 - FFA ${config.ranked_option_emote}
-11 - Duos ${config.ranked_option_emote}
-12 - 3 vs. 3 ${config.ranked_option_emote}
-13 - 4 vs. 4 ${config.ranked_option_emote}
-14 - Survival ${config.ranked_option_emote}
+10 - 1 vs. 1 ${config.ranked_option_emote}
+11 - FFA ${config.ranked_option_emote}
+12 - Duos ${config.ranked_option_emote}
+13 - 3 vs. 3 ${config.ranked_option_emote}
+14 - 4 vs. 4 ${config.ranked_option_emote}
+15 - Survival ${config.ranked_option_emote}
 
 **Misc. Modes**
-15 - Krunking
-16 - Custom`, 'info').then((confirmMessage) => {
+16 - Krunking
+17 - Custom`, 'info').then((confirmMessage) => {
           // eslint-disable-next-line consistent-return
           message.channel.awaitMessages(filter, options).then(async (collected) => {
             confirmMessage.delete();
@@ -1118,7 +1120,7 @@ module.exports = {
 
             let sentMessage;
             let choice = parseInt(content, 10);
-            const modes = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
+            const modes = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17];
 
             if (modes.includes(choice)) {
               let type;
@@ -1145,30 +1147,33 @@ module.exports = {
                   type = RACE_ITEMLESS_DUOS;
                   break;
                 case 8:
-                  type = RACE_ITEMLESS_4V4;
+                  type = RACE_ITEMLESS_3V3;
                   break;
                 case 9:
-                  type = BATTLE_1V1;
+                  type = RACE_ITEMLESS_4V4;
                   break;
                 case 10:
-                  type = BATTLE_FFA;
+                  type = BATTLE_1V1;
                   break;
                 case 11:
-                  type = BATTLE_DUOS;
+                  type = BATTLE_FFA;
                   break;
                 case 12:
-                  type = BATTLE_3V3;
+                  type = BATTLE_DUOS;
                   break;
                 case 13:
-                  type = BATTLE_4V4;
+                  type = BATTLE_3V3;
                   break;
                 case 14:
-                  type = BATTLE_SURVIVAL;
+                  type = BATTLE_4V4;
                   break;
                 case 15:
-                  type = RACE_KRUNKING;
+                  type = BATTLE_SURVIVAL;
                   break;
                 case 16:
+                  type = RACE_KRUNKING;
+                  break;
+                case 17:
                   type = CUSTOM;
                   break;
                 default:
