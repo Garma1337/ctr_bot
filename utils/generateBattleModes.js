@@ -40,6 +40,8 @@ async function generateBattleModes(type, arenas, playerCount) {
   const maxModeUsage = Math.ceil(N / modeNames.length);
 
   for (let i = 0; i < N; i += 1) {
+    let currentIterations = 0;
+
     // eslint-disable-next-line no-constant-condition
     while (true) {
       const rng = Math.floor(modeNames.length * Math.random());
@@ -52,6 +54,13 @@ async function generateBattleModes(type, arenas, playerCount) {
 
         break;
       }
+
+      if (currentIterations >= 100) {
+        throw new Error('Could not generate battle modes!');
+      }
+
+      // eslint-disable-next-line no-plusplus
+      currentIterations++;
     }
   }
 

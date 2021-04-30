@@ -15,6 +15,7 @@ module.exports = {
     characters_file: 'db/characters.txt',
     tracks_file: 'db/tracks.txt',
     battle_maps_file: 'db/battle_maps.txt',
+    badwords_file: 'db/badwords.txt',
   },
   channels: {
     suggestions_channel: 'suggestions',

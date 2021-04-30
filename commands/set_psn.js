@@ -1,6 +1,5 @@
 const { Player } = require('../db/models/player');
 const isStaffMember = require('../utils/isStaffMember');
-const sendLogMessage = require('../utils/sendLogMessage');
 const sendAlertMessage = require('../utils/sendAlertMessage');
 
 module.exports = {
@@ -37,7 +36,7 @@ module.exports = {
     message.guild.members.fetch(user).then((member) => {
       const discordId = member.user.id;
 
-      const e = 'You should specify PSN.';
+      const e = 'You should specify the PSN.';
       if (!PSN) {
         return sendAlertMessage(message.channel, e, 'warning');
       }
@@ -48,6 +47,7 @@ module.exports = {
           if (repeatPSN.discordId === message.author.id) {
             return sendAlertMessage(message.channel, 'You\'ve already set this PSN name.', 'warning');
           }
+
           return sendAlertMessage(message.channel, 'This PSN is already used by another player.', 'warning');
         }
 
@@ -59,27 +59,6 @@ module.exports = {
             player.discordId = discordId;
             player.psn = PSN;
             promise = player.save();
-          } else {
-            if (!isStaff && doc.psn) {
-              return sendAlertMessage(message.channel, `You've already set your PSN to \`${doc.psn}\`. It cannot be changed.`, 'warning');
-            }
-
-            const oldPSN = doc.psn;
-            // eslint-disable-next-line no-param-reassign
-            doc.psn = PSN;
-            promise = doc.save();
-
-            if (oldPSN) {
-              try {
-                sendLogMessage(message.guild, `${member} changed their PSN.
-Old: \`${oldPSN}\`
-New: \`${PSN}\``);
-                // eslint-disable-next-line no-shadow
-              } catch (e) {
-                // eslint-disable-next-line no-console
-                console.error(e);
-              }
-            }
           }
 
           promise.then(() => {

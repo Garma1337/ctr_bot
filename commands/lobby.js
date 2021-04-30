@@ -1829,7 +1829,9 @@ The value should be in the range of \`${diffMin} to ${diffMax}\`. The value defa
         }
 
         // eslint-disable-next-line no-use-before-define
-        await getDecay(message.channel);
+        const decay = await getDecay(message.channel);
+        message.channel.send(decay[RACE_FFA].join('\n'));
+
         break;
       case 'force_add':
         // eslint-disable-next-line consistent-return
@@ -2087,6 +2089,10 @@ async function mogi(reaction, user, removed = false) {
 
           const player = await Player.findOne({ discordId: user.id });
 
+          if (!player || !player.rankedName) {
+            errors.push('You need to set your ranked name. Example: `!set_ranked_name your_ranked_name`.');
+          }
+
           if (!player || !player.psn) {
             errors.push('You need to set your PSN. Example: `!set_psn ctr_tourney_bot`.');
           }
@@ -2189,6 +2195,10 @@ async function mogi(reaction, user, removed = false) {
                 }
 
                 const partner = await Player.findOne({ discordId: savedPartner });
+
+                if (!partner || !partner.rankedName) {
+                  errors.push('Your partner needs to set their ranked name. Example: `!set_ranked_name your_ranked_name`.');
+                }
 
                 if (doc.region) {
                   if (!partner || !partner.region) {
@@ -2315,6 +2325,10 @@ async function mogi(reaction, user, removed = false) {
                 // eslint-disable-next-line guard-for-in
                 for (const i in teammates) {
                   const teammate = teammates[i];
+
+                  if (!teammate.rankedName) {
+                    errors.push(`Your teammate ${teammate.psn} needs to set their ranked name. Example: \`!set_ranked_name your_ranked_name\`.`);
+                  }
 
                   if (doc.region) {
                     if (!teammate.region) {
@@ -2798,7 +2812,7 @@ async function getDecay() {
     }
   });
 
-  console.log(decay);
+  return decay;
 }
 
 new CronJob('0/15 * * * *', getRanks).start();

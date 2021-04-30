@@ -145,9 +145,11 @@ module.exports = {
         let voiceChat = [];
         let nat;
         let timeZone;
+        let rankedName;
         let favCharacter;
         let favTrack;
         let playerConsoles;
+        let favArena;
 
         if (!player) {
           psn = '-';
@@ -157,9 +159,11 @@ module.exports = {
           birthday = '-';
           nat = '-';
           timeZone = '-';
+          rankedName = '-';
           favCharacter = '-';
           favTrack = '-';
           playerConsoles = ['-'];
+          favArena = '-';
         } else {
           psn = player.psn || '-';
           flag = player.flag || '-';
@@ -167,9 +171,11 @@ module.exports = {
           languages = player.languages.length > 0 ? player.languages : ['-'];
           nat = player.nat || '-';
           timeZone = player.timeZone || '-';
+          rankedName = player.rankedName || '-';
           favCharacter = player.favCharacter || '-';
           favTrack = player.favTrack || '-';
           playerConsoles = player.consoles.length > 0 ? player.consoles : ['-'];
+          favArena = player.favArena || '-';
 
           if (!player.birthday) {
             birthday = '-';
@@ -237,10 +243,12 @@ module.exports = {
         }
 
         const gameData = [
+          `**Ranked Name**: ${rankedName.replace(/_/g, '\\_')}`,
           `**Consoles**: ${playerConsoles.join(', ')}`,
           `**Clans**: ${playerClans.join(', ')}`,
           `**Fav. Character**: ${favCharacter}`,
           `**Fav. Track**: ${favTrack}`,
+          `**Fav. Arena**: ${favArena}`,
         ];
 
         embedFields.push({
@@ -330,8 +338,20 @@ module.exports = {
               achievements.push('Member for over 1 year');
             }
 
-            // eslint-disable-next-line max-len
-            if (player && player.psn && player.flag && player.nat && player.timeZone && player.birthday && (player.discordVc || player.ps4Vc) && player.favCharacter && player.favCharacter && player.languages.length > 0 && player.consoles.length > 0) {
+            if (player
+                && player.psn
+                && player.flag
+                && player.nat
+                && player.timeZone
+                && player.birthday
+                && (player.discordVc || player.ps4Vc)
+                && player.rankedName
+                && player.favCharacter
+                && player.favTrack
+                && player.languages.length > 0
+                && player.consoles.length > 0
+                && player.favArena
+            ) {
               achievements.push('Complete Profile');
             }
 

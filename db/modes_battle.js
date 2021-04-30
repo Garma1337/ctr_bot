@@ -20,7 +20,7 @@ module.exports.battleModes1v1 = [
         'Game Mode: Limit Battle',
         'Type: Points',
         'Point Limit: 10',
-        `Items: **ENABLED ONLY**: ${turboCanister}, ${greenShield}, ${invisibility}, ${missile} and ${bomb}`,
+        `Items: **ENABLED ONLY**: ${turboCanister} and ${bomb}`,
         'Teams: None',
       ],
       arenas: [],
@@ -32,7 +32,7 @@ module.exports.battleModes1v1 = [
         'Game Mode: Limit Battle',
         'Type: Time',
         'Time Limit: 6 minutes',
-        `Items: **ENABLED ONLY**: ${turboCanister}, ${greenShield}, ${invisibility}, ${missile} and ${bomb}`,
+        `Items: **ENABLED ONLY**: ${turboCanister} and ${bomb}`,
         'Teams: None',
       ],
       arenas: [],
@@ -67,18 +67,6 @@ module.exports.battleModes1v1 = [
     },
   ],
   [
-    {
-      name: 'Bomb Capture The Flag',
-      settings: [
-        'Game Mode: Capture The Flag',
-        'Time Limit: 6 minutes',
-        'Point Limit: 9 points',
-        `Items: **ENABLED ONLY**: ${bomb} and ${turboCanister}`,
-        'Teams: 2',
-      ],
-      arenas: [],
-      maxPlayers: 2,
-    },
     {
       name: 'Basic Capture The Flag',
       settings: [
