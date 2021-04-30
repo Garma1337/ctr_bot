@@ -56,6 +56,8 @@ const TRACK_OPTION_IRON_MAN = 'Iron Man';
 const TRACK_DRAGON_MINES = 'Dragon Mines';
 const TRACK_HYPER_SPACEWAY = 'Hyper Spaceway';
 const TRACK_SPYRO_CIRCUIT = 'Spyro Circuit';
+const ARENA_FROZEN_FRENZY = 'Frozen Frenzy';
+const ARENA_MAGNETIC_MAYHEM = 'Magnetic Mayhem';
 const CUSTOM_OPTION_MODE = 'mode';
 const CUSTOM_OPTION_TRACK_POOL = 'track_pool';
 const CUSTOM_OPTION_PLAYERS = 'players';
@@ -770,7 +772,7 @@ Lobby.methods = {
         [RACE_ITEMLESS_DUOS]: [TRACK_DRAGON_MINES, TRACK_HYPER_SPACEWAY],
         [RACE_ITEMLESS_3V3]: [TRACK_DRAGON_MINES, TRACK_HYPER_SPACEWAY],
         [RACE_ITEMLESS_4V4]: [TRACK_DRAGON_MINES, TRACK_HYPER_SPACEWAY],
-        [BATTLE_1V1]: [],
+        [BATTLE_1V1]: [ARENA_FROZEN_FRENZY, ARENA_MAGNETIC_MAYHEM],
         [BATTLE_FFA]: [],
         [BATTLE_DUOS]: [],
         [BATTLE_3V3]: [],
@@ -790,7 +792,7 @@ Lobby.methods = {
         [RACE_ITEMLESS_DUOS]: [TRACK_DRAGON_MINES],
         [RACE_ITEMLESS_3V3]: [TRACK_DRAGON_MINES],
         [RACE_ITEMLESS_4V4]: [TRACK_DRAGON_MINES],
-        [BATTLE_1V1]: [],
+        [BATTLE_1V1]: [ARENA_FROZEN_FRENZY, ARENA_MAGNETIC_MAYHEM],
         [BATTLE_FFA]: [],
         [BATTLE_DUOS]: [],
         [BATTLE_3V3]: [],
