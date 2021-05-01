@@ -588,6 +588,9 @@ async function createBalancedTeams(doc, soloPlayers) {
 }
 
 async function setupTournamentRound(doc, roomChannel) {
+  const pinnedMessages = await roomChannel.messages.fetchPinned();
+  pinnedMessages.forEach((pinnedMessage) => pinnedMessage.unpin());
+
   const engineRestriction = engineStyles.find((e) => e.uid === doc.engineRestriction);
   const ruleset = rulesets.find((r, i) => i === doc.ruleset);
 
@@ -630,13 +633,11 @@ async function setupTournamentRound(doc, roomChannel) {
         PSNs,
         templateUrl,
         number: i,
-        tracks,
-        settings,
         template,
       });
     }
 
-    lobbyData.forEach((l) => {
+    for (const l of lobbyData) {
       const embed = {
         color: doc.getColor(),
         title: `Lobby ${l.number}`,
@@ -668,8 +669,10 @@ async function setupTournamentRound(doc, roomChannel) {
       });
 
       const pings = doc.players.map((m) => `<@!${m}>`).join(', ');
-      roomChannel.send({ content: pings, embed });
-    });
+      roomChannel.send({ content: pings, embed }).then((m) => {
+        m.pin();
+      });
+    }
   }
 }
 

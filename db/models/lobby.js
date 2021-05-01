@@ -640,7 +640,7 @@ Lobby.methods = {
     return LEADERBOARDS[this.type];
   },
   getRemindMinutes() {
-    if (this.isCustom()) {
+    if (this.isCustom() || this.isTournament()) {
       return null;
     }
 
@@ -667,7 +667,7 @@ Lobby.methods = {
     return [remindMinutesMin, remindMinutesMax];
   },
   getPingMinutes() {
-    if (this.isCustom()) {
+    if (this.isCustom() || this.isTournament()) {
       return null;
     }
 
