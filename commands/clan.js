@@ -108,17 +108,17 @@ Edit clans:
         });
 
         Player.find({ discordId: { $in: discordIds } }).then((players) => {
-          const psns = [];
-          const psnMapping = {};
+          const rankedNames = [];
+          const rankedNameMapping = {};
 
           players.forEach((p) => {
-            if (p.psn) {
-              psns.push(p.psn);
-              psnMapping[p.discordId] = p.psn;
+            if (p.rankedName) {
+              rankedNames.push(p.rankedName);
+              rankedNameMapping[p.discordId] = p.rankedName;
             }
           });
 
-          Rank.find({ name: { $in: psns } }).then((ranks) => {
+          Rank.find({ name: { $in: rankedNames } }).then((ranks) => {
             const promise = getConfigValue('super_score_base_rank');
             Promise.resolve(promise).then((baseRank) => {
               const superScores = [];
@@ -133,7 +133,7 @@ Edit clans:
                 clanMembers[i].superScoreCount = 0;
 
                 clanMembers[i].members.forEach((m) => {
-                  const psn = psnMapping[m];
+                  const psn = rankedNameMapping[m];
                   const superScore = superScores[psn] || 0;
                   superScoreSum += superScore;
 
@@ -249,17 +249,17 @@ Edit clans:
       Clan.findOne().or([{ shortName: { $regex: regexShortName } }, { fullName: { $regex: regexFullName } }]).then((clan) => {
         if (clan) {
           Player.find({ discordId: { $in: clan.getMemberIds() } }).then((docs) => {
-            const psns = [];
-            const psnMapping = {};
+            const rankedNames = [];
+            const rankedNameMapping = {};
 
             docs.forEach((p) => {
-              if (p.psn) {
-                psns.push(p.psn);
-                psnMapping[p.discordId] = p.psn;
+              if (p.rankedName) {
+                rankedNames.push(p.rankedName);
+                rankedNameMapping[p.discordId] = p.rankedName;
               }
             });
 
-            Rank.find({ name: { $in: psns } }).then((ranks) => {
+            Rank.find({ name: { $in: rankedNames } }).then((ranks) => {
               const promise = getConfigValue('super_score_base_rank');
               Promise.resolve(promise).then((baseRank) => {
                 const superScores = {};
@@ -267,13 +267,13 @@ Edit clans:
                 let superScoreCount = 0;
 
                 clan.getMemberIds().forEach((m) => {
-                  const psn = psnMapping[m] || null;
-                  if (psn) {
-                    const rank = ranks.find((r) => r.name === psn);
+                  const rankedName = rankedNameMapping[m] || null;
+                  if (rankedName) {
+                    const rank = ranks.find((r) => r.name === rankedName);
 
                     if (rank) {
                       const superScore = calculateSuperScore(rank, baseRank);
-                      superScores[psn] = superScore;
+                      superScores[rankedName] = superScore;
                       superScoreSum += superScore;
 
                       superScoreCount += 1;
@@ -312,8 +312,8 @@ Edit clans:
                   if (player && player.psn) {
                     out = `${player.psn.replace(/_/g, '\\_')}`;
 
-                    if (superScores[player.psn]) {
-                      out += ` (Score: ${superScores[player.psn]})`;
+                    if (superScores[player.rankedName]) {
+                      out += ` (Score: ${superScores[player.rankedName]})`;
                     }
                   } else {
                     out = '-';

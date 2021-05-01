@@ -34,7 +34,7 @@ function sendMessage(message, rank) {
   });
 
   generateSuperScoreRanking().then((superScoreRanking) => {
-    const superScoreEntry = superScoreRanking.find((r) => r.psn === rank.name);
+    const superScoreEntry = superScoreRanking.find((r) => r.rankedName === rank.name);
 
     fields.push({
       name: 'Super Score',
@@ -56,11 +56,12 @@ module.exports = {
   description: 'Check your rank',
   guildOnly: true,
   cooldown: 10,
+  // eslint-disable-next-line consistent-return
   async execute(message, args) {
     if (args.length) {
       if (args[0] === 'list') {
         generateSuperScoreRanking().then((superScoreRanking) => {
-          const elements = superScoreRanking.map((sr) => `**${sr.rank}**. ${sr.flag} <@!${sr.discordId}>\n**PSN**: ${sr.psn}\n**Score**: ${sr.superScore}\n`);
+          const elements = superScoreRanking.map((sr) => `**${sr.rank}**. ${sr.flag} <@!${sr.discordId}>\n**PSN**: ${sr.psn}\n**Ranked Name**: ${sr.rankedName}\n**Score**: ${sr.superScore}\n`);
 
           createPageableContent(message.channel, message.author.id, {
             outputType: 'embed',
@@ -74,11 +75,11 @@ module.exports = {
           });
         });
       } else {
-        let psn;
+        let rankedName;
 
         const user = message.mentions.users.first();
         if (!user) {
-          psn = args[0];
+          rankedName = args[0];
         } else {
           const player = await Player.findOne({ discordId: user.id });
 
@@ -86,13 +87,13 @@ module.exports = {
             return sendAlertMessage(message.channel, `<@!${user.id}> has not played any ranked matches yet.`, 'warning');
           }
 
-          psn = player.psn || '-';
+          rankedName = player.rankedName || '-';
         }
 
         // eslint-disable-next-line consistent-return
-        Rank.findOne({ name: psn }).then((rank) => {
+        Rank.findOne({ name: rankedName }).then((rank) => {
           if (!rank) {
-            return sendAlertMessage(message.channel, `${psn} has not played any ranked matches yet.`, 'warning');
+            return sendAlertMessage(message.channel, `${rankedName} has not played any ranked matches yet.`, 'warning');
           }
 
           sendMessage(message, rank);
@@ -101,12 +102,12 @@ module.exports = {
     } else {
       // eslint-disable-next-line consistent-return
       Player.findOne({ discordId: message.author.id }).then((player) => {
-        if (!player || !player.psn) {
+        if (!player || !player.rankedName) {
           return sendAlertMessage(message.channel, 'You have not played any ranked matches yet.', 'warning');
         }
 
         // eslint-disable-next-line consistent-return
-        Rank.findOne({ name: player.psn }).then((rank) => {
+        Rank.findOne({ name: player.rankedName }).then((rank) => {
           if (!rank) {
             return sendAlertMessage(message.channel, 'You have not played any ranked matches yet.', 'warning');
           }

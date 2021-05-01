@@ -59,13 +59,13 @@ module.exports = {
       const countryMembers = {};
 
       Player.find().then((players) => {
-        const psns = [];
-        const psnMapping = {};
+        const rankedNames = [];
+        const rankedNameMapping = {};
 
         players.forEach((p) => {
-          if (p.psn) {
-            psns.push(p.psn);
-            psnMapping[p.discordId] = p.psn;
+          if (p.rankedName) {
+            rankedNames.push(p.rankedName);
+            rankedNameMapping[p.discordId] = p.rankedName;
           }
 
           if (p.flag !== '🇺🇳') {
@@ -81,7 +81,7 @@ module.exports = {
           }
         });
 
-        Rank.find({ name: { $in: psns } }).then((ranks) => {
+        Rank.find({ name: { $in: rankedNames } }).then((ranks) => {
           const promise = getConfigValue('super_score_base_rank');
           Promise.resolve(promise).then((baseRank) => {
             const superScores = [];
@@ -95,7 +95,7 @@ module.exports = {
               let superScoreSum = 0;
 
               countryMembers[i].members.forEach((m) => {
-                const psn = psnMapping[m];
+                const psn = rankedNameMapping[m];
                 const superScore = superScores[psn] || 0;
                 superScoreSum += superScore;
 
@@ -152,20 +152,20 @@ module.exports = {
           return sendAlertMessage(message.channel, `There are no players from ${flag}.`, 'info');
         }
 
-        const psns = [];
-        const psnMapping = {};
+        const rankedNames = [];
+        const rankedNameMapping = {};
         const playerIds = [];
 
         players.forEach((p) => {
-          if (p.psn) {
-            psns.push(p.psn);
-            psnMapping[p.discordId] = p.psn;
+          if (p.rankedName) {
+            rankedNames.push(p.rankedName);
+            rankedNameMapping[p.discordId] = p.rankedName;
           }
 
           playerIds.push(p.discordId);
         });
 
-        Rank.find({ name: { $in: psns } }).then((ranks) => {
+        Rank.find({ name: { $in: rankedNames } }).then((ranks) => {
           const promise = getConfigValue('super_score_base_rank');
           // eslint-disable-next-line consistent-return
           Promise.resolve(promise).then((baseRank) => {
@@ -174,7 +174,7 @@ module.exports = {
             let superScoreCount = 0;
 
             playerIds.forEach((m) => {
-              const psn = psnMapping[m] || null;
+              const psn = rankedNameMapping[m] || null;
               if (psn) {
                 const rank = ranks.find((r) => r.name === psn);
 
@@ -214,8 +214,8 @@ module.exports = {
               if (player && player.psn) {
                 out = `${player.psn.replace(/_/g, '\\_')}`;
 
-                if (superScores[player.psn]) {
-                  out += ` (Score: ${superScores[player.psn]})`;
+                if (superScores[player.rankedName]) {
+                  out += ` (Score: ${superScores[player.rankedName]})`;
                 }
               } else {
                 out = '-';

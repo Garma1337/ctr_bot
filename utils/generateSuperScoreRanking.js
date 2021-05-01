@@ -10,19 +10,20 @@ const getConfigValue = require('./getConfigValue');
 async function generateSuperScoreRanking() {
   let superScores = [];
 
-  const players = await Player.find({ psn: { $ne: null } });
-  const psns = players.map((p) => p.psn);
+  const players = await Player.find({ rankedName: { $ne: null } });
+  const rankedNames = players.map((p) => p.rankedName);
 
-  const ranks = await Rank.find({ name: { $in: psns } });
+  const ranks = await Rank.find({ name: { $in: rankedNames } });
   const baseRank = await getConfigValue('super_score_base_rank');
 
   ranks.forEach((r) => {
-    const player = players.find((p) => p.psn === r.name);
+    const player = players.find((p) => p.rankedName === r.name);
 
     if (player) {
       superScores.push({
         discordId: player.discordId,
-        psn: r.name,
+        rankedName: r.name,
+        psn: player.psn,
         flag: player.flag,
         superScore: calculateSuperScore(r, baseRank),
       });
@@ -33,6 +34,7 @@ async function generateSuperScoreRanking() {
     .sort((a, b) => b.superScore - a.superScore)
     .map((s, i) => ({
       discordId: s.discordId,
+      rankedName: s.rankedName,
       psn: s.psn,
       flag: s.flag,
       rank: (i + 1),
