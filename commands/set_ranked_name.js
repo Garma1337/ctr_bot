@@ -37,6 +37,11 @@ module.exports = {
     if (isStaff && args.length === 2) {
       user = message.mentions.users.first();
       name = args[1];
+
+      if (!user) {
+        // eslint-disable-next-line consistent-return
+        return sendAlertMessage(message.channel, 'You need to mention a user.', 'warning');
+      }
     } else {
       user = message.author;
       name = args[0];
