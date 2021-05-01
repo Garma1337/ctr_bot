@@ -112,7 +112,7 @@ async function getPlayerInfo(playerId, doc) {
 
   let { psn } = p;
   if (psn) {
-    psn = psn.replace(/_/g, '\\_');
+    psn = psn.replace('_', '\\_');
   }
 
   return [tag, psn, rankValue];

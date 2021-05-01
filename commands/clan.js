@@ -310,7 +310,7 @@ Edit clans:
                   const player = docs.find((p) => p.discordId === m);
 
                   if (player && player.psn) {
-                    out = `${player.psn.replace(/_/g, '\\_')}`;
+                    out = `${player.psn.replace('_', '\\_')}`;
 
                     if (superScores[player.rankedName]) {
                       out += ` (Score: ${superScores[player.rankedName]})`;

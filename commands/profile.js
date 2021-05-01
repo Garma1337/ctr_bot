@@ -202,7 +202,7 @@ module.exports = {
         }
 
         const profile = [
-          `**PSN**: ${psn.replace(/_/g, '\\_')}`,
+          `**PSN**: ${psn.replace('_', '\\_')}`,
           `**Country**: ${flag}`,
           `**Region**: ${region}`,
           `**Languages**: ${languages.join(', ')}`,
