@@ -11,9 +11,13 @@ const {
  * @returns {number}
  */
 function calculateSuperScore(rank, baseRank = 500) {
-  const itemsRank = rank[RACE_FFA].rank || baseRank;
-  const itemlessRank = rank[RACE_ITEMLESS_FFA].rank || baseRank;
-  const battleRank = rank[BATTLE_FFA].rank || baseRank;
+  let itemsRank = rank[RACE_FFA].rank || baseRank;
+  let itemlessRank = rank[RACE_ITEMLESS_FFA].rank || baseRank;
+  let battleRank = rank[BATTLE_FFA].rank || baseRank;
+
+  itemsRank = parseInt(itemsRank, 10);
+  itemlessRank = parseInt(itemlessRank, 10);
+  battleRank = parseInt(battleRank, 10);
 
   // eslint-disable-next-line max-len
   return Math.ceil(itemsRank + itemlessRank + battleRank);
