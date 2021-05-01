@@ -182,10 +182,10 @@ async function getEmbed(doc, players, tracks, roomChannel) {
       });
 
       playersText += `**Team ${i + 1} (Rating: ${Math.floor(mmrSum / team.length)})**\n`;
-      team.forEach((player) => {
+      team.forEach((player, x) => {
         const info = playersInfo[player];
         const tag = info && info.tag;
-        playersText += `${tag}\n`;
+        playersText += `${x + 1}. ${tag}\n`;
         delete playersInfo[player];
       });
     });
