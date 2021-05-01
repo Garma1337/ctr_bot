@@ -43,7 +43,9 @@ async function generateTracks(doc) {
       pools = poolItems4;
     }
   } else if (doc.isBattle()) {
-    if (doc.trackCount % 3 === 0) {
+    if (doc.is1v1()) {
+      pools = poolBattle3;
+    } else if (doc.trackCount % 3 === 0) {
       pools = poolBattle3;
     } else if (doc.trackCount % 4 === 0) {
       pools = poolBattle4;
@@ -105,8 +107,9 @@ async function generateTracks(doc) {
       }
     } else {
       const pool = removeBannedTracks(tmpPools[0], doc);
+      const trackCount = (doc.trackCount > pool.length ? pool.length : doc.trackCount);
 
-      for (let i = 0; i < pool.length; i += 1) {
+      for (let i = 0; i < trackCount; i += 1) {
         const trackIndex = Math.floor(Math.random() * pool.length);
 
         maps.push(pool[trackIndex]);

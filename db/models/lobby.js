@@ -299,7 +299,7 @@ Lobby.methods = {
       };
     } else {
       minimumPlayers = {
-        [RACE_ITEMS_FFA]: 4,
+        [RACE_ITEMS_FFA]: 6,
         [RACE_ITEMS_DUOS]: 6,
         [RACE_ITEMS_3V3]: 6,
         [RACE_ITEMS_4V4]: 8,
