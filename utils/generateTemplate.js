@@ -82,7 +82,7 @@ async function generateTemplate(players, doc) {
       title += '#title Match # - Itemless 4 vs. 4';
       break;
     case BATTLE_1V1:
-      title += 'Match # - Battle 1 vs. 1';
+      title += 'Match # - Battle 1v1';
       break;
     case BATTLE_FFA:
       title += 'Match # - Battle FFA';
