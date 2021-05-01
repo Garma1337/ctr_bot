@@ -243,7 +243,7 @@ module.exports = {
         }
 
         const gameData = [
-          `**Ranked Name**: ${rankedName.replace(/_/g, '\\_')}`,
+          `**Ranked Name**: ${rankedName.replace('_', '\\_')}`,
           `**Consoles**: ${playerConsoles.join(', ')}`,
           `**Clans**: ${playerClans.join(', ')}`,
           `**Fav. Character**: ${favCharacter}`,

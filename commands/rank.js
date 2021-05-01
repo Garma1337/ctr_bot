@@ -61,7 +61,7 @@ module.exports = {
     if (args.length) {
       if (args[0] === 'list') {
         generateSuperScoreRanking().then((superScoreRanking) => {
-          const elements = superScoreRanking.map((sr) => `**${sr.rank}**. ${sr.flag} <@!${sr.discordId}>\n**PSN**: ${sr.psn.replace('_', '\\_')}\n**Ranked Name**: ${sr.rankedName}\n**Score**: ${sr.superScore}\n`);
+          const elements = superScoreRanking.map((sr) => `**${sr.rank}**. ${sr.flag} <@!${sr.discordId}>\n**PSN**: ${sr.psn.replace('_', '\\_')}\n**Ranked Name**: ${sr.rankedName.replace('_', '\\_')}\n**Score**: ${sr.superScore}\n`);
 
           createPageableContent(message.channel, message.author.id, {
             outputType: 'embed',
