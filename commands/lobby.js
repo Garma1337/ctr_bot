@@ -118,6 +118,24 @@ async function getPlayerInfo(playerId, doc) {
   return [tag, psn, rankValue];
 }
 
+async function getLivestreams(doc) {
+  const isCTRStream = (a) => a.type === 'STREAMING' && a.state && a.state.toLowerCase().includes('crash team');
+  const livestreams = [];
+
+  // eslint-disable-next-line max-len
+  const members = await client.guilds.cache.get(doc.guild).members.fetch({ user: doc.players, withPresences: true });
+
+  members.forEach((m) => {
+    m.presence.activities.forEach((a) => {
+      if (isCTRStream(a) && !livestreams.includes(a.url)) {
+        livestreams.push(a.url);
+      }
+    });
+  });
+
+  return livestreams;
+}
+
 async function getEmbed(doc, players, tracks, roomChannel) {
   let playersText = 'No players.';
   let psnAndRanks = 'No players.';
@@ -297,6 +315,22 @@ async function getEmbed(doc, players, tracks, roomChannel) {
 
     if (settings.length > 0) {
       fields.push(settingsField);
+    }
+
+    const livestreams = await getLivestreams(doc);
+    if (livestreams.length > 0) {
+      fields.push({
+        name: ':tv: Livestreams',
+        value: livestreams.join('\n'),
+        inline: true,
+      });
+
+      // add spacer so that the layout doesn't get fucked
+      fields.push({
+        name: '\u200B',
+        value: '\u200B',
+        inline: true,
+      });
     }
 
     return {
@@ -791,20 +825,10 @@ ${playersText}`,
                     if (doc.isWar() && doc.draftTracks) {
                       const teams = ['A', 'B'];
 
-                      let captainAPromise;
-                      let captainBPromise;
-
-                      if (!doc.is1v1()) {
-                        // eslint-disable-next-line max-len
-                        captainAPromise = client.guilds.cache.get(doc.guild).members.fetch(getRandomArrayElement(doc.teamList[0]));
-                        // eslint-disable-next-line max-len
-                        captainBPromise = client.guilds.cache.get(doc.guild).members.fetch(getRandomArrayElement(doc.teamList[1]));
-                      } else {
-                        // eslint-disable-next-line max-len
-                        captainAPromise = client.guilds.cache.get(doc.guild).members.fetch(doc.players[0]);
-                        // eslint-disable-next-line max-len
-                        captainBPromise = client.guilds.cache.get(doc.guild).members.fetch(doc.players[1]);
-                      }
+                      // eslint-disable-next-line max-len
+                      const captainAPromise = client.guilds.cache.get(doc.guild).members.fetch(getRandomArrayElement(doc.teamList[0]));
+                      // eslint-disable-next-line max-len
+                      const captainBPromise = client.guilds.cache.get(doc.guild).members.fetch(getRandomArrayElement(doc.teamList[1]));
 
                       Promise.all([captainAPromise, captainBPromise]).then((captains) => {
                         switch (doc.type) {
@@ -813,9 +837,6 @@ ${playersText}`,
                             break;
                           case RACE_4V4:
                             createDraft(roomChannel, '0', teams, captains);
-                            break;
-                          case BATTLE_1V1:
-                            createDraftv2(roomChannel, 2, 0, 3, 30, captains);
                             break;
                           case BATTLE_DUOS:
                             createDraftv2(roomChannel, 2, 0, 3, 30, captains);

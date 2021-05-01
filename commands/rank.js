@@ -42,6 +42,13 @@ function sendMessage(message, rank) {
       inline: true,
     });
 
+    // add spacer so that the layout doesn't get fucked
+    fields.push({
+      name: '\u200B',
+      value: '\u200B',
+      inline: true,
+    });
+
     message.channel.send({
       embed: {
         title: `${rank.name}'s ranks`,
