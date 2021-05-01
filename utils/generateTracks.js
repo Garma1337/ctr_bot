@@ -66,10 +66,15 @@ async function generateTracks(doc) {
   if (!doc.isIronMan()) {
     if (tmpPools.length > 1) {
       const perPool = Math.floor(doc.trackCount / tmpPools.length);
-      const remainder = doc.trackCount % tmpPools.length;
+      let remainder = doc.trackCount % tmpPools.length;
 
       tmpPools.forEach((p, i) => {
         p = removeBannedTracks(p, doc);
+        if (p.length <= 0) {
+          // eslint-disable-next-line no-plusplus
+          remainder += perPool;
+          return;
+        }
 
         for (let x = 0; x < perPool; x += 1) {
           const trackIndex = Math.floor(Math.random() * p.length);
@@ -83,7 +88,15 @@ async function generateTracks(doc) {
 
       for (let x = 0; x < remainder; x += 1) {
         const poolIndex = Math.floor(Math.random() * tmpPools.length);
+
         const randomPool = removeBannedTracks(tmpPools[poolIndex], doc);
+        if (randomPool.length <= 0) {
+          x -= 1;
+
+          // eslint-disable-next-line no-continue
+          continue;
+        }
+
         const trackIndex = Math.floor(Math.random() * randomPool.length);
 
         maps.push(randomPool[trackIndex]);
@@ -93,7 +106,7 @@ async function generateTracks(doc) {
     } else {
       const pool = removeBannedTracks(tmpPools[0], doc);
 
-      for (let i = 0; i < doc.trackCount; i += 1) {
+      for (let i = 0; i < pool.length; i += 1) {
         const trackIndex = Math.floor(Math.random() * pool.length);
 
         maps.push(pool[trackIndex]);
