@@ -152,7 +152,7 @@ async function getEmbed(doc, players, tracks, roomChannel) {
     playersText += '**Teams:**\n';
 
     doc.teamList.forEach((team, i) => {
-      if (team.players.length <= 0) {
+      if (team.length <= 0) {
         return;
       }
 

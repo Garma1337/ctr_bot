@@ -199,6 +199,10 @@ ${message.content}`;
 client.on('messageReactionAdd', (reaction) => {
   // eslint-disable-next-line max-len
   client.channels.cache.get(reaction.message.channel.id).messages.fetch(reaction.message.id).then((message) => {
+    if (message.channel.type !== 'text') {
+      return;
+    }
+
     // eslint-disable-next-line max-len
     if (message.channel.name.toLowerCase() === config.channels.suggestions_channel.toLowerCase() && !message.author.bot) {
       if (['✅', '❌'].includes(reaction.emoji.name)) {
