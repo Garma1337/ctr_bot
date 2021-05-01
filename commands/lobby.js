@@ -95,7 +95,7 @@ function getRoomName(number) {
 
 async function getPlayerInfo(playerId, doc) {
   const p = await Player.findOne({ discordId: playerId });
-  const rank = await Rank.findOne({ name: p.psn });
+  const rank = await Rank.findOne({ name: p.rankedName });
   let rankValue = doc.getDefaultRank();
 
   if (rank && rank[doc.type]) {

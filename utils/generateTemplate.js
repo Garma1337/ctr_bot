@@ -146,7 +146,7 @@ async function generateTemplate(players, doc) {
 
   const PSNs = [];
   for (const x of playerDocs) {
-    const rank = await Rank.findOne({ name: x.psn });
+    const rank = await Rank.findOne({ name: x.rankedName });
 
     let mmr = doc.getDefaultRank();
     if (rank && rank[doc.type] && rank[doc.type].rank) {
