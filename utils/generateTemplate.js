@@ -16,6 +16,7 @@ const {
   BATTLE_4V4,
   BATTLE_SURVIVAL,
   CUSTOM,
+  LOBBY_MODE_STANDARD,
 } = require('../db/models/lobby');
 
 const { Player } = require('../db/models/player');
@@ -50,61 +51,74 @@ async function generateTemplate(players, doc) {
 
   switch (doc.type) {
     case RACE_FFA:
-      title += 'Match # - FFA\n';
+      title += 'Match # - FFA';
       break;
     case RACE_DUOS:
-      title += '#title Match # - Duos\n';
+      title += '#title Match # - Duos';
       break;
     case RACE_3V3:
-      title += '#title Match # - 3 vs. 3\n';
+      title += '#title Match # - 3 vs. 3';
       break;
     case RACE_4V4:
-      title += '#title Match # - 4 vs. 4\n';
+      title += '#title Match # - 4 vs. 4';
       break;
     case RACE_SURVIVAL:
-      title += 'Match # - Survival\n';
+      title += 'Match # - Survival';
       numberOfMaps = 1;
       break;
     case RACE_KRUNKING:
-      title += '#title Match # - Krunking\n';
+      title += '#title Match # - Krunking';
       break;
     case RACE_ITEMLESS_FFA:
-      title += 'Match # - Itemless FFA\n';
+      title += 'Match # - Itemless FFA';
       break;
     case RACE_ITEMLESS_DUOS:
-      title += '#title Match # - Itemless Duos\n';
+      title += '#title Match # - Itemless Duos';
       break;
     case RACE_ITEMLESS_3V3:
-      title += '#title Match # - Itemless 3 vs. 3\n';
+      title += '#title Match # - Itemless 3 vs. 3';
       break;
     case RACE_ITEMLESS_4V4:
-      title += '#title Match # - Itemless 4 vs. 4\n';
+      title += '#title Match # - Itemless 4 vs. 4';
       break;
     case BATTLE_1V1:
-      title += 'Match # - Battle 1 vs. 1\n';
+      title += 'Match # - Battle 1 vs. 1';
       break;
     case BATTLE_FFA:
-      title += 'Match # - Battle FFA\n';
+      title += 'Match # - Battle FFA';
       break;
     case BATTLE_DUOS:
-      title += '#title Match # - Battle Duos\n';
+      title += '#title Match # - Battle Duos';
       break;
     case BATTLE_3V3:
-      title += '#title Match # - Battle 3 vs. 3\n';
+      title += '#title Match # - Battle 3 vs. 3';
       break;
     case BATTLE_4V4:
-      title += '#title Match # - Battle 4 vs. 4\n';
+      title += '#title Match # - Battle 4 vs. 4';
       break;
     case BATTLE_SURVIVAL:
-      title += 'Match # - Battle Survival\n';
+      title += 'Match # - Battle Survival';
       numberOfMaps = 1;
       break;
     case CUSTOM:
-      title += 'Match # - Custom\n';
+      title += 'Match # - Custom';
       numberOfMaps = 1;
       break;
     default:
       break;
+  }
+
+  if (doc.isTournament()) {
+    const lobby = doc;
+    lobby.mode = LOBBY_MODE_STANDARD;
+
+    if (doc.players.length <= lobby.getDefaultPlayerCount()) {
+      title += ' Tournament Finals\n';
+    } else {
+      title += ' Tournament\n';
+    }
+  } else {
+    title += '\n';
   }
 
   const rows = [];
