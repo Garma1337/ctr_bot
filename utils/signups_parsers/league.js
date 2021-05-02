@@ -56,6 +56,18 @@ module.exports = {
       type: 'nickname',
       optional: true,
     },
+    {
+      key: /psn ?sub ?5/i,
+      name: 'psnSub5',
+      type: 'nickname',
+      optional: true,
+    },
+    {
+      key: /psn ?sub ?6/i,
+      name: 'psnSub6',
+      type: 'nickname',
+      optional: true,
+    },
   ],
   template: `Team Name: Template Team
 Captain: <@!${config.bot_user_id}>
@@ -66,5 +78,7 @@ PSN 4: ctr_tourney_bot_4
 PSN Sub 1: ctr_tourney_bot_sub_1
 PSN Sub 2: ctr_tourney_bot_sub_2
 PSN Sub 3: ctr_tourney_bot_sub_3
-PSN Sub 4: ctr_tourney_bot_sub_4 (substitute players are optional)`,
+PSN Sub 4: ctr_tourney_bot_sub_4
+PSN Sub 4: ctr_tourney_bot_sub_5
+PSN Sub 4: ctr_tourney_bot_sub_6 (substitute players are optional)`,
 };
