@@ -454,6 +454,11 @@ async function getPlayersText(doc) {
     // eslint-disable-next-line guard-for-in
     for (const i in doc.teamList) {
       const team = doc.teamList[i];
+      if (team.length <= 0) {
+        // eslint-disable-next-line no-continue
+        continue;
+      }
+
       let mmrSum = 0;
 
       // eslint-disable-next-line guard-for-in
