@@ -459,7 +459,7 @@ async function getPlayersText(doc) {
       // eslint-disable-next-line guard-for-in
       for (const p in team) {
         const player = await Player.findOne({ discordId: team[p] });
-        const rank = await Rank.findOne({ name: player.psn });
+        const rank = await Rank.findOne({ name: player.rankedName });
 
         let mmr = doc.getDefaultRank();
         if (rank && rank[doc.type] && rank[doc.type].rank) {
@@ -491,7 +491,7 @@ async function getPlayerRanks(doc, players) {
     const playerModels = await Player.find({ discordId: { $in: players } });
 
     for (const player of playerModels) {
-      const rank = await Rank.findOne({ name: player.psn });
+      const rank = await Rank.findOne({ name: player.rankedName });
 
       let ranking = doc.getDefaultRank();
       if (rank && rank[doc.type]) {
@@ -1645,8 +1645,8 @@ The value should be in the range of \`${diffMin} to ${diffMax}\`. The value defa
                   playerRank = lobby.getDefaultRank();
 
                   const player = await Player.findOne({ discordId: message.author.id });
-                  if (player && player.psn) {
-                    const rank = await Rank.findOne({ name: player.psn });
+                  if (player && player.rankedName) {
+                    const rank = await Rank.findOne({ name: player.rankedName });
 
                     if (rank && rank[type] && rank[type].rank) {
                       playerRank = rank[type].rank;
@@ -2035,8 +2035,8 @@ async function restrictSoloQueue(doc, user, soloQueue) {
   if (!doc.locked.$isEmpty()) {
     let rank = doc.getDefaultRank();
 
-    if (player && player.psn) {
-      const playerRank = await Rank.findOne({ name: player.psn });
+    if (player && player.rankedName) {
+      const playerRank = await Rank.findOne({ name: player.rankedName });
 
       if (playerRank && playerRank[doc.type]) {
         // eslint-disable-next-line prefer-destructuring
@@ -2209,8 +2209,8 @@ async function mogi(reaction, user, removed = false) {
           }
 
           // eslint-disable-next-line max-len
-          if (doc.ranked && !doc.locked.$isEmpty() && doc.isSolos() && player.psn) {
-            const playerRank = await Rank.findOne({ name: player.psn });
+          if (doc.ranked && !doc.locked.$isEmpty() && doc.isSolos() && player.rankedName) {
+            const playerRank = await Rank.findOne({ name: player.rankedName });
 
             let rank = doc.getDefaultRank();
             if (playerRank && playerRank[doc.type]) {
@@ -2310,9 +2310,9 @@ async function mogi(reaction, user, removed = false) {
                   let player1Rank = doc.getDefaultRank();
                   let player2Rank = doc.getDefaultRank();
 
-                  if (player && player.psn && partner && partner.psn) {
-                    const playerRank = await Rank.findOne({ name: player.psn });
-                    const partnerRank = await Rank.findOne({ name: partner.psn });
+                  if (player && player.rankedName && partner && partner.rankedName) {
+                    const playerRank = await Rank.findOne({ name: player.rankedName });
+                    const partnerRank = await Rank.findOne({ name: partner.rankedName });
 
                     if (playerRank && playerRank[doc.type]) {
                       player1Rank = playerRank[doc.type].rank;
@@ -2435,7 +2435,7 @@ async function mogi(reaction, user, removed = false) {
                   }
 
                   if (doc.ranked && !doc.locked.$isEmpty()) {
-                    const teammateRank = await Rank.findOne({ name: teammate.psn });
+                    const teammateRank = await Rank.findOne({ name: teammate.rankedName });
 
                     let rank = doc.getDefaultRank();
                     if (teammateRank && teammateRank[doc.type]) {

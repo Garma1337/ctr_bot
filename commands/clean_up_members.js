@@ -22,8 +22,8 @@ module.exports = {
               });
             });
 
-            if (p.psn) {
-              Rank.findOne({ name: p.psn }).then((rank) => {
+            if (p.rankedName) {
+              Rank.findOne({ name: p.rankedName }).then((rank) => {
                 if (rank) {
                   rank.delete();
                 }

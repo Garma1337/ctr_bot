@@ -260,10 +260,10 @@ module.exports = {
         embedFields.push({ name: '\u200B', value: '\u200B' });
 
         /* Ranks */
-        Rank.findOne({ name: psn }).then((rank) => {
+        Rank.findOne({ name: rankedName }).then((rank) => {
           generateSuperScoreRanking().then((superScoreRanking) => {
             let playerRanks;
-            const superScoreEntry = superScoreRanking.find((r) => r.psn === psn);
+            const superScoreEntry = superScoreRanking.find((r) => r.rankedName === rankedName);
 
             if (!rank) {
               playerRanks = [
