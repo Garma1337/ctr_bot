@@ -136,7 +136,7 @@ async function generateTemplate(players, doc) {
   } else {
     rows.push(title);
     const playersAlphabetic = playerDocs.slice()
-      .sort((a, b) => a.psn.toLowerCase().localeCompare(b.psn.toLowerCase()));
+      .sort((a, b) => a.rankedName.toLowerCase().localeCompare(b.rankedName.toLowerCase()));
     rows.push(...playersAlphabetic.map((p) => `${getPlayerData(p)} ${points}`));
   }
 
