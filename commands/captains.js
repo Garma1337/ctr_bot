@@ -28,16 +28,16 @@ module.exports = {
       const text = [];
       Object.keys(captains).sort().forEach((k) => {
         if (captains[k].length > 0) {
-          text.push(`${k} - ${captains[k].map((cp) => `<@${cp}>`).join(', ')}`);
+          text.push(`**${k}**: ${captains[k].map((cp) => `<@${cp}>`).join(', ')}`);
         } else {
-          text.push(`${k} - None`);
+          text.push(`**${k}**: None`);
         }
       });
 
       createPageableContent(message.channel, message.author.id, {
         outputType: 'embed',
         elements: text,
-        elementsPerPage: 10,
+        elementsPerPage: 15,
         embedOptions: {
           heading: `Clan Captains (${captainMembers.length})`,
           image: 'https://i.imgur.com/EwZCCpX.png',

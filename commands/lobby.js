@@ -1025,6 +1025,7 @@ function deleteLobby(doc, msg) {
   finishedLobby.region = doc.region;
   finishedLobby.engineRestriction = doc.engineRestriction;
   finishedLobby.survivalStyle = doc.survivalStyle;
+  finishedLobby.tournament = doc.isTournament();
 
   const promiseDocDelete = doc.delete();
   const promiseSaveFinishedLobby = finishedLobby.save();

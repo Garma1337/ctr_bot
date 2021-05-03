@@ -8,6 +8,7 @@ const FinishedLobby = new Schema({
   region: { type: String, default: null },
   engineRestriction: { type: String, default: null },
   survivalStyle: { type: Number, default: null },
+  tournament: Boolean,
 });
 
 module.exports.FinishedLobby = model('finishedLobby', FinishedLobby);
