@@ -126,6 +126,10 @@ async function generateTemplate(players, doc) {
   if (doc.isTeams()) {
     rows.push(title);
     doc.teamList.forEach((team, i) => {
+      if (team.length <= 0) {
+        return;
+      }
+
       rows.push(`Team ${teams[i]} ${colors[i]}`);
       team.forEach((playerId) => {
         const p = playerDocs.find((d) => d.discordId === playerId);
