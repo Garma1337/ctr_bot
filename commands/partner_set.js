@@ -18,11 +18,9 @@ module.exports = {
     }
 
     const { author, guild } = message;
-
     const partner = message.mentions.members.first();
 
-    const { client } = message;
-    if (author.id === partner.id || partner.id === client.user.id) {
+    if (author.id === partner.id || partner.user.bot) {
       return sendAlertMessage(message.channel, 'You cannot set yourself or a bot as your partner.', 'warning');
     }
 

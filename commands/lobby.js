@@ -28,6 +28,7 @@ const {
   TRACK_OPTION_IRON_MAN,
   LOBBY_MODE_STANDARD,
   LOBBY_MODE_TOURNAMENT,
+  LOBBY_MODE_RANDOM,
   CUSTOM_OPTION_MODE,
   CUSTOM_OPTION_TRACK_POOL,
   CUSTOM_OPTION_PLAYERS,
@@ -37,6 +38,7 @@ const {
   CUSTOM_OPTION_REGION,
   CUSTOM_OPTION_ENGINE,
   CUSTOM_OPTION_SURVIVAL_STYLE,
+  CUSTOM_OPTION_BATTLE_MODES,
   CUSTOM_OPTION_PREMADE_TEAMS,
   CUSTOM_OPTION_RESERVE,
   CUSTOM_OPTION_TYPE,
@@ -361,7 +363,7 @@ async function getEmbed(doc, players, tracks, roomChannel) {
       fields.push(averageRankField);
     }
 
-    if (settings.length > 0) {
+    if (!doc.isRandom() && settings.length > 0) {
       fields.push(settingsField);
     }
 
@@ -379,7 +381,7 @@ async function getEmbed(doc, players, tracks, roomChannel) {
 
   fields = [creatorField];
 
-  if (settings.length > 0) {
+  if (!doc.isRandom() && settings.length > 0) {
     fields.push(settingsField);
   }
 
@@ -740,7 +742,7 @@ function startLobby(docId) {
 
               let modes = [];
               if (doc.isBattle()) {
-                modes = await generateBattleModes(doc.type, tracks.split('\n'), players.length);
+                modes = await generateBattleModes(doc, tracks.split('\n'));
 
                 fields.push({
                   name: 'Modes',
@@ -880,6 +882,10 @@ function confirmLobbyStart(doc, message, override = false) {
 
   if (doc.started) {
     return sendAlertMessage(message.channel, 'The lobby has already been started.', 'warning');
+  }
+
+  if (doc.isRandom()) {
+    return sendAlertMessage(message.channel, 'You cannot force start a random lobby.', 'warning');
   }
 
   if (!override && minutes < FORCE_START_COOLDOWN) {
@@ -1070,6 +1076,7 @@ module.exports = {
           CUSTOM_OPTION_REGION,
           CUSTOM_OPTION_ENGINE,
           CUSTOM_OPTION_SURVIVAL_STYLE,
+          CUSTOM_OPTION_BATTLE_MODES,
           CUSTOM_OPTION_PREMADE_TEAMS,
           CUSTOM_OPTION_RESERVE,
           CUSTOM_OPTION_TYPE,
@@ -1144,7 +1151,8 @@ module.exports = {
 
 **Misc. Modes**
 16 - Krunking
-17 - Custom`, 'info').then((confirmMessage) => {
+17 - Custom
+18 - Random ${config.ranked_option_emote}`, 'info').then((confirmMessage) => {
           // eslint-disable-next-line consistent-return
           message.channel.awaitMessages(filter, options).then(async (collected) => {
             confirmMessage.delete();
@@ -1154,7 +1162,7 @@ module.exports = {
 
             let sentMessage;
             let choice = parseInt(content, 10);
-            const modes = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17];
+            const modes = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18];
 
             if (modes.includes(choice)) {
               let type;
@@ -1210,6 +1218,19 @@ module.exports = {
                 case 17:
                   type = CUSTOM;
                   break;
+                case 18:
+                  // eslint-disable-next-line no-case-declarations
+                  const rankedModes = [];
+
+                  // Filter unranked modes
+                  for (const i in LEADERBOARDS) {
+                    if (LEADERBOARDS[i] !== null) {
+                      rankedModes.push(i);
+                    }
+                  }
+
+                  type = getRandomArrayElement(rankedModes);
+                  break;
                 default:
                   break;
               }
@@ -1226,6 +1247,12 @@ module.exports = {
               ];
 
               let mode = LOBBY_MODE_STANDARD;
+              if (choice === 18) {
+                mode = LOBBY_MODE_RANDOM;
+
+                // Disable custom options for random lobbies
+                custom = [];
+              }
 
               if (lobby.hasTournamentsEnabled() && custom.includes(CUSTOM_OPTION_MODE)) {
                 sentMessage = await sendAlertMessage(message.channel, `Select the lobby mode. Waiting 1 minute.
@@ -1386,6 +1413,10 @@ ${trackOptions.map((t, i) => `${i + 1} - ${t}${t !== TRACK_OPTION_IRON_MAN ? ` $
               lobby.lapCount = lapCount;
 
               let ruleset = 1;
+              if (lobby.isRandom()) {
+                ruleset = getRandomArrayElement(Object.keys(rulesets));
+              }
+
               if (!lobby.isBattle() && custom.includes(CUSTOM_OPTION_RULESET)) {
                 sentMessage = await sendAlertMessage(message.channel, `Select the ruleset. Waiting 1 minute.
 
@@ -1472,6 +1503,9 @@ ${engineStyles.length + 1} - No engine restriction ${config.ranked_option_emote}
               lobby.engineRestriction = engineRestriction;
 
               let survivalStyle = 1;
+              if (lobby.isRandom()) {
+                survivalStyle = getRandomArrayElement(Object.keys(SURVIVAL_STYLES));
+              }
 
               // eslint-disable-next-line max-len
               if (lobby.isRacing() && lobby.isSurvival() && custom.includes(CUSTOM_OPTION_SURVIVAL_STYLE)) {
@@ -1505,7 +1539,35 @@ ${SURVIVAL_STYLES.map((s, i) => `${i + 1} - ${s} ${config.ranked_option_emote}`)
 
               lobby.survivalStyle = survivalStyle;
 
+              let limitAndLKDOnly = false;
+              if (lobby.isBattle() && lobby.isRandom()) {
+                limitAndLKDOnly = getRandomArrayElement([true, false]);
+              }
+
+              if (lobby.isBattle() && custom.includes(CUSTOM_OPTION_BATTLE_MODES)) {
+                sentMessage = await sendAlertMessage(message.channel, `Do you want to restrict the battle mode selection to Last Kart Driving and Limit Battle? (yes / no) ${config.ranked_option_emote}`, 'info');
+                // eslint-disable-next-line no-unused-vars,no-shadow,max-len
+                limitAndLKDOnly = await message.channel.awaitMessages(filter, options).then(async (collected) => {
+                  sentMessage.delete();
+
+                  collectedMessage = collected.first();
+                  // eslint-disable-next-line no-shadow
+                  const { content } = collectedMessage;
+
+                  return (content.toLowerCase() !== 'no');
+                }).catch(() => {
+                  sentMessage.delete();
+                  return false;
+                });
+              }
+
+              lobby.limitAndLKDOnly = limitAndLKDOnly;
+
               let allowPremadeTeams = true;
+              if (lobby.isRandom()) {
+                allowPremadeTeams = false;
+              }
+
               // eslint-disable-next-line max-len
               if (lobby.isTeams() && custom.includes(CUSTOM_OPTION_PREMADE_TEAMS)) {
                 sentMessage = await sendAlertMessage(message.channel, `Do you want to allow premade teams? (yes / no) ${config.ranked_option_emote}`, 'info');
@@ -2028,6 +2090,12 @@ async function tickCount(reaction, user) {
 
 async function restrictSoloQueue(doc, user, soloQueue) {
   const errors = [];
+
+  // no validation in random lobbies
+  if (doc.isRandom()) {
+    return errors;
+  }
+
   const player = await Player.findOne({ discordId: user.id });
 
   if (doc.reservedTeam) {
@@ -2348,7 +2416,7 @@ async function mogi(reaction, user, removed = false) {
                   errors.push(`The lobby is reserved for <@!${doc.creator}>'s and <@!${doc.reservedTeam}>'s teams.`);
                 }
 
-                if (playersCount === 7) {
+                if (playersCount === (doc.maxPlayerCount - 1)) {
                   const soloQueue = players.filter((p) => !doc.teamList.flat().includes(p));
                   const lastSoloQueuePlayer = soloQueue.pop();
                   players = players.filter((p) => p !== lastSoloQueuePlayer);

@@ -13,13 +13,13 @@ const {
   BATTLE_SURVIVAL,
 } = require('../db/models/lobby');
 
-async function generateBattleModes(type, arenas, playerCount) {
+async function generateBattleModes(doc, arenas) {
   let list;
-  if (type === BATTLE_1V1) {
+  if (doc.type === BATTLE_1V1) {
     list = battleModes1v1;
-  } else if ([BATTLE_FFA, BATTLE_SURVIVAL].includes(type)) {
+  } else if ([BATTLE_FFA, BATTLE_SURVIVAL].includes(doc.type)) {
     list = battleModesSolos;
-  } else if ([BATTLE_DUOS, BATTLE_3V3, BATTLE_4V4].includes(type)) {
+  } else if ([BATTLE_DUOS, BATTLE_3V3, BATTLE_4V4].includes(doc.type)) {
     list = battleModesTeams;
   } else {
     list = battleModesSolos;
@@ -30,8 +30,12 @@ async function generateBattleModes(type, arenas, playerCount) {
 
   list.forEach((battleMode) => {
     battleMode.forEach((mode) => {
-      modes.push(mode);
-      modeNames.push(mode.name);
+      const isSideMode = !(mode.settings[0].includes('Limit Battle') || mode.settings[0].includes('Last Kart Driving'));
+
+      if (!doc.limitAndLKDOnly || (doc.limitAndLKDOnly && !isSideMode)) {
+        modes.push(mode);
+        modeNames.push(mode.name);
+      }
     });
   });
 
@@ -49,7 +53,7 @@ async function generateBattleModes(type, arenas, playerCount) {
       const modeUsageCount = randomModes.filter((rm) => rm === modeNames[rng]).length;
 
       // eslint-disable-next-line max-len
-      if (modeUsageCount < maxModeUsage && (mode.arenas.length < 1 || mode.arenas.includes(arenas[i])) && mode.maxPlayers >= playerCount) {
+      if (modeUsageCount < maxModeUsage && (mode.arenas.length < 1 || mode.arenas.includes(arenas[i])) && mode.maxPlayers >= doc.players.length) {
         randomModes.push(modeNames[rng]);
 
         break;

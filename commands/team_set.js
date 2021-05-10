@@ -33,10 +33,11 @@ module.exports = {
 
     const teammates = message.mentions.members;
 
-    const { client } = message;
     const teammateIds = teammates.map((t) => t.id);
-    if (teammateIds.includes(author.id) || teammateIds.includes(client.user.id)) {
-      return sendAlertMessage(message.channel, 'very funny :)', 'warning');
+    const teammateBot = teammates.find((t) => t.user.bot);
+
+    if (teammateIds.includes(author.id) || teammateBot) {
+      return sendAlertMessage(message.channel, 'You cannot set a team with yourself or a bot.', 'warning');
     }
 
     // eslint-disable-next-line max-len
