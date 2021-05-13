@@ -1,7 +1,7 @@
 const { Player } = require('../db/models/player');
 const { consoles } = require('../db/consoles');
 const { regions } = require('../db/regions');
-const { serverLanguages } = require('../db/serverLanguages');
+const { serverLanguages } = require('../db/server_languages');
 const sendAlertMessage = require('../utils/sendAlertMessage');
 
 module.exports = {

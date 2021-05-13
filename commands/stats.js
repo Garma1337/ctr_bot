@@ -23,6 +23,7 @@ module.exports = {
       'time_zones',
       'characters',
       'tracks',
+      'arenas',
       'consoles',
     ];
 
@@ -225,6 +226,29 @@ module.exports = {
         // eslint-disable-next-line guard-for-in
         for (const i in tracks) {
           elements.push(`${i} - ${tracks[i]} players`);
+        }
+        break;
+
+      case 'arenas':
+        embedHeading = 'Most favorited arenas';
+        // eslint-disable-next-line no-case-declarations
+        let arenas = {};
+
+        players.forEach((p) => {
+          if (p.favArena) {
+            if (!arenas[p.favArena]) {
+              arenas[p.favArena] = 1;
+            } else {
+              arenas[p.favArena] += 1;
+            }
+          }
+        });
+
+        arenas = sortObject(arenas);
+
+        // eslint-disable-next-line guard-for-in
+        for (const i in arenas) {
+          elements.push(`${i} - ${arenas[i]} players`);
         }
         break;
 

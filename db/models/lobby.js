@@ -1,9 +1,31 @@
 const mongoose = require('mongoose');
 
 const { Schema, model } = mongoose;
-const { engineStyles } = require('../engineStyles');
+const { engineStyles } = require('../engine_styles');
+const { trackOptions } = require('../track_options');
+
+const poolItems3 = require('../pools/items_3');
+const poolItems4 = require('../pools/items_4');
+const poolItems5 = require('../pools/items_5');
+const poolItemless3 = require('../pools/itemless_3');
+const poolBattle3 = require('../pools/battle_3');
+const poolBattle4 = require('../pools/battle_4');
+const poolBattle5 = require('../pools/battle_5');
+const poolBlueFire = require('../pools/blue_fire');
+const poolBonus = require('../pools/bonus');
+const poolCnk = require('../pools/cnk');
+const poolCtr = require('../pools/ctr');
+const poolDayTime = require('../pools/day_time');
+const poolLong = require('../pools/long');
+const poolNature = require('../pools/nature');
+const poolNightTime = require('../pools/night_time');
+const poolPolswid = require('../pools/polswid');
+const poolSacredFire = require('../pools/sacred_fire');
+const poolSmall = require('../pools/small');
+const poolTechnology = require('../pools/technology');
 
 const engineUids = engineStyles.map((e) => e.uid);
+const trackOptionUids = trackOptions.map((t) => t.uid);
 
 const LOBBY_MODE_STANDARD = 'standard';
 const LOBBY_MODE_TOURNAMENT = 'tournament';
@@ -50,10 +72,22 @@ const LEADERBOARDS = {
   [BATTLE_SURVIVAL]: 'kN_Sbgn',
   [CUSTOM]: null,
 };
-const TRACK_OPTION_RNG = 'Full RNG';
-const TRACK_OPTION_POOLS = 'Pools';
-const TRACK_OPTION_DRAFT = 'Draft';
-const TRACK_OPTION_IRON_MAN = 'Iron Man';
+const TRACK_OPTION_RNG = 'random';
+const TRACK_OPTION_POOLS = 'pool';
+const TRACK_OPTION_DRAFT = 'draft';
+const TRACK_OPTION_IRON_MAN = 'ironman';
+const TRACK_OPTION_BONUS = 'bonus';
+const TRACK_OPTION_BLUE_FIRE = 'blue_fire';
+const TRACK_OPTION_CNK = 'cnk';
+const TRACK_OPTION_CTR = 'ctr';
+const TRACK_OPTION_DAY_TIME = 'day_time';
+const TRACK_OPTION_LONG = 'long';
+const TRACK_OPTION_NIGHT_TIME = 'night_time';
+const TRACK_OPTION_NATURE = 'nature';
+const TRACK_OPTION_POLSWID = 'polswid';
+const TRACK_OPTION_SACRED_FIRE = 'sacred_fire';
+const TRACK_OPTION_SMALL = 'small';
+const TRACK_OPTION_TECHNOLOGY = 'technology';
 const TRACK_DRAGON_MINES = 'Dragon Mines';
 const TRACK_HYPER_SPACEWAY = 'Hyper Spaceway';
 const TRACK_SPYRO_CIRCUIT = 'Spyro Circuit';
@@ -97,6 +131,18 @@ module.exports.TRACK_OPTION_RNG = TRACK_OPTION_RNG;
 module.exports.TRACK_OPTION_POOLS = TRACK_OPTION_POOLS;
 module.exports.TRACK_OPTION_DRAFT = TRACK_OPTION_DRAFT;
 module.exports.TRACK_OPTION_IRON_MAN = TRACK_OPTION_IRON_MAN;
+module.exports.TRACK_OPTION_BONUS = TRACK_OPTION_BONUS;
+module.exports.TRACK_OPTION_BLUE_FIRE = TRACK_OPTION_BLUE_FIRE;
+module.exports.TRACK_OPTION_CNK = TRACK_OPTION_CNK;
+module.exports.TRACK_OPTION_CTR = TRACK_OPTION_CTR;
+module.exports.TRACK_OPTION_DAY_TIME = TRACK_OPTION_DAY_TIME;
+module.exports.TRACK_OPTION_LONG = TRACK_OPTION_LONG;
+module.exports.TRACK_OPTION_NIGHT_TIME = TRACK_OPTION_NIGHT_TIME;
+module.exports.TRACK_OPTION_NATURE = TRACK_OPTION_NATURE;
+module.exports.TRACK_OPTION_POLSWID = TRACK_OPTION_POLSWID;
+module.exports.TRACK_OPTION_SACRED_FIRE = TRACK_OPTION_SACRED_FIRE;
+module.exports.TRACK_OPTION_SMALL = TRACK_OPTION_SMALL;
+module.exports.TRACK_OPTION_TECHNOLOGY = TRACK_OPTION_TECHNOLOGY;
 module.exports.LOBBY_MODE_STANDARD = LOBBY_MODE_STANDARD;
 module.exports.LOBBY_MODE_TOURNAMENT = LOBBY_MODE_TOURNAMENT;
 module.exports.LOBBY_MODE_RANDOM = LOBBY_MODE_RANDOM;
@@ -160,13 +206,10 @@ const Lobby = new Schema({
       CUSTOM,
     ],
   },
-  pools: {
-    type: Boolean,
-    default: true,
-  },
-  draftTracks: {
-    type: Boolean,
-    default: false,
+  trackOption: {
+    type: String,
+    enum: trackOptionUids,
+    default: TRACK_OPTION_RNG,
   },
   maxPlayerCount: Number,
   trackCount: Number,
@@ -219,6 +262,12 @@ const Lobby = new Schema({
 });
 
 Lobby.methods = {
+  isPools() {
+    return this.trackOption === TRACK_OPTION_POOLS;
+  },
+  isDrafting() {
+    return this.trackOption === TRACK_OPTION_DRAFT;
+  },
   getSoloPlayers() {
     let soloPlayers = [...this.players];
 
@@ -332,6 +381,29 @@ Lobby.methods = {
     }
 
     return minimumPlayers[this.type];
+  },
+  getDefaultTrackOption() {
+    const defaultTrackOption = {
+      [RACE_ITEMS_FFA]: TRACK_OPTION_RNG,
+      [RACE_ITEMS_DUOS]: TRACK_OPTION_POOLS,
+      [RACE_ITEMS_3V3]: TRACK_OPTION_POOLS,
+      [RACE_ITEMS_4V4]: TRACK_OPTION_POOLS,
+      [RACE_SURVIVAL]: TRACK_OPTION_POOLS,
+      [RACE_KRUNKING]: TRACK_OPTION_POOLS,
+      [RACE_ITEMLESS_FFA]: TRACK_OPTION_POOLS,
+      [RACE_ITEMLESS_DUOS]: TRACK_OPTION_POOLS,
+      [RACE_ITEMLESS_3V3]: TRACK_OPTION_POOLS,
+      [RACE_ITEMLESS_4V4]: TRACK_OPTION_POOLS,
+      [BATTLE_1V1]: TRACK_OPTION_POOLS,
+      [BATTLE_FFA]: TRACK_OPTION_RNG,
+      [BATTLE_DUOS]: TRACK_OPTION_POOLS,
+      [BATTLE_3V3]: TRACK_OPTION_POOLS,
+      [BATTLE_4V4]: TRACK_OPTION_POOLS,
+      [BATTLE_SURVIVAL]: TRACK_OPTION_POOLS,
+      [CUSTOM]: null,
+    };
+
+    return defaultTrackOption[this.type];
   },
   getDefaultPlayerCount() {
     if (this.isTournament()) {
@@ -524,19 +596,12 @@ Lobby.methods = {
 
     if (!this.isRandom() || (this.started && this.isRandom())) {
       if (this.isRacing()) {
-        if (this.draftTracks) {
-          title += ' (Track Drafting)';
-        } else if (this.pools) {
-          title += ' (Track Pools)';
-        } else if (this.isIronMan()) {
-          title += ' (Iron Man)';
-        } else {
-          title += ' (Full RNG Tracks)';
-        }
+        const trackOption = trackOptions.find((t) => t.uid === this.trackOption);
+        title += ` (${trackOption.name})`;
       } else if (this.isBattle()) {
-        if (this.draftTracks) {
+        if (this.isDrafting()) {
           title += ' (Arena Drafting)';
-        } else if (this.pools) {
+        } else if (this.isPools()) {
           title += ' (Arena Pools)';
         } else if (this.isIronMan()) {
           title += ' (Iron Man)';
@@ -771,22 +836,44 @@ Lobby.methods = {
     }
 
     // all lobby types at least have full rng and pools
-    const trackOptions = [
+    const availableTrackOptions = [
       TRACK_OPTION_RNG,
       TRACK_OPTION_POOLS,
     ];
 
     if (this.isStandard()) {
       // Iron Man is available for all lobby types except tournaments
-      trackOptions.push(TRACK_OPTION_IRON_MAN);
+      availableTrackOptions.push(TRACK_OPTION_IRON_MAN);
+    }
+
+    // Themed tracks are available for race modes
+    if (this.isRacing()) {
+      // Bonus only has 8 tracks
+      if (this.getDefaultTrackCount() <= 8) {
+        availableTrackOptions.push(TRACK_OPTION_BONUS);
+      }
+
+      availableTrackOptions.push(...[
+        TRACK_OPTION_BLUE_FIRE,
+        TRACK_OPTION_CNK,
+        TRACK_OPTION_CTR,
+        TRACK_OPTION_DAY_TIME,
+        TRACK_OPTION_LONG,
+        TRACK_OPTION_NATURE,
+        TRACK_OPTION_NIGHT_TIME,
+        TRACK_OPTION_POLSWID,
+        TRACK_OPTION_SACRED_FIRE,
+        TRACK_OPTION_SMALL,
+        TRACK_OPTION_TECHNOLOGY,
+      ]);
     }
 
     if (this.isWar() && !this.is1v1()) {
       // drafting for all 3 vs. 3 / 4 vs. 4 modes and battle duos
-      trackOptions.push(TRACK_OPTION_DRAFT);
+      availableTrackOptions.push(TRACK_OPTION_DRAFT);
     }
 
-    return trackOptions;
+    return availableTrackOptions;
   },
   getBannedTracks() {
     let bannedTracks;
@@ -903,6 +990,92 @@ Lobby.methods = {
     };
 
     return enabled[this.type];
+  },
+  getTrackPools() {
+    if (this.trackCount <= 0 || this.isCustom() || this.isTournament()) {
+      return [];
+    }
+
+    let pools;
+
+    if (this.isRacing()) {
+      // eslint-disable-next-line max-len
+      if ([TRACK_OPTION_RNG, TRACK_OPTION_POOLS, TRACK_OPTION_DRAFT, TRACK_OPTION_IRON_MAN].includes(this.trackOption)) {
+        if (this.isItemless()) {
+          pools = poolItemless3;
+        } else if (this.trackCount % 3 === 0) {
+          pools = poolItems3;
+        } else if (this.trackCount % 4 === 0) {
+          pools = poolItems4;
+        } else if (this.trackCount % 5 === 0) {
+          pools = poolItems5;
+        } else {
+          pools = poolItems4;
+        }
+
+        if (this.trackOption === TRACK_OPTION_RNG) {
+          pools = [pools.flat()];
+        }
+      } else {
+        switch (this.trackOption) {
+          case TRACK_OPTION_BLUE_FIRE:
+            pools = poolBlueFire;
+            break;
+          case TRACK_OPTION_BONUS:
+            pools = poolBonus;
+            break;
+          case TRACK_OPTION_CNK:
+            pools = poolCnk;
+            break;
+          case TRACK_OPTION_CTR:
+            pools = poolCtr;
+            break;
+          case TRACK_OPTION_DAY_TIME:
+            pools = poolDayTime;
+            break;
+          case TRACK_OPTION_LONG:
+            pools = poolLong;
+            break;
+          case TRACK_OPTION_NATURE:
+            pools = poolNature;
+            break;
+          case TRACK_OPTION_NIGHT_TIME:
+            pools = poolNightTime;
+            break;
+          case TRACK_OPTION_POLSWID:
+            pools = poolPolswid;
+            break;
+          case TRACK_OPTION_SACRED_FIRE:
+            pools = poolSacredFire;
+            break;
+          case TRACK_OPTION_SMALL:
+            pools = poolSmall;
+            break;
+          case TRACK_OPTION_TECHNOLOGY:
+            pools = poolTechnology;
+            break;
+          default:
+            pools = poolItems4;
+            break;
+        }
+      }
+    } else if (this.isBattle()) {
+      if (this.is1v1()) {
+        pools = poolBattle3;
+      } else if (this.trackCount % 3 === 0) {
+        pools = poolBattle3;
+      } else if (this.trackCount % 4 === 0) {
+        pools = poolBattle4;
+      } else if (this.trackCount % 5 === 0) {
+        pools = poolBattle5;
+      } else {
+        pools = poolBattle4;
+      }
+    } else {
+      pools = [];
+    }
+
+    return pools;
   },
 };
 

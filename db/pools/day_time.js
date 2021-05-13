@@ -1,0 +1,22 @@
+module.exports = [
+  [
+    'Crash Cove',
+    'Turbo Track',
+    'Coco Park',
+    'Dingo Canyon',
+    'Papu\'s Pyramid',
+    'Blizzard Bluff',
+    'Polar Pass',
+    'Hot Air Skyway',
+    'Jungle Boogie',
+    'Android Alley',
+    'Out of Time',
+    'Barin Ruins',
+    'Assembly Lane',
+    'Meteor Gorge',
+    'Twilight Tour',
+    'Prehistoric Playground',
+    'Spyro Circuit',
+    'Megamix Mania',
+  ],
+];

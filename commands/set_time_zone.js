@@ -1,6 +1,6 @@
 const { Player } = require('../db/models/player');
 const sendAlertMessage = require('../utils/sendAlertMessage');
-const { timeZones } = require('../db/timeZones');
+const { timeZones } = require('../db/time_zones');
 
 module.exports = {
   name: 'set_time_zone',

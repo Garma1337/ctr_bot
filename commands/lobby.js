@@ -24,7 +24,6 @@ const {
   LEADERBOARDS,
   TRACK_OPTION_RNG,
   TRACK_OPTION_POOLS,
-  TRACK_OPTION_DRAFT,
   TRACK_OPTION_IRON_MAN,
   LOBBY_MODE_STANDARD,
   LOBBY_MODE_TOURNAMENT,
@@ -75,9 +74,10 @@ const {
   battleModesSolos,
   battleModesTeams,
 } = require('../db/modes_battle');
-const { engineStyles } = require('../db/engineStyles');
+const { engineStyles } = require('../db/engine_styles');
 const { regions } = require('../db/regions');
 const { rulesets } = require('../db/rulesets');
+const { trackOptions } = require('../db/track_options');
 
 const lock = new AsyncLock();
 
@@ -701,7 +701,7 @@ function startLobby(docId) {
               });
             } else {
               // Display track column but blank all tracks
-              if (doc.isWar() && doc.draftTracks) {
+              if (doc.isWar() && doc.isDrafting()) {
                 tracks = [];
 
                 for (let i = 1; i <= doc.trackCount; i += 1) {
@@ -832,7 +832,7 @@ ${playersText}`,
                       });
                     });
 
-                    if (doc.isWar() && doc.draftTracks) {
+                    if (doc.isWar() && doc.isDrafting()) {
                       const teams = ['A', 'B'];
 
                       // eslint-disable-next-line max-len
@@ -1283,50 +1283,36 @@ module.exports = {
 
               lobby.mode = mode;
 
-              const trackOptions = lobby.getTrackOptions();
-
               // eslint-disable-next-line max-len
-              let trackOption = ![RACE_FFA, BATTLE_FFA].includes(type) ? TRACK_OPTION_POOLS : TRACK_OPTION_RNG;
-              let pools = ![RACE_FFA, BATTLE_FFA].includes(type);
-              let draftTracks = false;
+              const lobbyTrackOptions = trackOptions.filter((t) => lobby.getTrackOptions().includes(t.uid));
+              let trackOption = lobby.getDefaultTrackOption();
 
-              if (trackOptions.length > 1 && custom.includes(CUSTOM_OPTION_TRACK_POOL)) {
+              if (lobbyTrackOptions.length > 1 && custom.includes(CUSTOM_OPTION_TRACK_POOL)) {
                 sentMessage = await sendAlertMessage(message.channel, `Select track option. Waiting 1 minute.
 
-${trackOptions.map((t, i) => `${i + 1} - ${t}${t !== TRACK_OPTION_IRON_MAN ? ` ${config.ranked_option_emote}` : ''}`).join('\n')}`, 'info');
+${lobbyTrackOptions.map((t, i) => `${i + 1} - ${t.name}${t.ranked ? ` ${config.ranked_option_emote}` : ''}`).join('\n')}`, 'info');
 
                 // eslint-disable-next-line no-shadow,max-len
-                const trackOptionSelection = await message.channel.awaitMessages(filter, options).then(async (collected) => {
+                trackOption = await message.channel.awaitMessages(filter, options).then(async (collected) => {
                   sentMessage.delete();
 
                   collectedMessage = collected.first();
                   // eslint-disable-next-line no-shadow
                   const { content } = collectedMessage;
+                  const index = (parseInt(content, 10) - 1);
 
-                  return parseInt(content, 10);
+                  if (lobbyTrackOptions[index]) {
+                    return lobbyTrackOptions[index].uid;
+                  }
+
+                  return lobby.getDefaultTrackOption();
                 }).catch(() => {
                   sentMessage.delete();
-                  return 1;
+                  return lobby.getDefaultTrackOption();
                 });
-
-                const index = trackOptionSelection - 1;
-
-                if (trackOptions[index] === TRACK_OPTION_RNG) {
-                  pools = false;
-                } else if (trackOptions[index] === TRACK_OPTION_POOLS) {
-                  pools = true;
-                } else if (trackOptions[index] === TRACK_OPTION_DRAFT) {
-                  pools = false;
-                  draftTracks = true;
-                } else if (trackOptions[index] === TRACK_OPTION_IRON_MAN) {
-                  pools = false;
-                }
-
-                trackOption = trackOptions[index];
               }
 
-              lobby.pools = pools;
-              lobby.draftTracks = draftTracks;
+              lobby.trackOption = trackOption;
 
               let maxPlayerCount = lobby.getDefaultPlayerCount();
 
@@ -1361,7 +1347,7 @@ ${trackOptions.map((t, i) => `${i + 1} - ${t}${t !== TRACK_OPTION_IRON_MAN ? ` $
               let trackCount = (trackOption === TRACK_OPTION_IRON_MAN ? lobby.getMaxTrackCount() : lobby.getDefaultTrackCount());
 
               // eslint-disable-next-line max-len
-              if (trackOption !== TRACK_OPTION_IRON_MAN && !draftTracks && !lobby.isSurvival() && lobby.getMaxTrackCount() > 0 && custom.includes(CUSTOM_OPTION_TRACKS)) {
+              if ([TRACK_OPTION_RNG, TRACK_OPTION_POOLS].includes(trackOption) && !lobby.isSurvival() && lobby.getMaxTrackCount() > 0 && custom.includes(CUSTOM_OPTION_TRACKS)) {
                 sentMessage = await sendAlertMessage(message.channel, `Select the number of tracks. The number has to be any of \`1\` to \`${lobby.getMaxTrackCount()}\`. Every other input will be counted as \`${lobby.getDefaultTrackCount()}\` ${config.ranked_option_emote}.`, 'info');
 
                 // eslint-disable-next-line max-len,no-shadow

@@ -2,7 +2,7 @@ const Discord = require('discord.js');
 const { Player } = require('../db/models/player');
 const isStaffMember = require('../utils/isStaffMember');
 const sendAlertMessage = require('../utils/sendAlertMessage');
-const { serverLanguages } = require('../db/serverLanguages');
+const { serverLanguages } = require('../db/server_languages');
 
 module.exports = {
   name: 'set_languages',

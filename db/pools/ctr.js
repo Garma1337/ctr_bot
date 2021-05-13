@@ -1,0 +1,22 @@
+module.exports = [
+  [
+    'Crash Cove',
+    'Roo\'s Tubes',
+    'Mystery Caves',
+    'Sewer Speedway',
+    'Slide Coliseum',
+    'Turbo Track',
+    'Coco Park',
+    'Tiger Temple',
+    'Papu\'s Pyramid',
+    'Dingo Canyon',
+    'Blizzard Bluff',
+    'Dragon Mines',
+    'Polar Pass',
+    'Tiny Arena',
+    'N. Gin Labs',
+    'Cortex Castle',
+    'Hot Air Skyway',
+    'Oxide Station',
+  ],
+];

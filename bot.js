@@ -387,6 +387,9 @@ client.on('message', (message) => {
   const command = client.commands.get(commandName)
     || client.commands.find((cmd) => cmd.aliases && cmd.aliases.includes(commandName));
 
+  // eslint-disable-next-line max-len
+  const botSpam = message.guild.channels.cache.find((c) => c.name.toLowerCase() === config.channels.spam_channel);
+
   if (!command) {
     Command.findOne({ name: commandName }).then((cmd) => {
       if (!cmd) {
@@ -394,7 +397,7 @@ client.on('message', (message) => {
       }
 
       if (!isStaff && !allowedChannels.find((c) => c.name === message.channel.name)) {
-        return sendAlertMessage(message.channel, 'You cannot use commands in this channel. Please head over to #bot-spam and use the command there.', 'warning');
+        return sendAlertMessage(message.channel, `You cannot use commands in this channel. Head over to ${botSpam} and use the command there.`, 'warning');
       }
 
       message.channel.send(cmd.message);
@@ -408,7 +411,7 @@ client.on('message', (message) => {
   }
 
   if (!isStaff && !allowedChannels.find((c) => c.name === message.channel.name)) {
-    return sendAlertMessage(message.channel, 'You cannot use commands in this channel.', 'warning');
+    return sendAlertMessage(message.channel, `You cannot use commands in this channel. Head over to ${botSpam} and use the command there.`, 'warning');
   }
 
   if (command.permissions && !(message.member && isStaffMember(message.member))) {

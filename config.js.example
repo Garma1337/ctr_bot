@@ -22,6 +22,7 @@ module.exports = {
     tourney_log_channel: 'tourney-bot-log',
     tourney_dm_channel: 'tourney-bot-dm',
     main_channel: 'general',
+    spam_channel: 'bot-spam',
     livestreams_channel: 'livestreams',
     war_search_channel: 'war-search',
     tournament_lobbies_category: 'Tournament Lobbies',

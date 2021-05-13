@@ -1,0 +1,22 @@
+module.exports = [
+  [
+    'Crash Cove',
+    'Roo\'s Tubes',
+    'Mystery Caves',
+    'Sewer Speedway',
+    'Coco Park',
+    'Tiger Temple',
+    'Papu\'s Pyramid',
+    'Dingo Canyon',
+    'Blizzard Bluff',
+    'Dragon Mines',
+    'Tiny Arena',
+    'Inferno Island',
+    'Jungle Boogie',
+    'Android Alley',
+    'Meteor Gorge',
+    'Assembly Lane',
+    'Barin Ruins',
+    'Spyro Circuit',
+  ],
+];

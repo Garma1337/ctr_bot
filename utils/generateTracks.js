@@ -24,42 +24,9 @@ function removeBannedTracks(pool, doc) {
  * @returns Array
  */
 async function generateTracks(doc) {
-  if (doc.trackCount <= 0 || doc.isCustom() || doc.isTournament()) {
+  const pools = doc.getTrackPools();
+  if (pools.length <= 0) {
     return ['-'];
-  }
-
-  let pools;
-
-  if (doc.isRacing()) {
-    if (doc.isItemless()) {
-      pools = poolItemless3;
-    } else if (doc.trackCount % 3 === 0) {
-      pools = poolItems3;
-    } else if (doc.trackCount % 4 === 0) {
-      pools = poolItems4;
-    } else if (doc.trackCount % 5 === 0) {
-      pools = poolItems5;
-    } else {
-      pools = poolItems4;
-    }
-  } else if (doc.isBattle()) {
-    if (doc.is1v1()) {
-      pools = poolBattle3;
-    } else if (doc.trackCount % 3 === 0) {
-      pools = poolBattle3;
-    } else if (doc.trackCount % 4 === 0) {
-      pools = poolBattle4;
-    } else if (doc.trackCount % 5 === 0) {
-      pools = poolBattle5;
-    } else {
-      pools = poolBattle4;
-    }
-  } else {
-    pools = [];
-  }
-
-  if (!doc.pools) {
-    pools = [pools.flat()];
   }
 
   let maps = [];
