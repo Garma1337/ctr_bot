@@ -9,6 +9,7 @@ const {
   RACE_4V4,
   RACE_SURVIVAL,
   RACE_KRUNKING,
+  RACE_ITEMLESS_1V1,
   RACE_ITEMLESS_FFA,
   RACE_ITEMLESS_DUOS,
   RACE_ITEMLESS_3V3,
@@ -1137,23 +1138,24 @@ module.exports = {
 5 - Survival ${config.ranked_option_emote}
 
 **Itemless Race Modes**
-6 - FFA ${config.ranked_option_emote}
-7 - Duos ${config.ranked_option_emote}
-8 - 3 vs. 3 ${config.ranked_option_emote}
-9 - 4 vs. 4 ${config.ranked_option_emote}
+6 - 1 vs. 1 ${config.ranked_option_emote}
+7 - FFA ${config.ranked_option_emote}
+8 - Duos ${config.ranked_option_emote}
+9 - 3 vs. 3 ${config.ranked_option_emote}
+10 - 4 vs. 4 ${config.ranked_option_emote}
 
 **Battle Modes**
-10 - 1 vs. 1 ${config.ranked_option_emote}
-11 - FFA ${config.ranked_option_emote}
-12 - Duos ${config.ranked_option_emote}
-13 - 3 vs. 3 ${config.ranked_option_emote}
-14 - 4 vs. 4 ${config.ranked_option_emote}
-15 - Survival ${config.ranked_option_emote}
+11 - 1 vs. 1 ${config.ranked_option_emote}
+12 - FFA ${config.ranked_option_emote}
+13 - Duos ${config.ranked_option_emote}
+14 - 3 vs. 3 ${config.ranked_option_emote}
+15 - 4 vs. 4 ${config.ranked_option_emote}
+16 - Survival ${config.ranked_option_emote}
 
 **Misc. Modes**
-16 - Krunking
-17 - Custom
-18 - Random ${config.ranked_option_emote}`, 'info').then((confirmMessage) => {
+17 - Krunking
+18 - Custom
+19 - Random ${config.ranked_option_emote}`, 'info').then((confirmMessage) => {
           // eslint-disable-next-line consistent-return
           message.channel.awaitMessages(filter, options).then(async (collected) => {
             confirmMessage.delete();
@@ -1163,7 +1165,7 @@ module.exports = {
 
             let sentMessage;
             let choice = parseInt(content, 10);
-            const modes = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18];
+            const modes = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19];
 
             if (modes.includes(choice)) {
               let type;
@@ -1184,42 +1186,45 @@ module.exports = {
                   type = RACE_SURVIVAL;
                   break;
                 case 6:
-                  type = RACE_ITEMLESS_FFA;
+                  type = RACE_ITEMLESS_1V1;
                   break;
                 case 7:
-                  type = RACE_ITEMLESS_DUOS;
+                  type = RACE_ITEMLESS_FFA;
                   break;
                 case 8:
-                  type = RACE_ITEMLESS_3V3;
+                  type = RACE_ITEMLESS_DUOS;
                   break;
                 case 9:
-                  type = RACE_ITEMLESS_4V4;
+                  type = RACE_ITEMLESS_3V3;
                   break;
                 case 10:
-                  type = BATTLE_1V1;
+                  type = RACE_ITEMLESS_4V4;
                   break;
                 case 11:
-                  type = BATTLE_FFA;
+                  type = BATTLE_1V1;
                   break;
                 case 12:
-                  type = BATTLE_DUOS;
+                  type = BATTLE_FFA;
                   break;
                 case 13:
-                  type = BATTLE_3V3;
+                  type = BATTLE_DUOS;
                   break;
                 case 14:
-                  type = BATTLE_4V4;
+                  type = BATTLE_3V3;
                   break;
                 case 15:
-                  type = BATTLE_SURVIVAL;
+                  type = BATTLE_4V4;
                   break;
                 case 16:
-                  type = RACE_KRUNKING;
+                  type = BATTLE_SURVIVAL;
                   break;
                 case 17:
-                  type = CUSTOM;
+                  type = RACE_KRUNKING;
                   break;
                 case 18:
+                  type = CUSTOM;
+                  break;
+                case 19:
                   // eslint-disable-next-line no-case-declarations
                   const rankedModes = [];
 

@@ -1,11 +1,4 @@
 const shuffleArray = require('./shuffleArray');
-const poolItems3 = require('../db/pools/items_3');
-const poolItems4 = require('../db/pools/items_4');
-const poolItems5 = require('../db/pools/items_5');
-const poolItemless3 = require('../db/pools/itemless_3');
-const poolBattle3 = require('../db/pools/battle_3');
-const poolBattle4 = require('../db/pools/battle_4');
-const poolBattle5 = require('../db/pools/battle_5');
 
 /**
  * Removes banned tracks from the track pool

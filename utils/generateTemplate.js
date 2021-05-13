@@ -5,6 +5,7 @@ const {
   RACE_4V4,
   RACE_SURVIVAL,
   RACE_KRUNKING,
+  RACE_ITEMLESS_1V1,
   RACE_ITEMLESS_FFA,
   RACE_ITEMLESS_DUOS,
   RACE_ITEMLESS_3V3,
@@ -68,6 +69,9 @@ async function generateTemplate(players, doc) {
       break;
     case RACE_KRUNKING:
       title += '#title Match # - Krunking';
+      break;
+    case RACE_ITEMLESS_1V1:
+      title += 'Match # - Itemless 1v1';
       break;
     case RACE_ITEMLESS_FFA:
       title += 'Match # - Itemless FFA';
