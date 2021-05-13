@@ -4,6 +4,7 @@ const { Schema, model } = mongoose;
 
 const FinishedLobby = new Schema({
   type: String,
+  trackOption: String,
   ruleset: Number,
   region: { type: String, default: null },
   engineRestriction: { type: String, default: null },

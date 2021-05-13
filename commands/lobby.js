@@ -1027,6 +1027,7 @@ function deleteLobby(doc, msg) {
 
   const finishedLobby = new FinishedLobby();
   finishedLobby.type = doc.type;
+  finishedLobby.trackOption = doc.trackOption;
   finishedLobby.ruleset = doc.ruleset;
   finishedLobby.region = doc.region;
   finishedLobby.engineRestriction = doc.engineRestriction;
