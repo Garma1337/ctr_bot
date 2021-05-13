@@ -1253,7 +1253,7 @@ module.exports = {
               ];
 
               let mode = LOBBY_MODE_STANDARD;
-              if (choice === 18) {
+              if (choice === 19) {
                 mode = LOBBY_MODE_RANDOM;
 
                 // Disable custom options for random lobbies
