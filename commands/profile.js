@@ -77,30 +77,31 @@ function getRegionName(regionUid) {
 
 /**
  * Returns the profile embed
- * @param guildMember
+ * @param member
+ * @param color
  * @param fields
  * @param url
  * @return Object
  */
-function getEmbed(guildMember, fields, url) {
+function getEmbed(member, color, fields, url) {
   let avatarUrl;
-  if (guildMember.user.avatar) {
-    avatarUrl = `https://cdn.discordapp.com/avatars/${guildMember.user.id}/${guildMember.user.avatar}.png`;
+  if (member.user.avatar) {
+    avatarUrl = `https://cdn.discordapp.com/avatars/${member.user.id}/${member.user.avatar}.png`;
   } else {
-    avatarUrl = guildMember.user.defaultAvatarURL;
+    avatarUrl = member.user.defaultAvatarURL;
   }
 
   const embed = {
-    color: guildMember.displayColor,
+    color,
     timestamp: new Date(),
     thumbnail: {
       url: avatarUrl,
     },
     footer: {
-      text: `!profile help  •  id: ${guildMember.user.id}`,
+      text: `!profile help  •  id: ${member.user.id}`,
     },
     author: {
-      name: `${guildMember.user.username}#${guildMember.user.discriminator}'s profile${guildMember.user.bot ? ' (Bot)' : ''}`,
+      name: `${member.user.username}#${member.user.discriminator}'s profile${member.user.bot ? ' (Bot)' : ''}`,
       icon_url: avatarUrl,
     },
     fields,
@@ -131,8 +132,8 @@ module.exports = {
       }
     }
 
-    const guildMember = message.guild.member(user);
-    const embedFields = [];
+    const member = message.guild.member(user);
+    const fields = [];
 
     Player.findOne({ discordId: user.id }).then((player) => {
       Clan.find().then((clans) => {
@@ -210,20 +211,20 @@ module.exports = {
           `**Voice Chat**: ${voiceChat.join(', ')}`,
           `**NAT Type**: ${nat}`,
           `**Time Zone**: ${timeZone}`,
-          `**Joined**: ${guildMember.joinedAt.toLocaleString('default', { month: 'short' })} ${guildMember.joinedAt.getDate()}, ${guildMember.joinedAt.getFullYear()}`,
-          `**Registered**: ${guildMember.user.createdAt.toLocaleString('default', { month: 'short' })} ${guildMember.user.createdAt.getDate()}, ${guildMember.user.createdAt.getFullYear()}`,
+          `**Joined**: ${member.joinedAt.toLocaleString('default', { month: 'short' })} ${member.joinedAt.getDate()}, ${member.joinedAt.getFullYear()}`,
+          `**Registered**: ${member.user.createdAt.toLocaleString('default', { month: 'short' })} ${member.user.createdAt.getDate()}, ${member.user.createdAt.getFullYear()}`,
         ];
 
         // eslint-disable-next-line max-len
-        if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === config.roles.ranked_verified_role.toLowerCase())) {
+        if (member.roles.cache.find((r) => r.name.toLowerCase() === config.roles.ranked_verified_role.toLowerCase())) {
           profile.push('**Ranked Verified** :white_check_mark:');
         }
 
-        if (guildMember.user.bot) {
+        if (member.user.bot) {
           profile.push('**Discord Bot** :robot:');
         }
 
-        embedFields.push({
+        fields.push({
           name: ':busts_in_silhouette: Profile',
           value: profile.join('\n'),
           inline: true,
@@ -251,13 +252,13 @@ module.exports = {
           `**Fav. Arena**: ${favArena}`,
         ];
 
-        embedFields.push({
+        fields.push({
           name: ':video_game: Game Data',
           value: gameData.join('\n'),
           inline: true,
         });
 
-        embedFields.push({ name: '\u200B', value: '\u200B' });
+        fields.push({ name: '\u200B', value: '\u200B' });
 
         /* Ranks */
         Rank.findOne({ name: rankedName }).then((rank) => {
@@ -288,7 +289,7 @@ module.exports = {
               ];
             }
 
-            embedFields.push({
+            fields.push({
               name: ':checkered_flag: Rankings',
               value: playerRanks.join('\n'),
               inline: true,
@@ -298,32 +299,32 @@ module.exports = {
             const achievements = [];
 
             // eslint-disable-next-line max-len
-            if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === config.roles.donator_role.toLowerCase())) {
+            if (member.roles.cache.find((r) => r.name.toLowerCase() === config.roles.donator_role.toLowerCase())) {
               achievements.push('Donator');
             }
 
             // eslint-disable-next-line max-len
-            if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === config.roles.wc_champion_role.toLowerCase())) {
+            if (member.roles.cache.find((r) => r.name.toLowerCase() === config.roles.wc_champion_role.toLowerCase())) {
               achievements.push('World Cup Champion');
             }
 
             // eslint-disable-next-line max-len
-            if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === config.roles.tournament_champion_role.toLowerCase())) {
+            if (member.roles.cache.find((r) => r.name.toLowerCase() === config.roles.tournament_champion_role.toLowerCase())) {
               achievements.push('Tournament Champion');
             }
 
             // eslint-disable-next-line max-len
-            if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === config.roles.ranked_champion_role.toLowerCase())) {
+            if (member.roles.cache.find((r) => r.name.toLowerCase() === config.roles.ranked_champion_role.toLowerCase())) {
               achievements.push('Ranked Champion');
             }
 
             // eslint-disable-next-line max-len
-            if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === config.roles.challenge_master_role.toLowerCase())) {
+            if (member.roles.cache.find((r) => r.name.toLowerCase() === config.roles.challenge_master_role.toLowerCase())) {
               achievements.push('Challenge Master');
             }
 
             // eslint-disable-next-line max-len
-            if (guildMember.roles.cache.find((r) => r.name.toLowerCase() === config.roles.nitro_booster_role.toLowerCase())) {
+            if (member.roles.cache.find((r) => r.name.toLowerCase() === config.roles.nitro_booster_role.toLowerCase())) {
               achievements.push('Server Booster');
             }
 
@@ -332,7 +333,7 @@ module.exports = {
             }
 
             const currentDate = moment(new Date());
-            const joinDate = moment(guildMember.joinedAt);
+            const joinDate = moment(member.joinedAt);
 
             if (currentDate.diff(joinDate, 'years', true) > 1) {
               achievements.push('Member for over 1 year');
@@ -360,7 +361,7 @@ module.exports = {
               achievements.push('None');
             }
 
-            embedFields.push({
+            fields.push({
               name: `:trophy: Achievements (${achievementCount})`,
               value: achievements.join('\n'),
               inline: true,
@@ -371,7 +372,9 @@ module.exports = {
               url = `https://my.playstation.com/profile/${player.psn}`;
             }
 
-            const embed = getEmbed(guildMember, embedFields, url);
+            const color = player.color || member.displayColor;
+
+            const embed = getEmbed(member, Number(color), fields, url);
             return message.channel.send({ embed });
           });
         });

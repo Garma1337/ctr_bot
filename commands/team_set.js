@@ -95,6 +95,7 @@ module.exports = {
 
     const teammatesPing = teammates.map((t) => t.toString()).join(', ');
     sendAlertMessage(message.channel, `${teammatesPing}, please confirm that you are teammates of ${author} for ${mode} lobbies.`, 'info').then((confirmMessage) => {
+      message.delete();
       confirmMessage.react('✅');
 
       const filter = (r, u) => r.emoji.name === '✅' && teammateIds.includes(u.id);
@@ -125,7 +126,9 @@ module.exports = {
         team.players = [author.id, ...teammateIds];
         team.date = new Date();
         team.save().then(() => {
-          sendAlertMessage(message.channel, `Team ${teamPing} was created.`, 'success');
+          sendAlertMessage(message.channel, `Team ${teamPing} was created.`, 'success').then((m) => {
+            m.delete({ timeout: 5000 });
+          });
         });
       }).catch(() => {
         sendAlertMessage(message.channel, 'Command cancelled.', 'error');

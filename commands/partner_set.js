@@ -77,6 +77,7 @@ module.exports = {
     }
 
     sendAlertMessage(message.channel, `Please confirm that you are a partner of ${author} for Ranked Duos.`, 'info', [partner.id]).then((confirmMessage) => {
+      message.delete();
       confirmMessage.react('✅');
 
       const filter = (r, u) => r.emoji.name === '✅' && u.id === partner.id;
@@ -108,7 +109,9 @@ module.exports = {
         duo.discord2 = partner.id;
         duo.date = new Date();
         duo.save().then(() => {
-          sendAlertMessage(message.channel, `${author} & ${partner} duo has been set.`, 'success');
+          sendAlertMessage(message.channel, `${author} & ${partner} duo has been set.`, 'success').then((m) => {
+            m.delete({ timeout: 5000 });
+          });
         });
       }).catch(() => {
         sendAlertMessage(message.channel, 'Command cancelled.', 'error');

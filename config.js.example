@@ -45,7 +45,6 @@ module.exports = {
     ],
   },
   roles: {
-    rainbow_role: '🎨',
     admin_role: 'admin',
     bot_developer_role: 'bot developer',
     staff_role: 'staff',

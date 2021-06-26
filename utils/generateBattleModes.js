@@ -10,14 +10,13 @@ const {
   BATTLE_DUOS,
   BATTLE_3V3,
   BATTLE_4V4,
-  BATTLE_SURVIVAL,
 } = require('../db/models/lobby');
 
 async function generateBattleModes(doc, arenas) {
   let list;
   if (doc.type === BATTLE_1V1) {
     list = battleModes1v1;
-  } else if ([BATTLE_FFA, BATTLE_SURVIVAL].includes(doc.type)) {
+  } else if ([BATTLE_FFA].includes(doc.type)) {
     list = battleModesSolos;
   } else if ([BATTLE_DUOS, BATTLE_3V3, BATTLE_4V4].includes(doc.type)) {
     list = battleModesTeams;

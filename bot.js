@@ -6,7 +6,7 @@ const fs = require('fs');
 const Discord = require('discord.js');
 const moment = require('moment');
 const { CronJob } = require('cron');
-const config = require('./config.js');
+const config = require('./config');
 const { Clan } = require('./db/models/clan');
 const { Command } = require('./db/models/command');
 const { CommandUsage } = require('./db/models/command_usage');
@@ -79,7 +79,7 @@ client.on('ready', () => {
           }
         }
 
-        client.user.setActivity(doc.value).then();
+        client.user.setActivity(doc.value);
       } else {
         const conf = new Config();
         conf.name = 'status';

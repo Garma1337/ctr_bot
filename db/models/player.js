@@ -21,6 +21,7 @@ const Player = new Schema({
   translation: String,
   rankedName: String,
   favArena: String,
+  color: String,
 });
 
 module.exports.Player = model('player', Player);
