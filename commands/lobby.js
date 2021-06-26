@@ -1050,6 +1050,7 @@ module.exports = {
   description: 'Lobbies',
   guildOnly: true,
   aliases: ['mogi', 'l', 'lebby'],
+  cooldown: 15,
   // eslint-disable-next-line consistent-return
   async execute(message, args) {
     let action = args[0];
