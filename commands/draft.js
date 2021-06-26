@@ -1,5 +1,6 @@
 const Discord = require('discord.js');
 const createDraft = require('../utils/createDraft');
+const isServerSupporter = require('../utils/isServerSupporter');
 const isStaffMember = require('../utils/isStaffMember');
 const sendAlertMessage = require('../utils/sendAlertMessage');
 
@@ -31,7 +32,7 @@ Team B: @CaptainB\``;
     }
 
     // eslint-disable-next-line max-len
-    if (!isStaffMember(message.member) && !mentions.users.map((m) => m.id).includes(message.author.id)) {
+    if (!isStaffMember(message.member) && !isServerSupporter(message.member) && !mentions.users.map((m) => m.id).includes(message.author.id)) {
       return sendAlertMessage(message.channel, 'You should be a captain of one of the teams.', 'warning');
     }
 

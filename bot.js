@@ -20,6 +20,7 @@ const getConfigValue = require('./utils/getConfigValue');
 const getSignupsCount = require('./utils/getSignupsCount');
 const createAndFindRole = require('./utils/createAndFindRole');
 const db = require('./db/models');
+const isServerSupporter = require('./utils/isServerSupporter');
 const isStaffMember = require('./utils/isStaffMember');
 const sendAlertMessage = require('./utils/sendAlertMessage');
 const sendLogMessage = require('./utils/sendLogMessage');
@@ -311,7 +312,9 @@ function checkPings(message) {
   const { member } = message;
 
   const isStaff = isStaffMember(member);
-  if (isStaff) return;
+  if (isStaff) {
+    return;
+  }
 
   const { roles } = message.mentions;
   const now = new Date();
@@ -329,9 +332,20 @@ function checkPings(message) {
       { $inc: { count: 1 }, $set: { updatedAt: now } },
       { upsert: true, new: true },
     ).then(async (doc) => {
-      if (doc.count >= 3) { // mute
+      let muteThreshold;
+      let warnThreshold;
+
+      if (isServerSupporter(member)) {
+        muteThreshold = 10;
+        warnThreshold = 8;
+      } else {
+        muteThreshold = 3;
+        warnThreshold = 2;
+      }
+
+      if (doc.count >= muteThreshold) { // mute
         await mute(member, message);
-      } else if (doc.count >= 2) {
+      } else if (doc.count >= warnThreshold) {
         sendAlertMessage(message.channel, `Please don't ping people so often, or I will have to mute you for ${muteDuration.humanize()}.`, 'warning', [member.id]);
       }
     });
@@ -370,10 +384,13 @@ client.on('message', (message) => {
   }
 
   let isStaff = false;
+  let isSupporter = false;
   let allowedChannels = [];
 
   if (message.channel.type === 'text') {
     isStaff = isStaffMember(message.member);
+    isSupporter = isServerSupporter(message.member);
+
     allowedChannels = message.guild.channels.cache.filter((c) => {
       const channels = config.channels.commands_allowed;
       return channels.includes(c.name) || c.name.match(/^lobby-room-[0-9]{1,2}/i);
@@ -434,7 +451,12 @@ client.on('message', (message) => {
 
   const now = Date.now();
   const timestamps = cooldowns.get(command.name);
-  const cooldownAmount = (command.cooldown || 1) * 1000;
+  let cooldownAmount = (command.cooldown || 1) * 1000;
+
+  /* Halved cooldown for supporters */
+  if (isSupporter) {
+    cooldownAmount = Math.floor(cooldownAmount / 2);
+  }
 
   if (!isStaff && cooldownAmount && timestamps.has(message.author.id)) {
     const expirationTime = timestamps.get(message.author.id) + cooldownAmount;

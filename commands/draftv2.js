@@ -1,4 +1,5 @@
 const createDraftv2 = require('../utils/createDraftv2');
+const isServerSupporter = require('../utils/isServerSupporter');
 const isStaffMember = require('../utils/isStaffMember');
 const sendAlertMessage = require('../utils/sendAlertMessage');
 
@@ -28,7 +29,7 @@ module.exports = {
     }
 
     // eslint-disable-next-line max-len
-    if (!isStaffMember(message.member) && !mentionedUsers.map((m) => m.id).includes(message.author.id)) {
+    if (!isStaffMember(message.member) && !isServerSupporter(message.member) && !mentionedUsers.map((m) => m.id).includes(message.author.id)) {
       return sendAlertMessage(message.channel, 'You should be one of the players doing the draft.', 'warning');
     }
 

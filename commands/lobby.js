@@ -62,6 +62,7 @@ const generateTracks = require('../utils/generateTracks');
 const getConfigValue = require('../utils/getConfigValue');
 const getRandomArrayElement = require('../utils/getRandomArrayElement');
 const greedyPartition = require('../utils/greedyPartition');
+const isServerSupporter = require('../utils/isServerSupporter');
 const isStaffMember = require('../utils/isStaffMember');
 const optimalPartition = require('../utils/optimalPartition');
 const sendAlertMessage = require('../utils/sendAlertMessage');
@@ -1100,6 +1101,7 @@ module.exports = {
 
     const { guild } = message;
     const isStaff = isStaffMember(member);
+    const isSupporter = isServerSupporter(member);
 
     if (!isStaff) {
       // eslint-disable-next-line max-len
@@ -1113,7 +1115,7 @@ module.exports = {
       case 'new':
         // eslint-disable-next-line no-case-declarations
         const cooldown = await Cooldown.findOne({ guildId: guild.id, discordId: message.author.id, name: 'lobby' });
-        if (!isStaff && cooldown && cooldown.count >= 1) {
+        if (!isStaff && !isSupporter && cooldown && cooldown.count >= 1) {
           const updatedAt = moment(cooldown.updatedAt);
           updatedAt.add(5, 'm');
           const wait = moment.duration(now.diff(updatedAt));

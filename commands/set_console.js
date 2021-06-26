@@ -8,7 +8,7 @@ module.exports = {
   description: 'Set your consoles.',
   guildOnly: true,
   aliases: ['set_consoles', 'console_set'],
-  cooldown: 60,
+  cooldown: 30,
   execute(message, args) {
     if (args[0] === 'unset') {
       Player.findOne({ discordId: message.author.id }).then((player) => {

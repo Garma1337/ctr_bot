@@ -22,6 +22,8 @@ module.exports = {
     }
 
     const action = args[0];
+    const filter = (m) => m.author.id === message.author.id;
+    const options = { max: 1, time: 60000, errors: ['time'] };
 
     const ADD = 'add';
     const EDIT = 'edit';
@@ -49,10 +51,11 @@ module.exports = {
           return sendAlertMessage(message.channel, 'There is already a static command with that name!', 'warning');
         }
 
-        message.channel.send(`Send a response message for this command. Waiting 1 minute.
-Type \`cancel\` to cancel.`).then(() => {
-          message.channel.awaitMessages((m) => m.author.id === message.author.id, { max: 1, time: 60000, errors: ['time'] }).then((collected) => {
+        sendAlertMessage(message.channel, `Send a response message for this command. Waiting 1 minute.
+Type \`cancel\` to cancel.`, 'info').then(() => {
+          message.channel.awaitMessages(filter, options).then((collected) => {
             const { content } = collected.first();
+
             if (content.toLowerCase() === 'cancel') {
               throw new Error('cancel');
             }
@@ -81,22 +84,21 @@ Type \`cancel\` to cancel.`).then(() => {
 
         Command.findOne({ name: commandName }).then((command) => {
           if (command) {
-            message.channel.send(`Send a new response message for this command. Waiting 1 minute.
-Type \`cancel\` to cancel.`).then(() => {
-              message.channel
-                .awaitMessages((m) => m.author.id === message.author.id, { max: 1, time: 60000, errors: ['time'] })
-                .then((collected) => {
-                  const { content } = collected.first();
-                  if (content.toLowerCase() === 'cancel') {
-                    throw new Error('cancel');
-                  }
+            sendAlertMessage(message.channel, `Send a new response message for this command. Waiting 1 minute.
+Type \`cancel\` to cancel.`, 'info').then(() => {
+              message.channel.awaitMessages(filter, options).then((collected) => {
+                const { content } = collected.first();
 
-                  // eslint-disable-next-line no-param-reassign
-                  command.message = content;
-                  command.save().then(() => {
-                    sendAlertMessage(message.channel, 'Command edited.', 'success');
-                  });
-                }).catch(() => sendAlertMessage(message.channel, 'Command cancelled.', 'error'));
+                if (content.toLowerCase() === 'cancel') {
+                  throw new Error('cancel');
+                }
+
+                // eslint-disable-next-line no-param-reassign
+                command.message = content;
+                command.save().then(() => {
+                  sendAlertMessage(message.channel, 'Command edited.', 'success');
+                });
+              }).catch(() => sendAlertMessage(message.channel, 'Command cancelled.', 'error'));
             });
           } else {
             sendAlertMessage(message.channel, 'There is no dynamic command with that name.', 'warning');
@@ -113,21 +115,19 @@ Type \`cancel\` to cancel.`).then(() => {
 
         Command.findOne({ name: commandName }).then((command) => {
           if (command) {
-            message.channel.send('Are you sure you want to delete this command? Yes/No. Waiting 1 minute.')
-              .then(() => {
-                message.channel
-                  .awaitMessages((m) => m.author.id === message.author.id, { max: 1, time: 60000, errors: ['time'] })
-                  .then((collected) => {
-                    const { content } = collected.first();
-                    if (content.toLowerCase() === 'yes') {
-                      command.delete().then(() => {
-                        sendAlertMessage(message.channel, 'Command deleted.', 'success');
-                      });
-                    } else {
-                      throw Error('cancel');
-                    }
-                  }).catch(() => sendAlertMessage(message.channel, 'Command cancelled.', 'error'));
-              });
+            sendAlertMessage(message.channel, 'Are you sure you want to delete this command? `(yes / no)`. Waiting 1 minute.', 'info').then(() => {
+              message.channel.awaitMessages(filter, options).then((collected) => {
+                const { content } = collected.first();
+
+                if (content.toLowerCase() === 'yes') {
+                  command.delete().then(() => {
+                    sendAlertMessage(message.channel, 'Command deleted.', 'success');
+                  });
+                } else {
+                  throw Error('cancel');
+                }
+              }).catch(() => sendAlertMessage(message.channel, 'Command cancelled.', 'error'));
+            });
           } else {
             sendAlertMessage(message.channel, 'There is no dynamic command with that name.', 'warning');
           }
