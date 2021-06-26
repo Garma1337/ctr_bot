@@ -24,6 +24,7 @@ module.exports = {
   description: 'Edit your clan profile.',
   guildOnly: true,
   aliases: ['cp'],
+  cooldown: 10,
   execute(message, args) {
     if (args[0] === 'help') {
       return message.channel.send(`To edit your clan profile you can use the following commands:

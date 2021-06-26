@@ -7,6 +7,7 @@ module.exports = {
   description: 'Set your voice chat options.',
   guildOnly: true,
   aliases: ['set_vc'],
+  cooldown: 10,
   execute(message, args) {
     if (args.length > 0 && args[0] === 'unset') {
       Player.findOne({ discordId: message.author.id }).then((player) => {

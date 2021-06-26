@@ -6,6 +6,7 @@ module.exports = {
   name: 'set_nat',
   description: 'Set your NAT type.',
   guildOnly: true,
+  cooldown: 10,
   execute(message, args) {
     if (args[0] === 'unset') {
       Player.findOne({ discordId: message.author.id }).then((player) => {

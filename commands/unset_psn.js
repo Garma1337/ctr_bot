@@ -20,6 +20,7 @@ module.exports = {
   name: 'unset_psn',
   description: 'Unset your PSN.',
   permissions: ['MANAGE_CHANNELS', 'MANAGE_ROLES'],
+  cooldown: 15,
   // eslint-disable-next-line consistent-return
   execute(message, args) {
     const isStaff = isStaffMember(message.member);

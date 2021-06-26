@@ -1,6 +1,7 @@
 module.exports = {
   name: 'flags',
   description: 'Show country flags.',
+  cooldown: 30,
   execute(message) {
     const { flags } = message.client;
 

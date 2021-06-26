@@ -1,10 +1,10 @@
-const { prefix } = require('../config.js');
+const { prefix } = require('../config');
 const isStaffMember = require('../utils/isStaffMember');
 
 module.exports = {
   name: 'help',
   description: 'help',
-  cooldown: 5,
+  cooldown: 30,
   execute(message) {
     const fields = [];
     const staffFields = [];

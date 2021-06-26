@@ -120,7 +120,7 @@ module.exports = {
   description: 'Check a player profile.',
   guildOnly: true,
   aliases: ['p'],
-  cooldown: 10,
+  cooldown: 15,
   execute(message, args) {
     let user = message.author;
 

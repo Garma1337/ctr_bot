@@ -8,6 +8,7 @@ module.exports = {
   usage: '[arena]',
   description: 'Set your favorite arena.',
   guildOnly: true,
+  cooldown: 10,
   execute(message, args) {
     // eslint-disable-next-line consistent-return
     fs.readFile(config.files.battle_arenas_file, 'utf8', (err, data) => {

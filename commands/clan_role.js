@@ -9,6 +9,7 @@ module.exports = {
   description: 'Modify the role of a clan member. Example: `!clan_role @Garma GSC captain`.',
   guildOnly: true,
   aliases: ['cr'],
+  cooldown: 10,
   // eslint-disable-next-line consistent-return
   execute(message, args) {
     if (args.length < 3) {

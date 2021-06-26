@@ -7,6 +7,7 @@ module.exports = {
   description: 'Set your time zone.',
   guildOnly: true,
   aliases: ['set_tz'],
+  cooldown: 10,
   execute(message) {
     const regions = Object.keys(timeZones);
 

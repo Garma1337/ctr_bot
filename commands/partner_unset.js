@@ -8,6 +8,7 @@ module.exports = {
   description: 'Unset your partner for Ranked Duos.',
   guildOnly: true,
   aliases: ['unset_partner', 'partner_remove', 'partner_u', 'divorce'],
+  cooldown: 15,
   // eslint-disable-next-line consistent-return
   async execute(message) {
     const { author, guild } = message;

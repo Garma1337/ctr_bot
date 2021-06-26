@@ -62,7 +62,7 @@ module.exports = {
   name: 'rank',
   description: 'Check your rank',
   guildOnly: true,
-  cooldown: 10,
+  cooldown: 15,
   // eslint-disable-next-line consistent-return
   async execute(message, args) {
     if (args.length) {

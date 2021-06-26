@@ -6,6 +6,7 @@ module.exports = {
   name: 'set_psn',
   description: 'Set your PSN.',
   guildOnly: true,
+  cooldown: 10,
   // eslint-disable-next-line consistent-return
   execute(message, args) {
     const isStaff = isStaffMember(message.member);

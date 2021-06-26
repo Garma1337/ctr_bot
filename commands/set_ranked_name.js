@@ -8,7 +8,8 @@ module.exports = {
   name: 'set_ranked_name',
   description: 'Set your ranked name.',
   guildOnly: true,
-  aliases: ['set_name'],
+  aliases: ['set_name', 'name_set', 'ranked_name_set'],
+  cooldown: 10,
   // eslint-disable-next-line consistent-return
   execute(message, args) {
     if (args[0] === 'unset') {

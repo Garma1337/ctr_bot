@@ -11,7 +11,7 @@ module.exports = {
   description: 'See various statistics',
   guildOnly: true,
   aliases: ['statistics'],
-  cooldown: 10,
+  cooldown: 15,
   // eslint-disable-next-line consistent-return
   async execute(message, args) {
     const types = [

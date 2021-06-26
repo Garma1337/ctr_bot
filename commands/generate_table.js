@@ -11,6 +11,7 @@ Team2: p1,p2,p3
 ...\``,
   args: true,
   guildOnly: true,
+  cooldown: 10,
   // eslint-disable-next-line consistent-return
   execute(message, args) {
     const numOfRaces = Number(args[0]);

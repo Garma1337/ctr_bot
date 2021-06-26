@@ -7,7 +7,8 @@ module.exports = {
   name: 'set_color',
   description: 'Set your profile color.',
   guildOnly: true,
-  aliases: ['set_profile_color'],
+  aliases: ['set_profile_color', 'color_set'],
+  cooldown: 10,
   // eslint-disable-next-line consistent-return
   execute(message, args) {
     const isStaff = isStaffMember(message.member);

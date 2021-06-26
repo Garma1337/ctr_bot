@@ -4,7 +4,7 @@ const sendAlertMessage = require('../utils/sendAlertMessage');
 module.exports = {
   name: 'table',
   description: 'Generate score table. https://gb.hlorenzi.com',
-  cooldown: 5,
+  cooldown: 10,
   guildOnly: true,
   aliases: ['t'],
   // eslint-disable-next-line consistent-return

@@ -6,6 +6,7 @@ module.exports = {
   name: 'unset_flag',
   description: 'Set your country flag.',
   aliases: ['remove_country', 'remove_flag', 'unset_country'],
+  cooldown: 15,
   // eslint-disable-next-line consistent-return
   execute(message, args) {
     const isStaff = isStaffMember(message.member);

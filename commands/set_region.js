@@ -8,6 +8,7 @@ module.exports = {
   usage: '@user',
   description: 'Set your region.',
   guildOnly: true,
+  cooldown: 10,
   execute(message, args) {
     const isStaff = isStaffMember(message.member);
 

@@ -16,6 +16,7 @@ module.exports = {
   name: 'set_birthday',
   description: 'Set your birthday.',
   guildOnly: true,
+  cooldown: 10,
   execute(message, args) {
     if (args.length > 0 && args[0] === 'unset') {
       Player.findOne({ discordId: message.author.id }).then((player) => {

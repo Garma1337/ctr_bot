@@ -69,6 +69,7 @@ module.exports = {
 !clan_member remove @user\``;
   },
   guildOnly: true,
+  cooldown: 10,
   // eslint-disable-next-line consistent-return
   execute(message, args) {
     const isStaff = isStaffMember(message.member);

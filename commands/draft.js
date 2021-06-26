@@ -11,7 +11,7 @@ module.exports = {
 Team A: @CaptainA
 Team B: @CaptainB\``,
   guildOnly: true,
-  cooldown: 10,
+  cooldown: 15,
   // eslint-disable-next-line consistent-return
   execute(message) {
     const wrongSyntax = `Wrong command usage. Example:

@@ -9,6 +9,7 @@ module.exports = {
   description: 'Set your languages.',
   guildOnly: true,
   aliases: ['set_language', 'language_set'],
+  cooldown: 10,
   execute(message, args) {
     if (args[0] === 'unset') {
       Player.findOne({ discordId: message.author.id }).then((player) => {

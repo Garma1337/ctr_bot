@@ -8,6 +8,7 @@ module.exports = {
   description: 'Unset your team for Ranked 4v4.',
   guildOnly: true,
   aliases: ['unset_team', 'team_u'],
+  cooldown: 15,
   // eslint-disable-next-line consistent-return
   async execute(message) {
     const { author, guild } = message;

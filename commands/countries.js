@@ -53,6 +53,7 @@ module.exports = {
   description: 'Countries of members.',
   guildOnly: true,
   aliases: ['country'],
+  cooldown: 15,
   // eslint-disable-next-line consistent-return
   execute(message, args) {
     if (!args.length) {

@@ -8,6 +8,7 @@ module.exports = {
   usage: '[character]',
   description: 'Set your favorite character.',
   guildOnly: true,
+  cooldown: 10,
   execute(message, args) {
     // eslint-disable-next-line consistent-return
     fs.readFile(config.files.characters_file, 'utf8', (err, data) => {

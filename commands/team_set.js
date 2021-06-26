@@ -11,6 +11,7 @@ module.exports = {
   description: 'Set your team for Ranked 3 vs. 3 and ranked 4 vs. 4.',
   guildOnly: true,
   aliases: ['set_team', 'team_s'],
+  cooldown: 15,
   // eslint-disable-next-line consistent-return
   async execute(message) {
     const tagsCount = message.mentions.members.size;

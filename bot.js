@@ -453,9 +453,9 @@ client.on('message', (message) => {
   const timestamps = cooldowns.get(command.name);
   let cooldownAmount = (command.cooldown || 1) * 1000;
 
-  /* Halved cooldown for supporters */
+  /* reduced cooldown by 75% for supporters */
   if (isSupporter) {
-    cooldownAmount = Math.floor(cooldownAmount / 2);
+    cooldownAmount = Math.ceil(cooldownAmount * 0.25);
   }
 
   if (!isStaff && cooldownAmount && timestamps.has(message.author.id)) {

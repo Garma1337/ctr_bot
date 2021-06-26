@@ -3,6 +3,7 @@ const sendAlertMessage = require('../utils/sendAlertMessage');
 module.exports = {
   name: 'ping',
   description: 'Ping!',
+  cooldown: 10,
   execute(message) {
     const { client } = message;
     message.channel.send('Pong!').then((m) => {

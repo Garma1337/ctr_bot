@@ -8,7 +8,7 @@ module.exports = {
   description: `Generate draft links using the new draft tool
 \`!draft2 [type] @CaptainA @CaptainB [bans] [picks] [timeout]\``,
   guildOnly: true,
-  cooldown: 10,
+  cooldown: 15,
   aliases: ['new_draft', 'draftv2'],
   // eslint-disable-next-line consistent-return
   execute(message) {

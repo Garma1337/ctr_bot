@@ -90,7 +90,7 @@ Edit clans:
   },
   aliases: ['clan'],
   guildOnly: true,
-  cooldown: 10,
+  cooldown: 15,
   execute(message, args) {
     if (!args.length) {
       Clan.find().then((clans) => {
