@@ -27,6 +27,7 @@ module.exports = {
         sendAlertMessage(message.channel, 'You need to specify a track. Here is the list of available tracks:', 'warning');
         return message.channel.send({
           embed: {
+            color: config.default_embed_color,
             author: {
               name: 'Select your favorite track!',
             },

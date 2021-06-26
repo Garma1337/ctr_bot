@@ -1,3 +1,4 @@
+const config = require('../config');
 const { Clan } = require('../db/models/clan');
 const { Player } = require('../db/models/player');
 const { Rank } = require('../db/models/rank');
@@ -19,7 +20,7 @@ function createCaseInsensitiveRegEx(s) {
 function getProfileEmbed(data) {
   const { name } = data;
   const { tag } = data;
-  const color = Number(data.color) || 0;
+  const color = Number(data.color) || config.default_embed_color;
   const { description } = data;
   const logo = data.logo || 'https://www.crashbandicoot.com/content/dam/atvi/Crash/crash-touchui/ctr/home/ctr-full-logo.png';
   const score = data.score || 0;

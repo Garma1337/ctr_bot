@@ -8,6 +8,7 @@ module.exports = {
   description: 'Picks random tracks from the list of all tracks.',
   guildOnly: true,
   aliases: ['random_track'],
+  cooldown: 10,
   // eslint-disable-next-line consistent-return
   execute(message, args) {
     let number = 1;

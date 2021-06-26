@@ -21,6 +21,7 @@ module.exports = {
       if (args.length < 1) {
         sendAlertMessage(message.channel, 'You need to specify a arena. Here is the list of available arenas:', 'warning');
         return message.channel.send({
+          color: config.default_embed_color,
           embed: {
             author: {
               name: 'Select your favorite arena!',

@@ -1,3 +1,4 @@
+const config = require('../config');
 const { Player } = require('../db/models/player');
 const isStaffMember = require('../utils/isStaffMember');
 const sendAlertMessage = require('../utils/sendAlertMessage');
@@ -42,6 +43,7 @@ module.exports = {
     const consoleList = consoles.map((c) => `${c.emote} - ${c.name}`);
 
     const embed = {
+      color: config.default_embed_color,
       author: {
         name: 'React with the appropriate console emote!',
       },

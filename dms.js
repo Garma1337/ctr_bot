@@ -21,6 +21,7 @@ const logDM = async (message) => {
 
     channelDM.send(`**New DM by ${message.author} \`${message.author.tag}\` \`${message.author.id}\`**\n${content}`, { files: attachments });
   } else {
+    // eslint-disable-next-line no-console
     console.log(`Could not find guild ${config.main_guild}`);
   }
 };

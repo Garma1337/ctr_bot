@@ -1,4 +1,5 @@
 const Discord = require('discord.js');
+const config = require('../config');
 const { Player } = require('../db/models/player');
 const isStaffMember = require('../utils/isStaffMember');
 const sendAlertMessage = require('../utils/sendAlertMessage');
@@ -45,6 +46,7 @@ module.exports = {
     const column3 = languageList.slice(20, 30);
 
     const embed = {
+      color: config.default_embed_color,
       author: {
         name: 'You can specify a list of flags when using the command',
       },

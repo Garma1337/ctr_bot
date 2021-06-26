@@ -1,3 +1,4 @@
+const config = require('../config');
 const drawTable = require('../utils/drawTable');
 const sendAlertMessage = require('../utils/sendAlertMessage');
 const sendLogMessage = require('../utils/sendLogMessage');
@@ -66,7 +67,7 @@ Team2: p1,p2,p3
           description: `You can use command \`!table\` and template to generate tables right in Discord.
 \`\`\`${data}\`\`\`
 [Open template on gb.hlorenzi.com](${url})`,
-          color: 0xff0000,
+          color: config.default_embed_color,
           timestamp: new Date(),
           image: { url: `attachment://${attachment.name}` },
         },

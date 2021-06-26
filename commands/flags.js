@@ -1,3 +1,5 @@
+const config = require('../config');
+
 module.exports = {
   name: 'flags',
   description: 'Show country flags.',
@@ -13,7 +15,12 @@ module.exports = {
 
     // eslint-disable-next-line array-callback-return
     chunks.map((chunk) => {
-      message.channel.send({ embed: { description: chunk.join(' ') } });
+      message.channel.send({
+        embed: {
+          color: config.default_embed_color,
+          description: chunk.join(' '),
+        },
+      });
     });
   },
 };

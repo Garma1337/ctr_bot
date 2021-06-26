@@ -26,6 +26,7 @@ module.exports = {
         sendAlertMessage(message.channel, 'You need to specify a character. Here is the list of available characters:', 'warning');
         return message.channel.send({
           embed: {
+            color: config.default_embed_color,
             author: {
               name: 'Select your favorite character!',
             },

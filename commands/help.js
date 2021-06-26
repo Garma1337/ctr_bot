@@ -1,4 +1,4 @@
-const { prefix } = require('../config');
+const config = require('../config');
 const isStaffMember = require('../utils/isStaffMember');
 
 module.exports = {
@@ -14,7 +14,7 @@ module.exports = {
         return;
       }
 
-      const commandName = `${prefix}${command.name}`;
+      const commandName = `${config.prefix}${command.name}`;
       let { description } = command;
 
       if (typeof description === 'function') {
@@ -43,6 +43,7 @@ module.exports = {
 
     const output = {
       embed: {
+        color: config.default_embed_color,
         title: 'Help',
         fields: [
           ...fields,
@@ -52,24 +53,22 @@ module.exports = {
 
     const staffOutput = {
       embed: {
+        color: config.default_embed_color,
         title: 'Staff Help',
         fields: staffFields,
       },
     };
 
-    message.member.user.createDM()
-      .then((dm) => {
-        dm.send(output)
-          .catch(() => {
-            message.channel.send(output);
-          });
-
-        if (staffFields.length) {
-          dm.send(staffOutput)
-            .catch(() => {
-              message.channel.send(staffOutput);
-            });
-        }
+    message.member.user.createDM().then((dm) => {
+      dm.send(output).catch(() => {
+        message.channel.send(output);
       });
+
+      if (staffFields.length) {
+        dm.send(staffOutput).catch(() => {
+          message.channel.send(staffOutput);
+        });
+      }
+    });
   },
 };

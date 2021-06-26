@@ -1,4 +1,5 @@
 const moment = require('moment');
+const config = require('../config');
 const { Duo } = require('../db/models/duo');
 const { Team } = require('../db/models/team');
 
@@ -35,6 +36,7 @@ function getEmbed(duos, teams) {
   }
 
   return {
+    color: config.default_embed_color,
     timestamp: new Date(),
     author: {
       name: 'Ranked Teams List',

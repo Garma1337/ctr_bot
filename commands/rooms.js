@@ -52,17 +52,16 @@ module.exports = {
       if (action === 'free') {
         const number = args.shift();
         if (number === 'all') {
-          Room.find({ guild: message.guild.id })
-            .then((docs) => {
-              const promises = docs.map((doc) => {
-                doc.lobby = null;
-                return doc.save();
-              });
-
-              Promise.all(promises).then(() => {
-                sendAlertMessage(message.channel, 'All rooms were freed.', 'success');
-              });
+          Room.find({ guild: message.guild.id }).then((docs) => {
+            const promises = docs.map((doc) => {
+              doc.lobby = null;
+              return doc.save();
             });
+
+            Promise.all(promises).then(() => {
+              sendAlertMessage(message.channel, 'All rooms were freed.', 'success');
+            });
+          });
         } else {
           // eslint-disable-next-line consistent-return
           Room.findOne({ guild: message.guild.id, number }).then((doc) => {

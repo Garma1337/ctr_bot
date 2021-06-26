@@ -12,6 +12,7 @@ module.exports = {
   description: 'Picks random tracks from existing track pools',
   guildOnly: true,
   aliases: ['rng_mogi', 'rng_pools'],
+  cooldown: 10,
   execute(message, args) {
     let number = 1;
     if (args.length) {

@@ -1,3 +1,4 @@
+const config = require('../config');
 const { Player } = require('../db/models/player');
 const { Rank } = require('../db/models/rank');
 const createPageableContent = require('../utils/createPageableContent');
@@ -51,6 +52,7 @@ function sendMessage(message, rank) {
 
     message.channel.send({
       embed: {
+        color: config.default_embed_color,
         title: `${rank.name}'s ranks`,
         fields,
       },

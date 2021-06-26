@@ -1,3 +1,4 @@
+const config = require('../config');
 const { Player } = require('../db/models/player');
 const { Rank } = require('../db/models/rank');
 const calculateMeaningfulness = require('../utils/calculateMeaningfulness');
@@ -25,6 +26,7 @@ function getProfileEmbed(data) {
   ];
 
   return {
+    color: config.default_embed_color,
     timestamp: new Date(),
     author: {
       name: `Country "${name}"`,
@@ -248,6 +250,7 @@ module.exports = {
                 } else {
                   message.channel.send({
                     embed: {
+                      color: config.default_embed_color,
                       timestamp: new Date(),
                       author: {
                         name: `Page ${i}`,

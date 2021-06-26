@@ -1,3 +1,4 @@
+const config = require('../config');
 const createPagination = require('./createPagination');
 
 /**
@@ -36,6 +37,7 @@ function getEmbed(options) {
   options.image = options.image || null;
 
   const embed = {
+    color: config.default_embed_color,
     author: {
       name: options.heading,
     },
