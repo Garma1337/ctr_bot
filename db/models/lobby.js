@@ -100,6 +100,7 @@ const CUSTOM_OPTION_SURVIVAL_STYLE = 'survival_style';
 const CUSTOM_OPTION_BATTLE_MODES = 'battle_modes';
 const CUSTOM_OPTION_PREMADE_TEAMS = 'premade_teams';
 const CUSTOM_OPTION_RESERVE = 'reserve';
+const CUSTOM_OPTION_ANONYMOUS = 'anonymous';
 const CUSTOM_OPTION_TYPE = 'type';
 const CUSTOM_OPTION_MMR_LOCK = 'mmr_lock';
 
@@ -150,6 +151,7 @@ module.exports.CUSTOM_OPTION_SURVIVAL_STYLE = CUSTOM_OPTION_SURVIVAL_STYLE;
 module.exports.CUSTOM_OPTION_BATTLE_MODES = CUSTOM_OPTION_BATTLE_MODES;
 module.exports.CUSTOM_OPTION_PREMADE_TEAMS = CUSTOM_OPTION_PREMADE_TEAMS;
 module.exports.CUSTOM_OPTION_RESERVE = CUSTOM_OPTION_RESERVE;
+module.exports.CUSTOM_OPTION_ANONYMOUS = CUSTOM_OPTION_ANONYMOUS;
 module.exports.CUSTOM_OPTION_TYPE = CUSTOM_OPTION_TYPE;
 module.exports.CUSTOM_OPTION_MMR_LOCK = CUSTOM_OPTION_MMR_LOCK;
 
@@ -245,6 +247,10 @@ const Lobby = new Schema({
     ],
   },
   limitAndLKDOnly: {
+    type: Boolean,
+    default: false,
+  },
+  anonymous: {
     type: Boolean,
     default: false,
   },

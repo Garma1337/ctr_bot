@@ -1,14 +1,4 @@
 /**
- * Returns an array containing incrementing numbers inside a range
- * @param start
- * @param end
- * @returns Array
- */
-function getRangeArray(start, end) {
-  return Array(end - start + 1).fill().map((_, idx) => start + idx);
-}
-
-/**
  * Array partitioning with brute force selecting optimal partition
  * @param objects
  * @param partitionSize
@@ -33,28 +23,50 @@ function optimalPartition(objects, partitionSize, valueKey) {
 
   /* iterate over all possible partitions */
   const n = objects.length;
+
   // eslint-disable-next-line guard-for-in
-  for (const i in getRangeArray(0, n - 3)) {
+  for (let i = 0; i < n - 3; i += 1) {
     // eslint-disable-next-line guard-for-in
-    for (const j in getRangeArray(i, n - 2)) {
+    for (let j = i; j < n - 2; j += 1) {
       // eslint-disable-next-line guard-for-in
-      for (const k in getRangeArray(j, n - 1)) {
+      for (let k = j; k < n - 1; k += 1) {
         // eslint-disable-next-line guard-for-in
-        for (const l in getRangeArray(k, n)) {
+        for (let l = k; l < n; l += 1) {
+          // eslint-disable-next-line max-len
+          const discordIds = [
+            objects[i].discordId,
+            objects[j].discordId,
+            objects[k].discordId,
+            objects[l].discordId,
+          ];
+
+          let hasDuplicates = false;
+          discordIds.sort().forEach((d, x) => {
+            const w = x - 1;
+            const y = x + 1;
+
+            if (discordIds[w] === d || discordIds[y] === d) {
+              hasDuplicates = true;
+            }
+          });
+
           // eslint-disable-next-line max-len
           const currentSum = objects[i][valueKey] + objects[j][valueKey] + objects[k][valueKey] + objects[l][valueKey];
 
-          if (Math.abs(currentSum - averageRank) < Math.abs(result.sumA - averageRank)) {
+          // eslint-disable-next-line max-len
+          if (!hasDuplicates && Math.abs(currentSum - averageRank) < Math.abs(result.sumA - averageRank)) {
             result.sumA = currentSum;
-            result.A = [i, j, k, l];
+            result.A = [objects[i], objects[j], objects[k], objects[l]];
           }
         }
       }
     }
   }
 
-  objects.forEach((o, i) => {
-    if (!result.A[i]) {
+  objects.forEach((o) => {
+    const pos = result.A.find((r) => r.discordId === o.discordId);
+
+    if (!pos) {
       result.B.push(o);
     }
   });

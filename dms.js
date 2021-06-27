@@ -1,7 +1,7 @@
 // separate process for monitoring bot's DMs and sending them in the server's channel
 
 const Discord = require('discord.js');
-const config = require('./config.js');
+const config = require('./config');
 
 const client = new Discord.Client();
 

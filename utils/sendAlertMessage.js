@@ -1,3 +1,5 @@
+const { MessageActionRow } = require('discord-buttons');
+
 const TYPE_INFO = 'info';
 const TYPE_SUCCESS = 'success';
 const TYPE_WARNING = 'warning';
@@ -8,12 +10,22 @@ const TYPE_ERROR = 'error';
  * @param channel
  * @param content
  * @param type
- * @param mentionedUsers
+ * @param mentions
+ * @param buttons
  * @returns null
  */
-function sendAlertMessage(channel, content, type, mentionedUsers) {
-  if (arguments.length < 4) {
-    mentionedUsers = [];
+function sendAlertMessage(channel, content, type, mentions, buttons) {
+  let pings = [];
+  const buttonRow = new MessageActionRow();
+
+  if (arguments.length >= 4 && mentions.length > 0) {
+    pings = mentions.map((m) => `<@!${m}>`).join(', ');
+  }
+
+  if (arguments.length >= 5 && buttons.length > 0) {
+    buttons.forEach((b) => {
+      buttonRow.addComponent(b);
+    });
   }
 
   const types = [
@@ -64,11 +76,6 @@ function sendAlertMessage(channel, content, type, mentionedUsers) {
     ],
   };
 
-  let pings = [];
-  if (mentionedUsers.length > 0) {
-    pings = mentionedUsers.map((m) => `<@!${m}>`).join(', ');
-  }
-
   // Embed Field Values can only be up to 1024 characters
   if (content.length > 1024) {
     return channel.send({
@@ -82,10 +89,15 @@ function sendAlertMessage(channel, content, type, mentionedUsers) {
     });
   }
 
-  return channel.send({
-    content: pings,
-    embed,
-  });
+  if (buttonRow.components.length > 0) {
+    return channel.send({
+      content: pings,
+      embed,
+      components: [buttonRow],
+    });
+  }
+
+  return channel.send({ content: pings, embed });
 }
 
 module.exports = sendAlertMessage;

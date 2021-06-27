@@ -7,14 +7,14 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
-  "author": "crash_ip21",
+  "author": "crash_ip21 & Garma",
   "license": "MIT",
   "dependencies": {
     "async-lock": "^1.2.8",
     "axios": "^0.21.1",
     "canvas": "^2.6.1",
     "cron": "^1.8.2",
-    "discord-buttons": "^3.1.1",
+    "discord-buttons": "github:AngeloCore/discord-buttons#dev",
     "discord.js": "^12.5.3",
     "lodash.escaperegexp": "^4.1.2",
     "log-timestamp": "^0.3.0",

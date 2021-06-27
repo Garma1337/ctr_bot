@@ -3,6 +3,10 @@ const moment = require('moment');
 const { CronJob } = require('cron');
 const AsyncLock = require('async-lock');
 const {
+  MessageButton,
+  MessageActionRow,
+} = require('discord-buttons');
+const {
   RACE_FFA,
   RACE_DUOS,
   RACE_3V3,
@@ -37,6 +41,7 @@ const {
   CUSTOM_OPTION_BATTLE_MODES,
   CUSTOM_OPTION_PREMADE_TEAMS,
   CUSTOM_OPTION_RESERVE,
+  CUSTOM_OPTION_ANONYMOUS,
   CUSTOM_OPTION_TYPE,
   CUSTOM_OPTION_MMR_LOCK,
 } = require('../db/models/lobby');
@@ -116,7 +121,15 @@ async function getPlayerInfo(playerId, doc) {
     psn = psn.replace('_', '\\_');
   }
 
-  return [tag, psn, rankValue];
+  if (!doc.anonymous || doc.started) {
+    return [tag, psn, rankValue];
+  }
+
+  return [
+    ':united_nations: ???',
+    '???',
+    1200,
+  ];
 }
 
 async function getLivestreams(doc) {
@@ -182,7 +195,12 @@ async function getEmbed(doc, players, tracks, roomChannel) {
         mmrSum += info.rank;
       });
 
-      playersText += `**Team ${i + 1} (Rating: ${Math.floor(mmrSum / team.length)})**\n`;
+      if (!doc.anonymous || doc.started) {
+        playersText += `**Team ${i + 1} (Rating: ${Math.floor(mmrSum / team.length)})**\n`;
+      } else {
+        playersText += `**Team ${i + 1}**\n`;
+      }
+
       team.forEach((player, x) => {
         const info = playersInfo[player];
         const tag = info && info.tag;
@@ -240,11 +258,21 @@ async function getEmbed(doc, players, tracks, roomChannel) {
     };
   }
 
-  const creatorField = {
-    name: ':bust_in_silhouette: Creator',
-    value: `${creator.flag} <@${doc.creator}>`,
-    inline: true,
-  };
+  let creatorField;
+
+  if (!doc.anonymous || doc.started) {
+    creatorField = {
+      name: ':bust_in_silhouette: Creator',
+      value: `${creator.flag} <@${doc.creator}>`,
+      inline: true,
+    };
+  } else {
+    creatorField = {
+      name: ':bust_in_silhouette: Creator',
+      value: ':united_nations: ???',
+      inline: true,
+    };
+  }
 
   const averageRankField = {
     name: ':checkered_flag: Average Rank',
@@ -695,10 +723,29 @@ function startLobby(docId) {
       generateTracks(doc).then((tracks) => {
         findRoom(doc).then((room) => {
           findRoomChannel(doc.guild, room.number).then(async (roomChannel) => {
+            const joinButton = new MessageButton()
+              .setStyle('grey')
+              .setLabel('Join')
+              .setEmoji('✅')
+              .setID('join_lobby')
+              .setDisabled(true);
+
+            const leaveButton = new MessageButton()
+              .setStyle('grey')
+              .setLabel('Leave')
+              .setEmoji('❌')
+              .setID('leave_lobby')
+              .setDisabled(true);
+
+            const buttonRow = new MessageActionRow()
+              .addComponent(joinButton)
+              .addComponent(leaveButton);
+
             if (doc.isTournament()) {
               sendAlertMessage(roomChannel, `The ${doc.getTitle()} is starting!`, 'info', doc.players).then(async () => {
                 await message.edit({
                   embed: await getEmbed(doc, doc.players, tracks, roomChannel),
+                  components: [buttonRow],
                 });
 
                 await setupTournamentRound(doc, roomChannel);
@@ -729,6 +776,7 @@ function startLobby(docId) {
 
               await message.edit({
                 embed: await getEmbed(doc, players, tracks, roomChannel),
+                components: [buttonRow],
               });
 
               const fields = [
@@ -1081,6 +1129,7 @@ module.exports = {
           CUSTOM_OPTION_BATTLE_MODES,
           CUSTOM_OPTION_PREMADE_TEAMS,
           CUSTOM_OPTION_RESERVE,
+          CUSTOM_OPTION_ANONYMOUS,
           CUSTOM_OPTION_TYPE,
           CUSTOM_OPTION_MMR_LOCK,
         ];
@@ -1096,7 +1145,7 @@ module.exports = {
       const lockDate = moment(configValue);
 
       if (lockDate.isValid() && lockDate >= now) {
-        return sendAlertMessage(message.channel, `Ranked Lobbies are temporarily closed until midnight CEST on ${lockDate.format('YYYY-MM-DD')}.`, 'warning');
+        return sendAlertMessage(message.channel, `Matchmaking is temporarily closed until midnight CEST on ${lockDate.format('YYYY-MM-DD')}.`, 'warning');
       }
     }
 
@@ -1107,7 +1156,7 @@ module.exports = {
     if (!isStaff) {
       // eslint-disable-next-line max-len
       if (!message.channel.parent || (message.channel.parent && message.channel.parent.name.toLowerCase() !== config.channels.matchmaking_category.toLowerCase())) {
-        return sendAlertMessage(message.channel, 'You can use this command only in the `Ranked Lobbies` category.', 'warning');
+        return sendAlertMessage(message.channel, 'You can use this command only in the `Matchmaking` category.', 'warning');
       }
     }
 
@@ -1583,6 +1632,31 @@ ${SURVIVAL_STYLES.map((s, i) => `${i + 1} - ${s} ${config.ranked_option_emote}`)
 
               lobby.reservedTeam = reservedTeam;
 
+              let anonymous = false;
+
+              if (custom.includes(CUSTOM_OPTION_ANONYMOUS)) {
+                sentMessage = await sendAlertMessage(message.channel, `Do you want to create an anonymous lobby? (yes / no) ${config.ranked_option_emote}`, 'info');
+                // eslint-disable-next-line max-len,no-shadow
+                anonymous = await message.channel.awaitMessages(filter, options).then(async (collected) => {
+                  sentMessage.delete();
+
+                  collectedMessage = collected.first();
+                  // eslint-disable-next-line no-shadow
+                  const { content } = collectedMessage;
+
+                  if (content.toLowerCase() === 'maybe') {
+                    return Boolean(Math.round(Math.random()));
+                  }
+
+                  return (content.toLowerCase() !== 'no');
+                }).catch(() => {
+                  sentMessage.delete();
+                  return false;
+                });
+              }
+
+              lobby.anonymous = anonymous;
+
               let ranked = lobby.canBeRanked();
               if (lobby.canBeRanked() && custom.includes(CUSTOM_OPTION_TYPE)) {
                 sentMessage = await sendAlertMessage(message.channel, `Do you want to create a ranked lobby? (yes / no) ${config.ranked_option_emote}`, 'info');
@@ -1693,14 +1767,30 @@ The value should be in the range of \`${diffMin} to ${diffMax}\`. The value defa
                   channel = guild.channels.cache.find((c) => c.name === config.channels.unranked_lobbies_channel);
                 }
 
+                const joinButton = new MessageButton()
+                  .setStyle('grey')
+                  .setLabel('Join')
+                  .setEmoji('✅')
+                  .setID('join_lobby');
+
+                const leaveButton = new MessageButton()
+                  .setStyle('grey')
+                  .setLabel('Leave')
+                  .setEmoji('❌')
+                  .setID('leave_lobby');
+
+                const buttonRow = new MessageActionRow()
+                  .addComponent(joinButton)
+                  .addComponent(leaveButton);
+
                 channel.send({
-                  content: role,
+                  content: `<@&${role.id}>`,
                   embed: await getEmbed(doc),
+                  components: [buttonRow],
                 }).then((m) => {
                   doc.channel = m.channel.id;
                   doc.message = m.id;
                   doc.save().then(() => {
-                    m.react(lobby.getReactionEmote());
                     sendAlertMessage(message.channel, `${lobby.getTitle()} has been created. Don't forget to react with ${lobby.getReactionEmote()}`, 'success');
                   });
                 });
@@ -1978,61 +2068,6 @@ The value should be in the range of \`${diffMin} to ${diffMax}\`. The value defa
   },
 };
 
-const banDuration = moment.duration(5, 'minutes');
-
-async function tickCount(reaction, user) {
-  const { guild } = reaction.message;
-
-  const member = await guild.members.fetch(user.id);
-  const isStaff = isStaffMember(member);
-  if (isStaff) return;
-
-  const now = new Date();
-  Counter.findOneAndUpdate(
-    { guildId: guild.id, discordId: user.id },
-    { $inc: { tickCount: 1 }, $set: { tickUpdatedAt: now } },
-    { upsert: true, new: true },
-  ).then((doc) => {
-    if (doc.tickCount === 7) { // ban
-      if (reaction.users) {
-        reaction.users.remove(user);
-      }
-
-      const bannedTill = moment().add(banDuration);
-      RankedBan.findOneAndUpdate(
-        { guildId: guild.id, discordId: user.id },
-        { bannedAt: now, bannedTill },
-        { upsert: true },
-      ).exec();
-
-      const lobbyChannelNames = [
-        config.channels.ranked_lobbies_channel.toLowerCase(),
-        config.channels.unranked_lobbies_channel.toLowerCase(),
-      ];
-
-      // eslint-disable-next-line max-len
-      const lobbyChannels = guild.channels.cache.filter((c) => lobbyChannelNames.includes(c.name.toLowerCase()));
-      lobbyChannels.forEach((lc) => {
-        lc.createOverwrite(user, { VIEW_CHANNEL: false });
-      });
-
-      // eslint-disable-next-line max-len
-      const notificationChannel = guild.channels.cache.find((c) => c.name.toLowerCase() === config.channels.matchmaking_notifications_channel.toLowerCase());
-      const message = `You've been banned from matchmaking for ${banDuration.humanize()}.`;
-
-      user.createDM().then((dm) => dm.send(message)).catch(() => { });
-      sendAlertMessage(notificationChannel, message, 'warning', [user.id]);
-    } else if (doc.tickCount === 3 || doc.tickCount === 5) {
-      // eslint-disable-next-line max-len
-      const notificationChannel = guild.channels.cache.find((c) => c.name.toLowerCase() === config.channels.matchmaking_notifications_channel.toLowerCase());
-      const message = `I will ban you from matchmaking for ${banDuration.humanize()} if you continue to spam reactions.`;
-
-      user.createDM().then((dm) => dm.send(message)).catch(() => { });
-      sendAlertMessage(notificationChannel, message, 'warning', [user.id]);
-    }
-  });
-}
-
 async function restrictSoloQueue(doc, user, soloQueue) {
   const errors = [];
   const player = await Player.findOne({ discordId: user.id });
@@ -2146,6 +2181,43 @@ async function restrictSoloQueue(doc, user, soloQueue) {
   return errors;
 }
 
+client.on('clickButton', async (b) => {
+  switch (b.id) {
+    case 'join_lobby':
+      // eslint-disable-next-line max-len
+      client.guilds.cache.get(b.guild.id).channels.cache.get(b.message.channel.id).messages.fetch(b.message.id).then(async (lobbyMessage) => {
+        const reaction = {
+          message: lobbyMessage,
+          users: null,
+        };
+
+        // eslint-disable-next-line no-use-before-define
+        mogi(reaction, b.clicker.user).then(async () => {
+          await b.reply.send('You successfully joined this lobby.');
+          await b.reply.delete();
+        });
+      });
+      break;
+    case 'leave_lobby':
+      // eslint-disable-next-line max-len
+      client.guilds.cache.get(b.guild.id).channels.cache.get(b.message.channel.id).messages.fetch(b.message.id).then(async (lobbyMessage) => {
+        const reaction = {
+          message: lobbyMessage,
+          users: null,
+        };
+
+        // eslint-disable-next-line no-use-before-define
+        mogi(reaction, b.clicker.user, true).then(async () => {
+          await b.reply.send('You successfully left this lobby.');
+          await b.reply.delete();
+        });
+      });
+      break;
+    default:
+      break;
+  }
+});
+
 async function mogi(reaction, user, removed = false) {
   if (user.id === client.user.id) {
     return;
@@ -2175,8 +2247,6 @@ async function mogi(reaction, user, removed = false) {
         const errors = [];
 
         if (!removed) {
-          await tickCount(reaction, user);
-
           const member = await guild.members.fetch(user.id);
           if (!member) return;
 
