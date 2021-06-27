@@ -2192,10 +2192,8 @@ client.on('clickButton', async (b) => {
         };
 
         // eslint-disable-next-line no-use-before-define
-        mogi(reaction, b.clicker.user).then(async () => {
-          await b.reply.send('You successfully joined this lobby.');
-          await b.reply.delete();
-        });
+        mogi(reaction, b.clicker.user);
+        await b.reply.defer();
       });
       break;
     case 'leave_lobby':
@@ -2207,10 +2205,8 @@ client.on('clickButton', async (b) => {
         };
 
         // eslint-disable-next-line no-use-before-define
-        mogi(reaction, b.clicker.user, true).then(async () => {
-          await b.reply.send('You successfully left this lobby.');
-          await b.reply.delete();
-        });
+        mogi(reaction, b.clicker.user, true);
+        await b.reply.defer();
       });
       break;
     default:
