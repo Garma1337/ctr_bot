@@ -19,10 +19,10 @@ module.exports = {
       const arenas = data.trim().split('\n');
 
       if (args.length < 1) {
-        sendAlertMessage(message.channel, 'You need to specify a arena. Here is the list of available arenas:', 'warning');
+        sendAlertMessage(message.channel, 'You need to specify an arena.', 'warning');
         return message.channel.send({
-          color: config.default_embed_color,
           embed: {
+            color: config.default_embed_color,
             author: {
               name: 'Select your favorite arena!',
             },
@@ -43,7 +43,7 @@ module.exports = {
       if (!arena) {
         return sendAlertMessage(message.channel, `The arena "${input}" doesn't exist.`, 'warning');
       }
-
+      gi;
       Player.findOne({ discordId: message.author.id }).then((player) => {
         if (!player) {
           player = new Player();

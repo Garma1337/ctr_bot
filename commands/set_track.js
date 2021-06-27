@@ -24,7 +24,7 @@ module.exports = {
         const column2 = tracks.slice(15, 30);
         const column3 = tracks.slice(30);
 
-        sendAlertMessage(message.channel, 'You need to specify a track. Here is the list of available tracks:', 'warning');
+        sendAlertMessage(message.channel, 'You need to specify a track.', 'warning');
         return message.channel.send({
           embed: {
             color: config.default_embed_color,
