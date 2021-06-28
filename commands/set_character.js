@@ -23,7 +23,7 @@ module.exports = {
         const column2 = characters.slice(20, 40);
         const column3 = characters.slice(40);
 
-        sendAlertMessage(message.channel, 'You need to specify a character. Here is the list of available characters:', 'warning');
+        sendAlertMessage(message.channel, 'You need to specify a character.', 'warning');
         return message.channel.send({
           embed: {
             color: config.default_embed_color,

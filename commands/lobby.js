@@ -1756,7 +1756,11 @@ The value should be in the range of \`${diffMin} to ${diffMax}\`. The value defa
               );
 
               lobby.save().then(async (doc) => {
-                const role = await createAndFindRole(guild, lobby.getRoleName());
+                let role = null;
+
+                if (lobby.ranked) {
+                  role = await createAndFindRole(guild, lobby.getRoleName());
+                }
 
                 let channel;
                 if (lobby.ranked) {
@@ -1784,7 +1788,7 @@ The value should be in the range of \`${diffMin} to ${diffMax}\`. The value defa
                   .addComponent(leaveButton);
 
                 channel.send({
-                  content: `<@&${role.id}>`,
+                  content: role,
                   embed: await getEmbed(doc),
                   components: [buttonRow],
                 }).then((m) => {
