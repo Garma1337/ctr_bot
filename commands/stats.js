@@ -16,6 +16,7 @@ module.exports = {
   async execute(message, args) {
     const types = [
       'regions',
+      'countries',
       'languages',
       'birthdays',
       'voice_chat',
@@ -61,6 +62,30 @@ module.exports = {
 
           elements.push(`${region.name} - ${playerRegions[i]} players`);
         }
+        break;
+
+      case 'countries':
+        embedHeading = 'Countries';
+        // eslint-disable-next-line no-case-declarations
+        let countries = {};
+
+        players.forEach((p) => {
+          if (p.flag && p.flag !== '🇺🇳') {
+            if (!countries[p.flag]) {
+              countries[p.flag] = 1;
+            } else {
+              countries[p.flag] += 1;
+            }
+          }
+        });
+
+        countries = sortObject(countries);
+
+        // eslint-disable-next-line guard-for-in
+        for (const i in countries) {
+          elements.push(`${i} - ${countries[i]} players`);
+        }
+
         break;
 
       case 'languages':
