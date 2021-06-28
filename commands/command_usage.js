@@ -30,7 +30,7 @@ module.exports = {
         embedOptions: {
           heading: 'Most used commands',
         },
-        reactionCollectorOptions: { time: 3600000 },
+        buttonCollectorOptions: { time: 3600000 },
       });
     });
   },

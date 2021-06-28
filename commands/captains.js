@@ -43,7 +43,7 @@ module.exports = {
           heading: `Clan Captains (${captainMembers.length})`,
           image: 'https://i.imgur.com/EwZCCpX.png',
         },
-        reactionCollectorOptions: { time: 3600000 },
+        buttonCollectorOptions: { time: 3600000 },
       });
     });
   },

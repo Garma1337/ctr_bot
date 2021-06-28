@@ -1,3 +1,7 @@
+const {
+  MessageButton,
+  MessageActionRow,
+} = require('discord-buttons');
 const config = require('../config');
 const createPagination = require('./createPagination');
 
@@ -64,6 +68,22 @@ function getEmbed(options) {
  * @param pagination
  */
 function getMessageContent(options, pagination) {
+  const previousButton = new MessageButton()
+    .setStyle('grey')
+    .setLabel('Previous')
+    .setEmoji(options.emojiPrevious)
+    .setID('previous_page');
+
+  const nextButton = new MessageButton()
+    .setStyle('grey')
+    .setLabel('Next')
+    .setEmoji(options.emojiNext)
+    .setID('next_page');
+
+  const buttonRow = new MessageActionRow()
+    .addComponent(previousButton)
+    .addComponent(nextButton);
+
   let placeholder;
   let content;
 
@@ -76,16 +96,32 @@ function getMessageContent(options, pagination) {
       numPages: pagination.numPages,
     });
 
-    placeholder = { embed: output };
-    content = { embed: output };
+    placeholder = {
+      embed: output,
+      components: [buttonRow],
+    };
+
+    content = {
+      embed: output,
+      components: [buttonRow],
+    };
   } else {
-    placeholder = '...';
-    content = getText({
+    placeholder = {
+      content: '...',
+      components: [buttonRow],
+    };
+
+    const text = getText({
       heading: options.textOptions.heading,
       elements: pagination.elements,
       currentPage: pagination.currentPage,
       numPages: pagination.numPages,
     });
+
+    content = {
+      content: text,
+      components: [buttonRow],
+    };
   }
 
   return {
@@ -108,7 +144,7 @@ function getMessageContent(options, pagination) {
  *   embedOptions: {
  *     fieldName: 'List of clans'
  *   },
- *  reactionCollectorOptions: {
+ *  buttonCollectorOptions: {
  *    time: 10000
  *  }
  * }
@@ -125,7 +161,7 @@ function createPageableContent(channel, userId, options) {
   options.emojiNext = options.emojiNext || '➡️';
   options.embedOptions = options.embedOptions || { heading: 'Heading', image: null };
   options.textOptions = options.textOptions || { heading: 'Heading' };
-  options.reactionCollectorOptions = options.reactionCollectorOptions || { time: 3600000 };
+  options.buttonCollectorOptions = options.buttonCollectorOptions || { time: 3600000 };
 
   let currentPage = 1;
   let pagination = createPagination(options.elements, 1, options.elementsPerPage);
@@ -137,22 +173,19 @@ function createPageableContent(channel, userId, options) {
     }
 
     if (pagination.numPages > 1) {
-      message.react(options.emojiPrevious);
-      message.react(options.emojiNext);
-
       // eslint-disable-next-line max-len
-      const reactionCollectorFilter = (reaction, user) => ([options.emojiPrevious, options.emojiNext].includes(reaction.emoji.name) && user.id !== message.author.id && user.id === userId);
-      const reactionCollectorOptions = {
-        time: options.reactionCollectorOptions.time,
+      const buttonCollectorFilter = (button) => button.clicker.user.id !== message.author.id && button.clicker.user.id === userId;
+      const buttonCollectorOptions = {
+        time: options.buttonCollectorOptions.time,
         errors: ['time'],
         dispose: true,
       };
 
       // eslint-disable-next-line max-len
-      const reactionCollector = message.createReactionCollector(reactionCollectorFilter, reactionCollectorOptions);
-      reactionCollector.on('collect', (reaction, user) => {
-        if (reaction.message.id === message.id) {
-          if (reaction.emoji.name === options.emojiPrevious) {
+      const buttonCollector = message.createButtonCollector(buttonCollectorFilter, buttonCollectorOptions);
+      buttonCollector.on('collect', (button) => {
+        if (button.message.id === message.id) {
+          if (button.id === 'previous_page') {
             currentPage -= 1;
 
             if (currentPage < 1) {
@@ -160,7 +193,7 @@ function createPageableContent(channel, userId, options) {
             }
           }
 
-          if (reaction.emoji.name === options.emojiNext) {
+          if (button.id === 'next_page') {
             currentPage += 1;
 
             if (currentPage > pagination.numPages) {
@@ -174,7 +207,7 @@ function createPageableContent(channel, userId, options) {
           message.edit(messageContent.content);
         }
 
-        reaction.users.remove(user).then();
+        button.reply.defer();
       });
     }
   });

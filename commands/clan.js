@@ -177,7 +177,7 @@ Edit clans:
                   heading: `Clan Ranking - ${clanList.length} Clans`,
                   image: 'https://static.wikia.nocookie.net/crashban/images/8/8f/CTRNF-Turbo.png',
                 },
-                reactionCollectorOptions: { time: 3600000 },
+                buttonCollectorOptions: { time: 3600000 },
               });
             });
           });

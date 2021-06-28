@@ -285,7 +285,7 @@ module.exports = {
       elements,
       elementsPerPage: 20,
       embedOptions: { heading: embedHeading },
-      reactionCollectorOptions: { time: 3600000 },
+      buttonCollectorOptions: { time: 3600000 },
     });
   },
 };

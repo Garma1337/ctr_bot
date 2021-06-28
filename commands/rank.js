@@ -80,7 +80,7 @@ module.exports = {
               heading: 'Super Score Ranking',
               image: 'https://static.wikia.nocookie.net/crashban/images/5/5a/CTRNF-Master_Wheels.png',
             },
-            reactionCollectorOptions: { time: 3600000 },
+            buttonCollectorOptions: { time: 3600000 },
           });
         });
       } else {

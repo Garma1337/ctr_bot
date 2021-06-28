@@ -137,7 +137,7 @@ module.exports = {
               elements: countryList,
               elementsPerPage: 5,
               embedOptions: { heading: `Country Ranking - ${countryList.length} Countries` },
-              reactionCollectorOptions: { time: 3600000 },
+              buttonCollectorOptions: { time: 3600000 },
             });
           });
         });
