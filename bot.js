@@ -620,6 +620,7 @@ client.on('presenceUpdate', (oldPresence, newPresence) => {
   const livestreamsChannel = newPresence.guild.channels.cache.find((c) => c.name.toLowerCase() === config.channels.livestreams_channel);
 
   if (livestreamsChannel) {
+    let isStreaming = false;
     let isNewStream = true;
 
     if (oldPresence) {
@@ -634,6 +635,8 @@ client.on('presenceUpdate', (oldPresence, newPresence) => {
       const timestamp = Math.floor(a.createdTimestamp / 1000);
 
       if (isCTRStream(a) && isNewStream) {
+        isStreaming = true;
+
         const fieldValue = [
           `**Streamer**: <@!${newPresence.userID}>`,
           `**Title**: ${a.details.trim()}`,
@@ -672,6 +675,14 @@ client.on('presenceUpdate', (oldPresence, newPresence) => {
           embed.thumbnail = { url: 'https://i.imgur.com/arlgVeV.png' };
           livestreamsChannel.send({ embed });
         });
+      }
+    });
+
+    createAndFindRole(newPresence.guild, config.roles.streaming_role).then((role) => {
+      if (isStreaming) {
+        newPresence.member.roles.add(role);
+      } else {
+        newPresence.member.roles.remove(role);
       }
     });
   }

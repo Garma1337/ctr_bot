@@ -43,7 +43,7 @@ module.exports = {
       if (!arena) {
         return sendAlertMessage(message.channel, `The arena "${input}" doesn't exist.`, 'warning');
       }
-      gi;
+
       Player.findOne({ discordId: message.author.id }).then((player) => {
         if (!player) {
           player = new Player();

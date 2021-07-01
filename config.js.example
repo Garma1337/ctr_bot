@@ -58,6 +58,7 @@ module.exports = {
     challenge_master_role: 'Challenge Master',
     donator_role: 'Donator',
     nitro_booster_role: 'Server Booster',
+    streaming_role: 'Streaming',
     race_war_search_role: 'War',
     battle_war_search_role: 'Battle War',
     instateam_role: 'Instateam',
