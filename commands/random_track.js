@@ -68,10 +68,6 @@ module.exports = {
           }
 
           const tracks = data.trim().split('\n');
-          if (option === 1) {
-            tracks.push('Retro Stadium');
-          }
-
           const randomTracks = [];
 
           for (let i = 0; i < number; i += 1) {
