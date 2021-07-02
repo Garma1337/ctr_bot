@@ -10,6 +10,7 @@ const FinishedLobby = new Schema({
   engineRestriction: { type: String, default: null },
   survivalStyle: { type: Number, default: null },
   tournament: Boolean,
+  ranked: Boolean,
 });
 
 module.exports.FinishedLobby = model('finishedLobby', FinishedLobby);

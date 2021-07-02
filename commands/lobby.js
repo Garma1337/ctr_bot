@@ -1081,6 +1081,7 @@ function deleteLobby(doc, msg) {
   finishedLobby.engineRestriction = doc.engineRestriction;
   finishedLobby.survivalStyle = doc.survivalStyle;
   finishedLobby.tournament = doc.isTournament();
+  finishedLobby.ranked = doc.ranked;
 
   const promiseDocDelete = doc.delete();
   const promiseSaveFinishedLobby = finishedLobby.save();
