@@ -215,11 +215,6 @@ module.exports = {
           `**Registered**: ${member.user.createdAt.toLocaleString('default', { month: 'short' })} ${member.user.createdAt.getDate()}, ${member.user.createdAt.getFullYear()}`,
         ];
 
-        // eslint-disable-next-line max-len
-        if (member.roles.cache.find((r) => r.name.toLowerCase() === config.roles.ranked_verified_role.toLowerCase())) {
-          profile.push('**Ranked Verified** :white_check_mark:');
-        }
-
         if (member.user.bot) {
           profile.push('**Discord Bot** :robot:');
         }
@@ -251,6 +246,11 @@ module.exports = {
           `**Fav. Track**: ${favTrack}`,
           `**Fav. Arena**: ${favArena}`,
         ];
+
+        // eslint-disable-next-line max-len
+        if (member.roles.cache.find((r) => r.name.toLowerCase() === config.roles.verified_player_role.toLowerCase())) {
+          gameData.push('**Verified Player** :white_check_mark:');
+        }
 
         fields.push({
           name: ':video_game: Game Data',

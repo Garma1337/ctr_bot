@@ -6,7 +6,7 @@ const sendLogMessage = require('../utils/sendLogMessage');
 
 module.exports = {
   name: 'verify',
-  description: 'Ranked verification',
+  description: 'Player verification',
   guildOnly: true,
   permissions: ['MANAGE_CHANNELS', 'MANAGE_ROLES'],
   args: true,
@@ -29,12 +29,12 @@ module.exports = {
     };
 
     const { guild } = message;
-    const role = await createAndFindRole(guild, config.roles.ranked_verified_role);
+    const role = await createAndFindRole(guild, config.roles.verified_player_role);
 
     await member.roles.add(role);
 
     member.createDM().then((dm) => {
-      dm.send(config.ranked_verification_dm).then((m) => {
+      dm.send(config.verification_dm).then((m) => {
         DMCallback(m);
       }).catch((error) => {
         sendAlertMessage(message.channel, error.message, 'error');

@@ -42,7 +42,7 @@ module.exports = {
     }
 
     // eslint-disable-next-line max-len
-    const authorVerified = message.member.roles.cache.find((r) => r.name.toLowerCase() === config.roles.ranked_verified_role.toLowerCase());
+    const authorVerified = message.member.roles.cache.find((r) => r.name.toLowerCase() === config.roles.verified_player_role.toLowerCase());
     if (!authorVerified) {
       return sendAlertMessage(message.channel, 'you are not verified.', 'warning');
     }
@@ -70,7 +70,7 @@ module.exports = {
 
     for (const teammate of teammates.array()) {
       // eslint-disable-next-line max-len
-      const partnerVerified = teammate.roles.cache.find((r) => r.name.toLowerCase() === config.roles.ranked_verified_role.toLowerCase());
+      const partnerVerified = teammate.roles.cache.find((r) => r.name.toLowerCase() === config.roles.verified_player_role.toLowerCase());
       if (!partnerVerified) {
         return sendAlertMessage(message.channel, `${teammate} isn't verified.`, 'warning');
       }

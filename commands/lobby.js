@@ -456,8 +456,8 @@ async function findRoomChannel(guildId, n) {
   let channel = guild.channels.cache.find((c) => c.name === channelName);
   if (!channel) {
     const roleStaff = await createAndFindRole(guild, config.roles.staff_role);
+    const roleVerified = await createAndFindRole(guild, config.roles.verified_player_role);
     const roleMatchmaking = await createAndFindRole(guild, config.roles.matchmaking_role);
-    const roleRankedVerified = await createAndFindRole(guild, config.roles.ranked_verified_role);
 
     channel = await guild.channels.create(channelName, {
       type: 'text',
@@ -465,8 +465,8 @@ async function findRoomChannel(guildId, n) {
     });
 
     await channel.createOverwrite(roleStaff, { VIEW_CHANNEL: true });
+    await channel.createOverwrite(roleVerified, { VIEW_CHANNEL: true });
     await channel.createOverwrite(roleMatchmaking, { VIEW_CHANNEL: true });
-    await channel.createOverwrite(roleRankedVerified, { VIEW_CHANNEL: true });
     await channel.createOverwrite(guild.roles.everyone, { VIEW_CHANNEL: false });
   }
 
@@ -3024,17 +3024,12 @@ client.on('guildMemberUpdate', async (oldMember, newMember) => {
   };
 
   const DMCatchCallback = (error) => {
-    const logMessage = `Ranked role: ${error.message} ${newMember}`;
+    const logMessage = `Could not send DM: ${error.message} ${newMember}`;
     sendLogMessage(newMember.guild, logMessage);
   };
 
   const oldRoles = oldMember.roles.cache;
   const newRoles = newMember.roles.cache;
-
-  // eslint-disable-next-line max-len
-  if (oldRoles.some((r) => r.name.toLowerCase() === config.roles.ranked_verified_role.toLowerCase())) {
-    return;
-  }
 
   // eslint-disable-next-line max-len
   if (!oldRoles.some((r) => r.name.toLowerCase() === config.roles.matchmaking_role.toLowerCase()) && newRoles.some((r) => r.name.toLowerCase() === config.roles.matchmaking_role.toLowerCase())) {
@@ -3043,41 +3038,6 @@ client.on('guildMemberUpdate', async (oldMember, newMember) => {
       newMember.createDM().then((dm) => {
         dm.send(welcomeMessage).then(DMCallback).catch(DMCatchCallback);
       });
-    });
-  }
-
-  // eslint-disable-next-line max-len
-  if (newRoles.some((r) => r.name.toLowerCase() === config.roles.ranked_verified_role.toLowerCase())) {
-    const { guild } = newMember;
-
-    // eslint-disable-next-line max-len
-    let notificationChannel = guild.channels.cache.find((c) => c.name.toLowerCase() === config.channels.matchmaking_notifications_channel.toLowerCase());
-    if (!notificationChannel) {
-      // eslint-disable-next-line max-len
-      notificationChannel = await guild.channels.create(config.channels.matchmaking_notifications_channel);
-    }
-
-    let rankedRules = `#${config.channels.ranked_rules_channel}`;
-
-    // eslint-disable-next-line max-len
-    const rankedRulesChannel = guild.channels.cache.find((c) => c.name.toLowerCase() === config.channels.ranked_rules_channel.toLowerCase());
-    if (rankedRulesChannel) {
-      rankedRules = rankedRulesChannel.toString();
-    }
-
-    let matchmakingGuide = `#${config.channels.matchmaking_guide_channel}`;
-
-    // eslint-disable-next-line max-len
-    const matchmakingGuideChannel = guild.channels.cache.find((c) => c.name.toLowerCase() === config.channels.matchmaking_guide_channel.toLowerCase());
-    if (matchmakingGuideChannel) {
-      matchmakingGuide = matchmakingGuideChannel.toString();
-    }
-
-    Player.findOne({ discordId: newMember.id }).then((doc) => {
-      if (!doc || !doc.psn) {
-        sendAlertMessage(notificationChannel, `${newMember}, welcome to matchmaking.
-Make sure to read the ${rankedRules} and ${matchmakingGuide} and set your PSN by using \`!set_psn\` before you can join any lobby.`, 'info');
-      }
     });
   }
 });
