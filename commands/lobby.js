@@ -737,9 +737,17 @@ function startLobby(docId) {
               .setID('leave_lobby')
               .setDisabled(true);
 
+            const deleteButton = new MessageButton()
+              .setStyle('grey')
+              .setLabel('Delete')
+              .setEmoji('🗑️')
+              .setID('delete_lobby')
+              .setDisabled(true);
+
             const buttonRow = new MessageActionRow()
               .addComponent(joinButton)
-              .addComponent(leaveButton);
+              .addComponent(leaveButton)
+              .addComponent(deleteButton);
 
             if (doc.isTournament()) {
               sendAlertMessage(roomChannel, `The ${doc.getTitle()} is starting!`, 'info', doc.players).then(async () => {
@@ -1046,7 +1054,11 @@ function findLobby(lobbyID, isStaff, message, callback) {
   }
 }
 
-function deleteLobby(doc, msg) {
+function deleteLobby(doc, msg, sendMessage) {
+  if (arguments.length < 3) {
+    sendMessage = true;
+  }
+
   const promiseMessageDelete = client.guilds.cache.get(doc.guild)
     .channels.cache.get(doc.channel)
     .messages.fetch(doc.message)
@@ -1088,7 +1100,7 @@ function deleteLobby(doc, msg) {
 
   // eslint-disable-next-line max-len
   Promise.all([promiseMessageDelete, promiseDocDelete, roomDocDelete, promiseSaveFinishedLobby]).then(() => {
-    if (msg) {
+    if (msg && sendMessage) {
       sendAlertMessage(msg.channel, endMessage, 'success');
     }
   });
@@ -1784,9 +1796,16 @@ The value should be in the range of \`${diffMin} to ${diffMax}\`. The value defa
                   .setEmoji('❌')
                   .setID('leave_lobby');
 
+                const deleteButton = new MessageButton()
+                  .setStyle('grey')
+                  .setLabel('Delete')
+                  .setEmoji('🗑️')
+                  .setID('delete_lobby');
+
                 const buttonRow = new MessageActionRow()
                   .addComponent(joinButton)
-                  .addComponent(leaveButton);
+                  .addComponent(leaveButton)
+                  .addComponent(deleteButton);
 
                 channel.send({
                   content: role,
@@ -2212,6 +2231,24 @@ client.on('clickButton', async (b) => {
         // eslint-disable-next-line no-use-before-define
         mogi(reaction, b.clicker.user, true);
         await b.reply.defer();
+      });
+      break;
+    case 'delete_lobby':
+      // eslint-disable-next-line max-len
+      client.guilds.cache.get(b.guild.id).channels.cache.get(b.message.channel.id).messages.fetch(b.message.id).then(async (lobbyMessage) => {
+        const doc = await Lobby.findOne({ message: lobbyMessage.id });
+
+        if (!doc.started) {
+          if (doc.creator === b.clicker.user.id || isStaffMember(b.clicker.member)) {
+            deleteLobby(doc, lobbyMessage, false);
+          } else {
+            b.reply.send('You do not have permission to do that.', { ephemeral: true });
+          }
+        } else if (isStaffMember(b.clicker.member)) {
+          deleteLobby(doc, lobbyMessage, false);
+        } else {
+          b.reply.send('You do not have permission to do that.', { ephemeral: true });
+        }
       });
       break;
     default:

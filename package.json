@@ -14,7 +14,7 @@
     "axios": "^0.21.1",
     "canvas": "^2.6.1",
     "cron": "^1.8.2",
-    "discord-buttons": "github:AngeloCore/discord-buttons#dev",
+    "discord-buttons": "^4.0.0",
     "discord.js": "^12.5.3",
     "lodash.escaperegexp": "^4.1.2",
     "log-timestamp": "^0.3.0",

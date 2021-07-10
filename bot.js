@@ -634,9 +634,11 @@ client.on('presenceUpdate', (oldPresence, newPresence) => {
     newPresence.activities.forEach((a) => {
       const timestamp = Math.floor(a.createdTimestamp / 1000);
 
-      if (isCTRStream(a) && isNewStream) {
+      if (isCTRStream(a)) {
         isStreaming = true;
+      }
 
+      if (isCTRStream(a) && isNewStream) {
         const fieldValue = [
           `**Streamer**: <@!${newPresence.userID}>`,
           `**Title**: ${a.details.trim()}`,
