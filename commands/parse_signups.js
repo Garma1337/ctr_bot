@@ -7,6 +7,7 @@ module.exports = {
   description: 'Parsing signups',
   guildOnly: true,
   permissions: ['MANAGE_CHANNELS', 'MANAGE_ROLES'],
+  // eslint-disable-next-line consistent-return
   async execute(message, args) {
     const { guild } = message;
 

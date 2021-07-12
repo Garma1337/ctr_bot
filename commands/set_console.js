@@ -1,4 +1,7 @@
-const config = require('../config');
+const {
+  MessageMenu,
+  MessageMenuOption,
+} = require('discord-buttons');
 const { Player } = require('../db/models/player');
 const isStaffMember = require('../utils/isStaffMember');
 const sendAlertMessage = require('../utils/sendAlertMessage');
@@ -39,91 +42,59 @@ module.exports = {
       user = message.author;
     }
 
-    const emoteChars = consoles.map((c) => c.emote);
-    const consoleList = consoles.map((c) => `${c.emote} - ${c.name}`);
+    const consoleMenu = new MessageMenu()
+      .setID('select_console')
+      .setPlaceholder('Choose ...')
+      .setMaxValues(consoles.length)
+      .setMinValues(1);
 
-    const embed = {
-      color: config.default_embed_color,
-      author: {
-        name: 'React with the appropriate console emote!',
-      },
-      fields: [
-        {
-          name: 'Consoles',
-          value: consoleList.join('\n'),
-        },
-      ],
-    };
+    consoles.forEach((c) => {
+      const option = new MessageMenuOption()
+        .setLabel(c.name)
+        .setValue(c.tag)
+        .setEmoji(c.emote);
+
+      consoleMenu.addOption(option);
+    });
 
     // eslint-disable-next-line consistent-return
-    return message.channel.send({ embed }).then((confirmMessage) => {
-      emoteChars.forEach((e) => {
-        confirmMessage.react(e);
-      });
+    return sendAlertMessage(message.channel, 'Select your consoles.', 'info', [], [], [consoleMenu]).then((confirmMessage) => {
+      const filter = (m) => m.clicker.user.id === message.author.id;
+      const options = { max: 1, time: 60000, errors: ['time'] };
 
-      const filter = (r, u) => emoteChars.includes(r.emoji.name) && u.id === message.author.id;
-      const options = {
-        max: consoles.length,
-        time: 60000,
-        errors: ['time'],
-        dispose: true,
-      };
+      confirmMessage.awaitMenus(filter, options).then((collectedOptions) => {
+        confirmMessage.delete();
 
-      const collector = confirmMessage.createReactionCollector(filter, options);
-      collector.on('collect', (reaction) => {
-        const console = consoles.find((c) => c.emote === reaction.emoji.name);
+        const collectedOption = collectedOptions.first();
+        const selectedConsoles = collectedOption.values;
 
-        if (console) {
-          Player.findOne({ discordId: user.id }).then((player) => {
-            if (!player) {
-              player = new Player();
-              player.discordId = user.id;
-              player.consoles = [];
-            }
+        const consoleNames = [];
+        selectedConsoles.forEach((s) => {
+          const console = consoles.find((c) => c.tag === s);
+          consoleNames.push(console.name);
+        });
 
-            const playerConsoles = player.consoles;
+        Player.findOne({ discordId: user.id }).then((player) => {
+          if (!player) {
+            player = new Player();
+            player.discordId = user.id;
+            player.consoles = [];
+          }
 
-            if (!playerConsoles.includes(console.tag)) {
-              playerConsoles.push(console.tag);
-            }
-
-            player.consoles = playerConsoles;
-            player.save().then(() => {
-              if (user.id === message.author.id) {
-                sendAlertMessage(message.channel, `${console.name} has been added to your consoles.`, 'success');
-              } else {
-                sendAlertMessage(message.channel, `${console.name} has been added to <@!${user.id}>'s consoles.`, 'success');
-              }
-            }).catch((error) => {
-              sendAlertMessage(message.channel, `Unable to update player. Error: ${error}`, 'error');
-            });
-          });
-        }
-      });
-
-      collector.on('remove', ((reaction) => {
-        const console = consoles.find((c) => c.emote === reaction.emoji.name);
-
-        if (console) {
-          Player.findOne({ discordId: user.id }).then((player) => {
-            const playerConsoles = player.consoles;
-
-            if (playerConsoles.includes(console.tag)) {
-              const index = playerConsoles.indexOf(console.tag);
-              playerConsoles.splice(index, 1);
-            }
-
-            player.consoles = playerConsoles;
-            player.save();
-
+          player.consoles = selectedConsoles;
+          player.save().then(() => {
             if (user.id === message.author.id) {
-              sendAlertMessage(message.channel, `${console.name} has been removed from your consoles.`, 'success');
+              sendAlertMessage(message.channel, `Your consoles have been set to \`${consoleNames.join(', ')}\`.`, 'success');
             } else {
-              sendAlertMessage(message.channel, `${console.name} has been remove from <@!${user.id}>'s consoles.`, 'success');
+              sendAlertMessage(message.channel, `<@!${user.id}>'s consoles have been set to \`${consoleNames.join(', ')}\`.`, 'success');
             }
+          }).catch((error) => {
+            sendAlertMessage(message.channel, `Unable to update player. Error: ${error}`, 'error');
           });
-        }
-      }));
+        }).catch(() => sendAlertMessage(message.channel, 'Command cancelled.', 'error'));
+
+        collectedOption.reply.defer();
+      }).catch(() => sendAlertMessage(message.channel, 'Command cancelled.', 'error'));
     }).catch(() => sendAlertMessage(message.channel, 'Command cancelled.', 'error'));
   },
 };

@@ -1,5 +1,8 @@
 const { MessageActionRow } = require('discord-buttons');
+const config = require('../config');
 
+const TYPE_PLAIN = 'plain';
+const TYPE_PRIMARY = 'primary';
 const TYPE_INFO = 'info';
 const TYPE_SUCCESS = 'success';
 const TYPE_WARNING = 'warning';
@@ -12,14 +15,16 @@ const TYPE_ERROR = 'error';
  * @param type
  * @param mentions
  * @param buttons
+ * @param menus
  * @returns null
  */
-function sendAlertMessage(channel, content, type, mentions, buttons) {
+function sendAlertMessage(channel, content, type, mentions, buttons, menus) {
+  let messageOptions = {};
   let pings = [];
   const buttonRow = new MessageActionRow();
 
   if (arguments.length >= 4 && mentions.length > 0) {
-    pings = mentions.map((m) => `<@!${m}>`).join(', ');
+    pings = mentions.map((m) => `<@!${m}>`);
   }
 
   if (arguments.length >= 5 && buttons.length > 0) {
@@ -28,7 +33,13 @@ function sendAlertMessage(channel, content, type, mentions, buttons) {
     });
   }
 
+  if (arguments.length < 6) {
+    menus = [];
+  }
+
   const types = [
+    TYPE_PLAIN,
+    TYPE_PRIMARY,
     TYPE_INFO,
     TYPE_SUCCESS,
     TYPE_WARNING,
@@ -40,6 +51,8 @@ function sendAlertMessage(channel, content, type, mentions, buttons) {
   }
 
   const colors = {
+    [TYPE_PLAIN]: 0,
+    [TYPE_PRIMARY]: config.default_embed_color,
     [TYPE_INFO]: 3901635,
     [TYPE_SUCCESS]: 7844437,
     [TYPE_WARNING]: 16763981,
@@ -47,6 +60,8 @@ function sendAlertMessage(channel, content, type, mentions, buttons) {
   };
 
   const emotes = {
+    [TYPE_PLAIN]: ':grey_exclamation:',
+    [TYPE_PRIMARY]: ':bookmark_tabs:',
     [TYPE_INFO]: ':information_source:',
     [TYPE_SUCCESS]: ':white_check_mark:',
     [TYPE_WARNING]: ':warning:',
@@ -54,6 +69,8 @@ function sendAlertMessage(channel, content, type, mentions, buttons) {
   };
 
   const headings = {
+    [TYPE_PLAIN]: 'Text',
+    [TYPE_PRIMARY]: 'Alert',
     [TYPE_INFO]: 'Info',
     [TYPE_SUCCESS]: 'Success!',
     [TYPE_WARNING]: 'Warning!',
@@ -64,7 +81,9 @@ function sendAlertMessage(channel, content, type, mentions, buttons) {
   const emote = emotes[type];
   const heading = headings[type];
 
-  content = `\u200B\n${content}`;
+  if (type !== TYPE_PLAIN) {
+    content = `\u200B\n${content}`;
+  }
 
   const embed = {
     color,
@@ -78,26 +97,39 @@ function sendAlertMessage(channel, content, type, mentions, buttons) {
 
   // Embed Field Values can only be up to 1024 characters
   if (content.length > 1024) {
-    return channel.send({
-      content: pings,
+    messageOptions = {
+      content: pings.join(', '),
       files: [{
         attachment: Buffer.from(content, 'utf-8'),
         name: 'message.txt',
       }],
-    }).then(() => {
+    };
+
+    return channel.send(messageOptions).then(() => {
       channel.send('The output was too big, therefore the message is attached as a text file.');
     });
   }
 
-  if (buttonRow.components.length > 0) {
-    return channel.send({
-      content: pings,
-      embed,
-      components: [buttonRow],
-    });
+  if (type === TYPE_PLAIN) {
+    if (pings.length > 0) {
+      messageOptions.content = `${pings.join(', ')}\n${content}`;
+    } else {
+      messageOptions.content = content;
+    }
+  } else {
+    messageOptions.content = pings.join(', ');
+    messageOptions.embed = embed;
   }
 
-  return channel.send({ content: pings, embed });
+  if (buttonRow.components.length > 0) {
+    messageOptions.components = [buttonRow];
+  }
+
+  if (menus.length > 0) {
+    messageOptions.menus = menus;
+  }
+
+  return channel.send(messageOptions);
 }
 
 module.exports = sendAlertMessage;

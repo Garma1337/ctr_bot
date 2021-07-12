@@ -1,6 +1,11 @@
+const {
+  MessageMenu,
+  MessageMenuOption,
+} = require('discord-buttons');
 const { Player } = require('../db/models/player');
 const isStaffMember = require('../utils/isStaffMember');
 const sendAlertMessage = require('../utils/sendAlertMessage');
+const { natTypes } = require('../db/nat_types');
 
 module.exports = {
   name: 'set_nat',
@@ -26,13 +31,6 @@ module.exports = {
       return;
     }
 
-    const natTypes = [
-      'NAT 1',
-      'NAT 2 Open',
-      'NAT 2 Closed',
-      'NAT 3',
-    ];
-
     const isStaff = isStaffMember(message.member);
 
     let user;
@@ -43,41 +41,47 @@ module.exports = {
       user = message.author;
     }
 
-    // eslint-disable-next-line consistent-return
-    return sendAlertMessage(message.channel, `Select NAT type. Waiting 1 minute.\n
-\`\`\`1 - NAT 1
-2 - NAT 2 Open
-3 - NAT 2 Closed
-4 - NAT 3\`\`\``, 'info').then((confirmMessage) => {
-      const filter = (m) => m.author.id === message.author.id;
-      const options = { max: 1, time: 60000, errors: ['time'] };
-      message.channel.awaitMessages(filter, options).then((collectedMessages) => {
-        const collectedMessage = collectedMessages.first();
-        const { content } = collectedMessage;
+    const natTypeMenu = new MessageMenu()
+      .setID('select_nat')
+      .setPlaceholder('Choose ...')
+      .setMaxValues(1)
+      .setMinValues(1);
 
-        confirmMessage.delete();
-        collectedMessage.delete();
+    natTypes.forEach((n) => {
+      const option = new MessageMenuOption()
+        .setLabel(n.name)
+        .setValue(n.name);
 
-        if (['1', '2', '3', '4'].includes(content)) {
-          const index = Number(content) - 1;
-
-          Player.findOne({ discordId: user.id }).then((player) => {
-            if (!player) {
-              player = new Player();
-              player.discordId = user.id;
-            }
-
-            player.nat = natTypes[index];
-            player.save().then(() => {
-              sendAlertMessage(message.channel, `NAT type has been set to \`${natTypes[index]}\`.`, 'success');
-            }).catch((error) => {
-              sendAlertMessage(message.channel, `Unable to update player. Error: ${error}`, 'error');
-            });
-          });
-        } else {
-          sendAlertMessage(message.channel, 'Command cancelled.', 'error');
-        }
-      }).catch(() => sendAlertMessage(message.channel, 'Command cancelled.', 'error'));
+      natTypeMenu.addOption(option);
     });
+
+    // eslint-disable-next-line consistent-return
+    return sendAlertMessage(message.channel, 'Select NAT type. Waiting 1 minute.', 'info', [], [], [natTypeMenu]).then((confirmMessage) => {
+      const filter = (m) => m.clicker.user.id === message.author.id;
+      const options = { max: 1, time: 60000, errors: ['time'] };
+
+      confirmMessage.awaitMenus(filter, options).then((collectedOptions) => {
+        confirmMessage.delete();
+
+        const collectedOption = collectedOptions.first();
+        const natType = collectedOption.values.shift();
+
+        Player.findOne({ discordId: user.id }).then((player) => {
+          if (!player) {
+            player = new Player();
+            player.discordId = user.id;
+          }
+
+          player.nat = natType;
+          player.save().then(() => {
+            sendAlertMessage(message.channel, `NAT type has been set to \`${natType}\`.`, 'success');
+          }).catch((error) => {
+            sendAlertMessage(message.channel, `Unable to update player. Error: ${error}`, 'error');
+          });
+
+          collectedOption.reply.defer();
+        }).catch(() => sendAlertMessage(message.channel, 'Command cancelled.', 'error'));
+      }).catch(() => sendAlertMessage(message.channel, 'Command cancelled.', 'error'));
+    }).catch(() => sendAlertMessage(message.channel, 'Command cancelled.', 'error'));
   },
 };

@@ -6,7 +6,7 @@ const FinishedLobby = new Schema({
   type: String,
   trackOption: String,
   ruleset: Number,
-  region: { type: String, default: null },
+  regions: { type: [String], default: null },
   engineRestriction: { type: String, default: null },
   survivalStyle: { type: Number, default: null },
   tournament: Boolean,

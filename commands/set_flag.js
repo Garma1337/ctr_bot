@@ -43,6 +43,7 @@ module.exports = {
         return sendAlertMessage(message.channel, e, 'warning');
       }
 
+      // eslint-disable-next-line consistent-return
       Player.findOne({ discordId }).then((doc) => {
         let promise;
         if (!doc) {

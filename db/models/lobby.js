@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 
 const { Schema, model } = mongoose;
 const { engineStyles } = require('../engine_styles');
+const { regions } = require('../regions');
 const { trackOptions } = require('../track_options');
 
 const poolItems3 = require('../pools/items_3');
@@ -25,6 +26,7 @@ const poolSmall = require('../pools/small');
 const poolTechnology = require('../pools/technology');
 
 const engineUids = engineStyles.map((e) => e.uid);
+const regionUids = regions.map((r) => r.uid);
 const trackOptionUids = trackOptions.map((t) => t.uid);
 
 const LOBBY_MODE_STANDARD = 'standard';
@@ -51,26 +53,25 @@ const SURVIVAL_STYLES = [
   'Itemless',
 ];
 const LEADERBOARDS = {
-  [RACE_ITEMS_FFA]: 'Ogi-V5',
-  [RACE_ITEMS_DUOS]: 'Ogi-V5',
-  [RACE_ITEMS_3V3]: 'Ogi-V5',
-  [RACE_ITEMS_4V4]: 'Ogi-V5',
-  [RACE_SURVIVAL]: 'kN_Sbgn',
-  [RACE_ITEMLESS_1V1]: 'pHmJnI',
-  [RACE_ITEMLESS_FFA]: 'pHmJnI',
-  [RACE_ITEMLESS_DUOS]: 'pHmJnI',
-  [RACE_ITEMLESS_3V3]: 'pHmJnI',
-  [RACE_ITEMLESS_4V4]: 'pHmJnI',
-  [BATTLE_1V1]: 'xcqgSc',
-  [BATTLE_FFA]: 'xcqgSc',
-  [BATTLE_DUOS]: 'xcqgSc',
-  [BATTLE_3V3]: 'xcqgSc',
-  [BATTLE_4V4]: 'xcqgSc',
+  [RACE_ITEMS_FFA]: 'udG9Tk',
+  [RACE_ITEMS_DUOS]: 'udG9Tk',
+  [RACE_ITEMS_3V3]: 'udG9Tk',
+  [RACE_ITEMS_4V4]: 'udG9Tk',
+  [RACE_SURVIVAL]: null,
+  [RACE_ITEMLESS_1V1]: 'CEOxYQ',
+  [RACE_ITEMLESS_FFA]: 'CEOxYQ',
+  [RACE_ITEMLESS_DUOS]: 'CEOxYQ',
+  [RACE_ITEMLESS_3V3]: 'CEOxYQ',
+  [RACE_ITEMLESS_4V4]: 'CEOxYQ',
+  [BATTLE_1V1]: 'KDVWLV',
+  [BATTLE_FFA]: 'KDVWLV',
+  [BATTLE_DUOS]: 'KDVWLV',
+  [BATTLE_3V3]: 'KDVWLV',
+  [BATTLE_4V4]: 'KDVWLV',
 };
 const TRACK_OPTION_RNG = 'random';
 const TRACK_OPTION_POOLS = 'pool';
 const TRACK_OPTION_DRAFT = 'draft';
-const TRACK_OPTION_IRON_MAN = 'ironman';
 const TRACK_OPTION_BONUS = 'bonus';
 const TRACK_OPTION_BLUE_FIRE = 'blue_fire';
 const TRACK_OPTION_CNK = 'cnk';
@@ -91,12 +92,8 @@ const ARENA_MAGNETIC_MAYHEM = 'Magnetic Mayhem';
 const CUSTOM_OPTION_MODE = 'mode';
 const CUSTOM_OPTION_TRACK_POOL = 'track_pool';
 const CUSTOM_OPTION_PLAYERS = 'players';
-const CUSTOM_OPTION_TRACKS = 'tracks';
-const CUSTOM_OPTION_LAPS = 'lap';
 const CUSTOM_OPTION_RULESET = 'ruleset';
 const CUSTOM_OPTION_REGION = 'region';
-const CUSTOM_OPTION_ENGINE = 'engine';
-const CUSTOM_OPTION_SURVIVAL_STYLE = 'survival_style';
 const CUSTOM_OPTION_BATTLE_MODES = 'battle_modes';
 const CUSTOM_OPTION_PREMADE_TEAMS = 'premade_teams';
 const CUSTOM_OPTION_RESERVE = 'reserve';
@@ -124,7 +121,6 @@ module.exports.LEADERBOARDS = LEADERBOARDS;
 module.exports.TRACK_OPTION_RNG = TRACK_OPTION_RNG;
 module.exports.TRACK_OPTION_POOLS = TRACK_OPTION_POOLS;
 module.exports.TRACK_OPTION_DRAFT = TRACK_OPTION_DRAFT;
-module.exports.TRACK_OPTION_IRON_MAN = TRACK_OPTION_IRON_MAN;
 module.exports.TRACK_OPTION_BONUS = TRACK_OPTION_BONUS;
 module.exports.TRACK_OPTION_BLUE_FIRE = TRACK_OPTION_BLUE_FIRE;
 module.exports.TRACK_OPTION_CNK = TRACK_OPTION_CNK;
@@ -142,12 +138,8 @@ module.exports.LOBBY_MODE_TOURNAMENT = LOBBY_MODE_TOURNAMENT;
 module.exports.CUSTOM_OPTION_MODE = CUSTOM_OPTION_MODE;
 module.exports.CUSTOM_OPTION_TRACK_POOL = CUSTOM_OPTION_TRACK_POOL;
 module.exports.CUSTOM_OPTION_PLAYERS = CUSTOM_OPTION_PLAYERS;
-module.exports.CUSTOM_OPTION_TRACKS = CUSTOM_OPTION_TRACKS;
-module.exports.CUSTOM_OPTION_LAPS = CUSTOM_OPTION_LAPS;
 module.exports.CUSTOM_OPTION_RULESET = CUSTOM_OPTION_RULESET;
 module.exports.CUSTOM_OPTION_REGION = CUSTOM_OPTION_REGION;
-module.exports.CUSTOM_OPTION_ENGINE = CUSTOM_OPTION_ENGINE;
-module.exports.CUSTOM_OPTION_SURVIVAL_STYLE = CUSTOM_OPTION_SURVIVAL_STYLE;
 module.exports.CUSTOM_OPTION_BATTLE_MODES = CUSTOM_OPTION_BATTLE_MODES;
 module.exports.CUSTOM_OPTION_PREMADE_TEAMS = CUSTOM_OPTION_PREMADE_TEAMS;
 module.exports.CUSTOM_OPTION_RESERVE = CUSTOM_OPTION_RESERVE;
@@ -215,7 +207,11 @@ const Lobby = new Schema({
     enum: [0, 1, 2],
     default: 1,
   },
-  region: String,
+  regions: {
+    type: [String],
+    enum: regionUids,
+    default: null,
+  },
   engineRestriction: {
     type: String,
     enum: engineUids.concat(null),
@@ -777,11 +773,6 @@ Lobby.methods = {
       TRACK_OPTION_POOLS,
     ];
 
-    if (this.isStandard()) {
-      // Iron Man is available for all lobby types except tournaments
-      availableTrackOptions.push(TRACK_OPTION_IRON_MAN);
-    }
-
     // Themed tracks are available for race modes
     if (this.isRacing()) {
       // Bonus only has 8 tracks
@@ -886,9 +877,6 @@ Lobby.methods = {
   getStartedIcon() {
     return 'https://i.imgur.com/cD0sLmQ.png';
   },
-  getReactionEmote() {
-    return '✅';
-  },
   isStandard() {
     return this.mode === LOBBY_MODE_STANDARD;
   },
@@ -925,7 +913,7 @@ Lobby.methods = {
 
     if (this.isRacing()) {
       // eslint-disable-next-line max-len
-      if ([TRACK_OPTION_RNG, TRACK_OPTION_POOLS, TRACK_OPTION_DRAFT, TRACK_OPTION_IRON_MAN].includes(this.trackOption)) {
+      if ([TRACK_OPTION_RNG, TRACK_OPTION_POOLS, TRACK_OPTION_DRAFT].includes(this.trackOption)) {
         if (this.isItemless()) {
           pools = poolItemless3;
         } else if (this.trackCount % 3 === 0) {

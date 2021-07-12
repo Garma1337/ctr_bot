@@ -15,11 +15,6 @@ module.exports.trackOptions = [
     ranked: true,
   },
   {
-    uid: 'ironman',
-    name: 'Iron Man',
-    ranked: false,
-  },
-  {
     uid: 'bonus',
     name: 'Bonus Tracks',
     ranked: true,

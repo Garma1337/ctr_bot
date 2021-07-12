@@ -1,5 +1,7 @@
-const Discord = require('discord.js');
-const config = require('../config');
+const {
+  MessageMenu,
+  MessageMenuOption,
+} = require('discord-buttons');
 const { Player } = require('../db/models/player');
 const isStaffMember = require('../utils/isStaffMember');
 const sendAlertMessage = require('../utils/sendAlertMessage');
@@ -40,72 +42,52 @@ module.exports = {
       user = message.author;
     }
 
-    const languageList = serverLanguages.map((l) => `${l.emote} - ${l.name}`);
-    const column1 = languageList.slice(0, 10);
-    const column2 = languageList.slice(10, 20);
-    const column3 = languageList.slice(20, 30);
+    const languageMenu = new MessageMenu()
+      .setID('select_language')
+      .setPlaceholder('Choose ...')
+      .setMaxValues(4)
+      .setMinValues(1);
 
-    const embed = {
-      color: config.default_embed_color,
-      author: {
-        name: 'You can specify a list of flags when using the command',
-      },
-      fields: [
-        {
-          name: 'Languages',
-          value: column1.join('\n'),
-          inline: true,
-        },
-        {
-          name: '\u200B',
-          value: column2.join('\n'),
-          inline: true,
-        },
-        {
-          name: '\u200B',
-          value: column3.join('\n'),
-          inline: true,
-        },
-      ],
-    };
+    serverLanguages.forEach((l) => {
+      const option = new MessageMenuOption()
+        .setLabel(l.name)
+        .setValue(l.char)
+        .setEmoji(l.char);
 
-    if (args.length <= 0) {
-      // eslint-disable-next-line consistent-return
-      return message.channel.send({ embed });
-    }
-
-    const emotes = [];
-
-    // eslint-disable-next-line guard-for-in
-    for (const i in args) {
-      if (!args[i].match(Discord.MessageMentions.USERS_PATTERN)) {
-        const language = serverLanguages.find((l) => l.char === args[i]);
-
-        if (!language) {
-          // eslint-disable-next-line consistent-return
-          return sendAlertMessage(message.channel, `${args[i]} is not a valid language flag.`, 'warning');
-        }
-
-        emotes.push(language.emote);
-      }
-    }
-
-    Player.findOne({ discordId: user.id }).then((player) => {
-      if (!player) {
-        player = new Player();
-        player.discordId = user.id;
-      }
-
-      player.languages = emotes;
-      player.save().then(() => {
-        if (user.id === message.author.id) {
-          sendAlertMessage(message.channel, `Your languages have been set to ${emotes.join(', ')}.`, 'success');
-        } else {
-          sendAlertMessage(message.channel, `<@!${user.id}>'s languages have been set to ${emotes.join(', ')}.`, 'success');
-        }
-      }).catch((error) => {
-        sendAlertMessage(message.channel, `Unable to update player. Error: ${error}`, 'error');
-      });
+      languageMenu.addOption(option);
     });
+
+    // eslint-disable-next-line consistent-return
+    return sendAlertMessage(message.channel, 'Select the languages that you speak.', 'info', [], [], [languageMenu]).then((confirmMessage) => {
+      const filter = (m) => m.clicker.user.id === message.author.id;
+      const options = { max: 1, time: 60000, errors: ['time'] };
+
+      confirmMessage.awaitMenus(filter, options).then((collectedOptions) => {
+        confirmMessage.delete();
+
+        const collectedOption = collectedOptions.first();
+        const emotes = collectedOption.values;
+
+        Player.findOne({ discordId: user.id }).then((player) => {
+          if (!player) {
+            player = new Player();
+            player.discordId = user.id;
+          }
+
+          player.languages = emotes;
+          player.save().then(() => {
+            if (user.id === message.author.id) {
+              sendAlertMessage(message.channel, `Your languages have been set to ${emotes.join(', ')}.`, 'success');
+            } else {
+              sendAlertMessage(message.channel, `<@!${user.id}>'s languages have been set to ${emotes.join(', ')}.`, 'success');
+            }
+          }).catch((error) => {
+            sendAlertMessage(message.channel, `Unable to update player. Error: ${error}`, 'error');
+          });
+
+          collectedOption.reply.defer();
+        }).catch(() => sendAlertMessage(message.channel, 'Command cancelled.', 'error'));
+      }).catch(() => sendAlertMessage(message.channel, 'Command cancelled.', 'error'));
+    }).catch(() => sendAlertMessage(message.channel, 'Command cancelled.', 'error'));
   },
 };

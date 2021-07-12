@@ -3,41 +3,37 @@ const moment = require('moment');
 const { CronJob } = require('cron');
 const AsyncLock = require('async-lock');
 const {
-  MessageButton,
   MessageActionRow,
+  MessageMenu,
+  MessageMenuOption,
 } = require('discord-buttons');
+const {
+  yesButton,
+  noButton,
+  maybeButton,
+  joinLobbyButton,
+  leaveLobbyButton,
+  deleteLobbyButton,
+} = require('../db/buttons');
 const {
   RACE_FFA,
   RACE_DUOS,
   RACE_3V3,
   RACE_4V4,
   RACE_SURVIVAL,
-  RACE_ITEMLESS_1V1,
   RACE_ITEMLESS_FFA,
-  RACE_ITEMLESS_DUOS,
-  RACE_ITEMLESS_3V3,
-  RACE_ITEMLESS_4V4,
-  BATTLE_1V1,
   BATTLE_FFA,
   BATTLE_DUOS,
-  BATTLE_3V3,
   BATTLE_4V4,
   SURVIVAL_STYLES,
   LEADERBOARDS,
-  TRACK_OPTION_RNG,
-  TRACK_OPTION_POOLS,
-  TRACK_OPTION_IRON_MAN,
   LOBBY_MODE_STANDARD,
   LOBBY_MODE_TOURNAMENT,
   CUSTOM_OPTION_MODE,
   CUSTOM_OPTION_TRACK_POOL,
   CUSTOM_OPTION_PLAYERS,
-  CUSTOM_OPTION_TRACKS,
-  CUSTOM_OPTION_LAPS,
   CUSTOM_OPTION_RULESET,
   CUSTOM_OPTION_REGION,
-  CUSTOM_OPTION_ENGINE,
-  CUSTOM_OPTION_SURVIVAL_STYLE,
   CUSTOM_OPTION_BATTLE_MODES,
   CUSTOM_OPTION_PREMADE_TEAMS,
   CUSTOM_OPTION_RESERVE,
@@ -79,6 +75,7 @@ const {
   battleModesTeams,
 } = require('../db/modes_battle');
 const { engineStyles } = require('../db/engine_styles');
+const { lobbyTypes } = require('../db/lobby_types');
 const { regions } = require('../db/regions');
 const { rulesets } = require('../db/rulesets');
 const { trackOptions } = require('../db/track_options');
@@ -225,10 +222,15 @@ async function getEmbed(doc, players, tracks, roomChannel) {
   const iconUrl = doc.getIcon();
   const creator = await Player.findOne({ discordId: doc.creator });
   const timestamp = doc.started ? doc.startedAt : doc.date;
-  const region = regions.find((r) => r.uid === doc.region);
   const engineRestriction = engineStyles.find((e) => e.uid === doc.engineRestriction);
   const survivalStyle = SURVIVAL_STYLES.find((s, i) => i === doc.survivalStyle);
   const ruleset = rulesets.find((r, i) => i === doc.ruleset);
+
+  const lobbyRegions = [];
+  doc.regions.forEach((dr) => {
+    const region = regions.find((r) => r.uid === dr);
+    lobbyRegions.push(region.name);
+  });
 
   const playersField = {
     name: ':busts_in_silhouette: Players',
@@ -298,8 +300,8 @@ async function getEmbed(doc, players, tracks, roomChannel) {
     }
   }
 
-  if (region) {
-    settings.push(`Region: ${region.description}`);
+  if (lobbyRegions.length > 0) {
+    settings.push(`Regions: ${lobbyRegions.join(', ')}`);
   }
 
   if (!doc.locked.$isEmpty()) {
@@ -417,7 +419,7 @@ async function getEmbed(doc, players, tracks, roomChannel) {
       name: `${doc.getTitle()}`,
       icon_url: iconUrl,
     },
-    description: `React with ${doc.getReactionEmote()} to participate`,
+    description: 'Click on the ✅ button to join!',
     fields,
     footer: getFooter(doc),
     timestamp,
@@ -723,31 +725,10 @@ function startLobby(docId) {
       generateTracks(doc).then((tracks) => {
         findRoom(doc).then((room) => {
           findRoomChannel(doc.guild, room.number).then(async (roomChannel) => {
-            const joinButton = new MessageButton()
-              .setStyle('grey')
-              .setLabel('Join')
-              .setEmoji('✅')
-              .setID('join_lobby')
-              .setDisabled(true);
-
-            const leaveButton = new MessageButton()
-              .setStyle('grey')
-              .setLabel('Leave')
-              .setEmoji('❌')
-              .setID('leave_lobby')
-              .setDisabled(true);
-
-            const deleteButton = new MessageButton()
-              .setStyle('grey')
-              .setLabel('Delete')
-              .setEmoji('🗑️')
-              .setID('delete_lobby')
-              .setDisabled(true);
-
             const buttonRow = new MessageActionRow()
-              .addComponent(joinButton)
-              .addComponent(leaveButton)
-              .addComponent(deleteButton);
+              .addComponent(joinLobbyButton.setDisabled(true))
+              .addComponent(leaveLobbyButton.setDisabled(true))
+              .addComponent(deleteLobbyButton.setDisabled(true));
 
             if (doc.isTournament()) {
               sendAlertMessage(roomChannel, `The ${doc.getTitle()} is starting!`, 'info', doc.players).then(async () => {
@@ -1089,7 +1070,7 @@ function deleteLobby(doc, msg, sendMessage) {
   finishedLobby.type = doc.type;
   finishedLobby.trackOption = doc.trackOption;
   finishedLobby.ruleset = doc.ruleset;
-  finishedLobby.region = doc.region;
+  finishedLobby.regions = doc.regions;
   finishedLobby.engineRestriction = doc.engineRestriction;
   finishedLobby.survivalStyle = doc.survivalStyle;
   finishedLobby.tournament = doc.isTournament();
@@ -1133,12 +1114,8 @@ module.exports = {
           CUSTOM_OPTION_MODE,
           CUSTOM_OPTION_TRACK_POOL,
           CUSTOM_OPTION_PLAYERS,
-          CUSTOM_OPTION_TRACKS,
-          CUSTOM_OPTION_LAPS,
           CUSTOM_OPTION_RULESET,
           CUSTOM_OPTION_REGION,
-          CUSTOM_OPTION_ENGINE,
-          CUSTOM_OPTION_SURVIVAL_STYLE,
           CUSTOM_OPTION_BATTLE_MODES,
           CUSTOM_OPTION_PREMADE_TEAMS,
           CUSTOM_OPTION_RESERVE,
@@ -1180,648 +1157,529 @@ module.exports = {
         const cooldown = await Cooldown.findOne({ guildId: guild.id, discordId: message.author.id, name: 'lobby' });
         if (!isStaff && !isSupporter && cooldown && cooldown.count >= 1) {
           const updatedAt = moment(cooldown.updatedAt);
-          updatedAt.add(5, 'm');
+          updatedAt.add(config.lobby_creation_cooldown, 'm');
           const wait = moment.duration(now.diff(updatedAt));
 
           return sendAlertMessage(message.channel, `You cannot create multiple lobbies so often. You have to wait ${wait.humanize()}.`, 'warning');
         }
 
         // eslint-disable-next-line no-case-declarations
-        const filter = (m) => m.author.id === message.author.id;
+        const actionFilter = (m) => m.clicker.user.id === message.author.id;
         // eslint-disable-next-line no-case-declarations
-        const options = { max: 1, time: 60000, errors: ['time'] };
+        const messageFilter = (m) => m.author.id === message.author.id;
+        // eslint-disable-next-line no-case-declarations
+        const filterOptions = { max: 1, time: 60000, errors: ['time'] };
 
-        return sendAlertMessage(message.channel, `Select the mode you want to play. Waiting 1 minute.
+        // eslint-disable-next-line no-case-declarations
+        const lobbyMenu = new MessageMenu()
+          .setID('select_lobby')
+          .setPlaceholder('Choose ...')
+          .setMaxValues(1)
+          .setMinValues(1);
 
-**Item Race Modes**
-1 - FFA ${config.ranked_option_emote}
-2 - Duos ${config.ranked_option_emote}
-3 - 3 vs. 3 ${config.ranked_option_emote}
-4 - 4 vs. 4 ${config.ranked_option_emote}
-5 - Survival ${config.ranked_option_emote}
+        lobbyTypes.forEach((l) => {
+          const option = new MessageMenuOption()
+            .setLabel(l.name)
+            .setValue(l.uid)
+            .setDefault(l.default)
+            .setDescription(l.description !== null ? l.description : '');
 
-**Itemless Race Modes**
-6 - 1 vs. 1 ${config.ranked_option_emote}
-7 - FFA ${config.ranked_option_emote}
-8 - Duos ${config.ranked_option_emote}
-9 - 3 vs. 3 ${config.ranked_option_emote}
-10 - 4 vs. 4 ${config.ranked_option_emote}
+          lobbyMenu.addOption(option);
+        });
 
-**Battle Modes**
-11 - 1 vs. 1 ${config.ranked_option_emote}
-12 - FFA ${config.ranked_option_emote}
-13 - Duos ${config.ranked_option_emote}
-14 - 3 vs. 3 ${config.ranked_option_emote}
-15 - 4 vs. 4 ${config.ranked_option_emote}`, 'info').then((confirmMessage) => {
+        message.delete();
+
+        return sendAlertMessage(message.channel, 'Select the mode you want to play.', 'info', [], [], [lobbyMenu]).then((confirmMessage) => {
           // eslint-disable-next-line consistent-return
-          message.channel.awaitMessages(filter, options).then(async (collected) => {
+          confirmMessage.awaitMenus(actionFilter, filterOptions).then(async (collected) => {
             confirmMessage.delete();
 
-            let collectedMessage = collected.first();
-            const { content } = collectedMessage;
+            let collectedOption = collected.first();
+            const type = collectedOption.values.shift();
+            let sentMessage = null;
 
-            let sentMessage;
-            let choice = parseInt(content, 10);
-            const modes = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
+            // Initialize lobby here to be able to use model functions
+            const lobby = new Lobby();
+            lobby.guild = guild.id;
+            lobby.creator = message.author.id;
+            lobby.type = type;
 
-            if (modes.includes(choice)) {
-              let type;
-              switch (choice) {
-                case 1:
-                  type = RACE_FFA;
-                  break;
-                case 2:
-                  type = RACE_DUOS;
-                  break;
-                case 3:
-                  type = RACE_3V3;
-                  break;
-                case 4:
-                  type = RACE_4V4;
-                  break;
-                case 5:
-                  type = RACE_SURVIVAL;
-                  break;
-                case 6:
-                  type = RACE_ITEMLESS_1V1;
-                  break;
-                case 7:
-                  type = RACE_ITEMLESS_FFA;
-                  break;
-                case 8:
-                  type = RACE_ITEMLESS_DUOS;
-                  break;
-                case 9:
-                  type = RACE_ITEMLESS_3V3;
-                  break;
-                case 10:
-                  type = RACE_ITEMLESS_4V4;
-                  break;
-                case 11:
-                  type = BATTLE_1V1;
-                  break;
-                case 12:
-                  type = BATTLE_FFA;
-                  break;
-                case 13:
-                  type = BATTLE_DUOS;
-                  break;
-                case 14:
-                  type = BATTLE_3V3;
-                  break;
-                case 15:
-                  type = BATTLE_4V4;
-                  break;
-                default:
-                  break;
+            let mode = LOBBY_MODE_STANDARD;
+            if (lobby.hasTournamentsEnabled() && custom.includes(CUSTOM_OPTION_MODE)) {
+              const modeMenu = new MessageMenu()
+                .setID('select_mode')
+                .setPlaceholder('Choose ...')
+                .setMaxValues(1)
+                .setMinValues(1)
+                .addOption(new MessageMenuOption()
+                  .setLabel('Standard Lobby')
+                  .setValue(LOBBY_MODE_STANDARD)
+                  .setDefault(true)
+                  .setDescription('Standard Lobbies can have up to 8 players.'))
+                .addOption(new MessageMenuOption()
+                  .setLabel('Tournament Lobby')
+                  .setValue(LOBBY_MODE_TOURNAMENT)
+                  .setDefault(false)
+                  .setDescription('Tournament Lobbies can have up to 64 players.'));
+
+              sentMessage = await sendAlertMessage(message.channel, 'Select the lobby mode.', 'info', [], [], [modeMenu]);
+
+              // eslint-disable-next-line no-shadow,max-len
+              mode = await sentMessage.awaitMenus(actionFilter, filterOptions).then(async (collected) => {
+                sentMessage.delete();
+
+                collectedOption = collected.first();
+                collectedOption.reply.defer();
+
+                return collectedOption.values.shift();
+              }).catch(() => {
+                sentMessage.delete();
+                return LOBBY_MODE_STANDARD;
+              });
+            }
+
+            lobby.mode = mode;
+
+            // eslint-disable-next-line max-len
+            const lobbyTrackOptions = trackOptions.filter((t) => lobby.getTrackOptions().includes(t.uid));
+            let trackOption = lobby.getDefaultTrackOption();
+
+            if (lobbyTrackOptions.length > 1 && custom.includes(CUSTOM_OPTION_TRACK_POOL)) {
+              const trackOptionMenu = new MessageMenu()
+                .setID('select_track_option')
+                .setPlaceholder('Choose ...')
+                .setMaxValues(1)
+                .setMinValues(1);
+
+              lobbyTrackOptions.forEach((l) => {
+                const option = new MessageMenuOption()
+                  .setLabel(l.name)
+                  .setValue(l.uid)
+                  .setDefault(l.uid === lobby.getDefaultTrackOption());
+
+                trackOptionMenu.addOption(option);
+              });
+
+              sentMessage = await sendAlertMessage(message.channel, 'Select the track pool.', 'info', [], [], [trackOptionMenu]);
+
+              // eslint-disable-next-line no-shadow,max-len
+              trackOption = await sentMessage.awaitMenus(actionFilter, filterOptions).then(async (collected) => {
+                sentMessage.delete();
+
+                collectedOption = collected.first();
+                collectedOption.reply.defer();
+
+                return collectedOption.values.shift();
+              }).catch(() => {
+                sentMessage.delete();
+                return lobby.getDefaultTrackOption();
+              });
+            }
+
+            lobby.trackOption = trackOption;
+
+            let maxPlayerCount = lobby.getDefaultPlayerCount();
+
+            // eslint-disable-next-line max-len
+            if (lobby.getMinimumPlayerCount() !== lobby.getMaxPlayerCount() && custom.includes(CUSTOM_OPTION_PLAYERS)) {
+              const maxPlayerCountMenu = new MessageMenu()
+                .setID('select_players')
+                .setPlaceholder('Choose ...')
+                .setMaxValues(1)
+                .setMinValues(1);
+
+              if (lobby.mode === LOBBY_MODE_TOURNAMENT) {
+                maxPlayerCountMenu.addOption(new MessageMenuOption()
+                  .setLabel(lobby.getMinimumPlayerCount())
+                  .setValue(lobby.getMinimumPlayerCount())
+                  .setDefault(false))
+                  .addOption(new MessageMenuOption()
+                    .setLabel(lobby.getMinimumPlayerCount() * 2)
+                    .setValue(lobby.getMinimumPlayerCount() * 2)
+                    .setDefault(true))
+                  .addOption(new MessageMenuOption()
+                    .setLabel(lobby.getMaxPlayerCount())
+                    .setValue(lobby.getMaxPlayerCount())
+                    .setDefault(false));
+              } else {
+                const count = lobby.getMaxPlayerCount() - lobby.getMinimumPlayerCount();
+                for (let i = 0; i <= count; i += 1) {
+                  const playerCount = lobby.getMinimumPlayerCount() + i;
+                  maxPlayerCountMenu.addOption(new MessageMenuOption()
+                    .setLabel(playerCount)
+                    .setValue(playerCount)
+                    .setDefault(playerCount === lobby.getDefaultPlayerCount()));
+                }
               }
 
-              // Initialize lobby here to be able to use model functions
-              const lobby = new Lobby();
-              lobby.guild = guild.id;
-              lobby.creator = message.author.id;
-              lobby.type = type;
+              sentMessage = await sendAlertMessage(message.channel, 'Select the maximum number of players.', 'info', [], [], [maxPlayerCountMenu]);
 
-              const lobbyModes = [
-                LOBBY_MODE_STANDARD,
-                LOBBY_MODE_TOURNAMENT,
-              ];
+              // eslint-disable-next-line max-len,no-shadow
+              maxPlayerCount = await sentMessage.awaitMenus(actionFilter, filterOptions).then(async (collected) => {
+                sentMessage.delete();
 
-              let mode = LOBBY_MODE_STANDARD;
-              if (lobby.hasTournamentsEnabled() && custom.includes(CUSTOM_OPTION_MODE)) {
-                sentMessage = await sendAlertMessage(message.channel, `Select the lobby mode. Waiting 1 minute.
+                collectedOption = collected.first();
+                collectedOption.reply.defer();
 
-1 - Standard Lobby ${config.ranked_option_emote}
-2 - Tournament ${config.ranked_option_emote}`, 'info');
+                return collectedOption.values.shift();
+              }).catch(() => {
+                sentMessage.delete();
+                return lobby.getDefaultPlayerCount();
+              });
+            }
 
-                // eslint-disable-next-line no-shadow,max-len
-                mode = await message.channel.awaitMessages(filter, options).then(async (collected) => {
-                  sentMessage.delete();
+            lobby.maxPlayerCount = maxPlayerCount;
 
-                  collectedMessage = collected.first();
-                  // eslint-disable-next-line no-shadow
-                  const { content } = collectedMessage;
+            lobby.trackCount = lobby.getDefaultTrackCount();
+            lobby.lapCount = lobby.getDefaultLapCount();
 
-                  // eslint-disable-next-line no-shadow
-                  const choice = parseInt(content, 10) - 1;
-                  if (lobbyModes[choice]) {
-                    return lobbyModes[choice];
-                  }
+            let ruleset = 1;
+            if (!lobby.isBattle() && custom.includes(CUSTOM_OPTION_RULESET)) {
+              const rulesetMenu = new MessageMenu()
+                .setID('select_ruleset')
+                .setPlaceholder('Choose ...')
+                .setMaxValues(1)
+                .setMinValues(1);
 
-                  return LOBBY_MODE_STANDARD;
-                }).catch(() => {
-                  sentMessage.delete();
-                  return LOBBY_MODE_STANDARD;
-                });
-              }
+              rulesets.forEach((r) => {
+                const option = new MessageMenuOption()
+                  .setLabel(r.name)
+                  .setValue(r.id)
+                  .setDefault(r.id === 1);
 
-              lobby.mode = mode;
+                rulesetMenu.addOption(option);
+              });
 
-              // eslint-disable-next-line max-len
-              const lobbyTrackOptions = trackOptions.filter((t) => lobby.getTrackOptions().includes(t.uid));
-              let trackOption = lobby.getDefaultTrackOption();
+              sentMessage = await sendAlertMessage(message.channel, 'Select the ruleset.', 'info', [], [], [rulesetMenu]);
 
-              if (lobbyTrackOptions.length > 1 && custom.includes(CUSTOM_OPTION_TRACK_POOL)) {
-                sentMessage = await sendAlertMessage(message.channel, `Select track option. Waiting 1 minute.
+              // eslint-disable-next-line max-len,no-shadow
+              ruleset = await sentMessage.awaitMenus(actionFilter, filterOptions).then(async (collected) => {
+                sentMessage.delete();
 
-${lobbyTrackOptions.map((t, i) => `${i + 1} - ${t.name}${t.ranked ? ` ${config.ranked_option_emote}` : ''}`).join('\n')}`, 'info');
+                collectedOption = collected.first();
+                collectedOption.reply.defer();
 
-                // eslint-disable-next-line no-shadow,max-len
-                trackOption = await message.channel.awaitMessages(filter, options).then(async (collected) => {
-                  sentMessage.delete();
+                return collectedOption.values.shift();
+              }).catch(() => {
+                sentMessage.delete();
+                return 1;
+              });
+            }
 
-                  collectedMessage = collected.first();
-                  // eslint-disable-next-line no-shadow
-                  const { content } = collectedMessage;
-                  const index = (parseInt(content, 10) - 1);
+            lobby.ruleset = ruleset;
 
-                  if (lobbyTrackOptions[index]) {
-                    return lobbyTrackOptions[index].uid;
-                  }
+            let lobbyRegions = null;
+            if (custom.includes(CUSTOM_OPTION_REGION)) {
+              const regionMenu = new MessageMenu()
+                .setID('select_regions')
+                .setPlaceholder('Choose ...')
+                .setMaxValues(4)
+                .setMinValues(1);
 
-                  return lobby.getDefaultTrackOption();
-                }).catch(() => {
-                  sentMessage.delete();
-                  return lobby.getDefaultTrackOption();
-                });
-              }
+              regions.forEach((r) => {
+                const option = new MessageMenuOption()
+                  .setLabel(r.name)
+                  .setValue(r.uid)
+                  .setDefault(r.uid === 'regionFree')
+                  .setDescription(r.description);
 
-              lobby.trackOption = trackOption;
+                regionMenu.addOption(option);
+              });
 
-              let maxPlayerCount = lobby.getDefaultPlayerCount();
+              sentMessage = await sendAlertMessage(message.channel, 'Select the region lock.', 'info', [], [], [regionMenu]);
 
-              // eslint-disable-next-line max-len
-              if (lobby.getMinimumPlayerCount() !== lobby.getMaxPlayerCount() && custom.includes(CUSTOM_OPTION_PLAYERS)) {
-                sentMessage = await sendAlertMessage(message.channel, `Select the maximum number of players. The number has to be any of \`${lobby.getMinimumPlayerCount()}\` to \`${lobby.getMaxPlayerCount()}\`. Every other input will be counted as \`${lobby.getMaxPlayerCount()}\` ${config.ranked_option_emote}.`, 'info');
+              // eslint-disable-next-line max-len,no-shadow
+              lobbyRegions = await sentMessage.awaitMenus(actionFilter, filterOptions).then(async (collected) => {
+                sentMessage.delete();
+
+                collectedOption = collected.first();
+                collectedOption.reply.defer();
+
+                let value = collectedOption.values;
+                if (value.includes('regionFree')) {
+                  value = null;
+                }
+
+                return value;
+              }).catch(() => {
+                sentMessage.delete();
+                return null;
+              });
+            }
+
+            if (lobbyRegions) {
+              lobby.regions = lobbyRegions;
+            }
+
+            lobby.engineRestriction = null;
+            lobby.survivalStyle = (lobby.isSurvival() && lobby.isRacing() ? 1 : null);
+
+            let limitAndLKDOnly = false;
+            if (lobby.isBattle() && custom.includes(CUSTOM_OPTION_BATTLE_MODES)) {
+              sentMessage = await sendAlertMessage(message.channel, 'Do you want to restrict the battle mode selection to Last Kart Driving and Limit Battle?', 'info', [], [yesButton, noButton, maybeButton]);
+
+              // eslint-disable-next-line no-unused-vars,no-shadow,max-len
+              limitAndLKDOnly = await sentMessage.awaitButtons(actionFilter, filterOptions).then(async (collected) => {
+                sentMessage.delete();
+
+                collectedOption = collected.first();
+                collectedOption.reply.defer();
+
+                if (collectedOption.id === 'maybe') {
+                  return getRandomArrayElement([true, false]);
+                }
+
+                return (collectedOption.id === 'yes');
+              }).catch(() => {
+                sentMessage.delete();
+                return false;
+              });
+            }
+
+            lobby.limitAndLKDOnly = limitAndLKDOnly;
+
+            let allowPremadeTeams = true;
+
+            // eslint-disable-next-line max-len
+            if (lobby.isTeams() && custom.includes(CUSTOM_OPTION_PREMADE_TEAMS)) {
+              sentMessage = await sendAlertMessage(message.channel, 'Do you want to allow premade teams?', 'info', [], [yesButton, noButton, maybeButton]);
+
+              // eslint-disable-next-line max-len,no-shadow
+              allowPremadeTeams = await sentMessage.awaitButtons(actionFilter, filterOptions).then(async (collected) => {
+                sentMessage.delete();
+
+                collectedOption = collected.first();
+                collectedOption.reply.defer();
+
+                if (collectedOption.id === 'maybe') {
+                  return getRandomArrayElement([true, false]);
+                }
+
+                return (collectedOption.id === 'yes');
+              }).catch(() => {
+                sentMessage.delete();
+                return true;
+              });
+            }
+
+            lobby.allowPremadeTeams = allowPremadeTeams;
+
+            let reservedTeam = null;
+
+            // eslint-disable-next-line max-len
+            if (lobby.isWar() && !lobby.is1v1() && allowPremadeTeams && custom.includes(CUSTOM_OPTION_RESERVE)) {
+              sentMessage = await sendAlertMessage(message.channel, 'Do you want to reserve the lobby for an existing team?', 'info', [], [yesButton, noButton, maybeButton]);
+
+              // eslint-disable-next-line max-len,no-shadow
+              const reserveLobby = await sentMessage.awaitButtons(actionFilter, filterOptions).then(async (collected) => {
+                sentMessage.delete();
+
+                collectedOption = collected.first();
+                collectedOption.reply.defer();
+
+                if (collectedOption.id === 'maybe') {
+                  return getRandomArrayElement([true, false]);
+                }
+
+                return (collectedOption.id === 'yes');
+              }).catch(() => {
+                sentMessage.delete();
+                return false;
+              });
+
+              if (reserveLobby) {
+                sentMessage = await sendAlertMessage(message.channel, 'Please mention one of the team members.', 'info');
 
                 // eslint-disable-next-line max-len,no-shadow
-                maxPlayerCount = await message.channel.awaitMessages(filter, options).then(async (collected) => {
+                const discordId = await message.channel.awaitMessages(messageFilter, filterOptions).then(async (collected) => {
                   sentMessage.delete();
 
-                  collectedMessage = collected.first();
-                  // eslint-disable-next-line no-shadow
-                  const { content } = collectedMessage;
-
-                  choice = parseInt(content, 10);
-                  // eslint-disable-next-line max-len
-                  if (choice >= lobby.getMinimumPlayerCount() && choice <= lobby.getMaxPlayerCount()) {
-                    return choice;
-                  }
-
-                  return lobby.getDefaultPlayerCount();
-                }).catch(() => {
-                  sentMessage.delete();
-                  return lobby.getDefaultPlayerCount();
-                });
-              }
-
-              lobby.maxPlayerCount = maxPlayerCount;
-
-              // eslint-disable-next-line max-len
-              let trackCount = (trackOption === TRACK_OPTION_IRON_MAN ? lobby.getMaxTrackCount() : lobby.getDefaultTrackCount());
-
-              // eslint-disable-next-line max-len
-              if ([TRACK_OPTION_RNG, TRACK_OPTION_POOLS].includes(trackOption) && !lobby.isSurvival() && lobby.getMaxTrackCount() > 0 && custom.includes(CUSTOM_OPTION_TRACKS)) {
-                sentMessage = await sendAlertMessage(message.channel, `Select the number of tracks. The number has to be any of \`1\` to \`${lobby.getMaxTrackCount()}\`. Every other input will be counted as \`${lobby.getDefaultTrackCount()}\` ${config.ranked_option_emote}.`, 'info');
-
-                // eslint-disable-next-line max-len,no-shadow
-                trackCount = await message.channel.awaitMessages(filter, options).then(async (collected) => {
-                  sentMessage.delete();
-
-                  collectedMessage = collected.first();
-                  // eslint-disable-next-line no-shadow
-                  const { content } = collectedMessage;
-
-                  choice = parseInt(content, 10);
-                  if (choice >= 1 && choice <= lobby.getMaxTrackCount()) {
-                    return choice;
-                  }
-
-                  return lobby.getDefaultTrackCount();
-                }).catch(() => {
-                  sentMessage.delete();
-                  return lobby.getDefaultTrackCount();
-                });
-              }
-
-              lobby.trackCount = trackCount;
-
-              let lapCount = lobby.getDefaultLapCount();
-              if (!lobby.isBattle() && custom.includes(CUSTOM_OPTION_LAPS)) {
-                sentMessage = await sendAlertMessage(message.channel, `Select the number of laps. The number has to be \`3\`, \`5\` or \`7\`. Every other input will be counted as \`${lobby.getDefaultLapCount()}\` ${config.ranked_option_emote}.`, 'info');
-
-                // eslint-disable-next-line no-shadow,max-len
-                lapCount = await message.channel.awaitMessages(filter, options).then(async (collected) => {
-                  sentMessage.delete();
-
-                  collectedMessage = collected.first();
-                  // eslint-disable-next-line no-shadow
-                  const { content } = collectedMessage;
-
-                  choice = parseInt(content, 10);
-                  if ([3, 5, 7].includes(choice)) {
-                    return choice;
-                  }
-
-                  return lobby.getDefaultLapCount();
-                }).catch(() => {
-                  sentMessage.delete();
-                  return lobby.getDefaultLapCount();
-                });
-              }
-
-              lobby.lapCount = lapCount;
-
-              let ruleset = 1;
-              if (!lobby.isBattle() && custom.includes(CUSTOM_OPTION_RULESET)) {
-                sentMessage = await sendAlertMessage(message.channel, `Select the ruleset. Waiting 1 minute.
-
-${rulesets.map((r, i) => `${i + 1} - ${r.name}${r.ranked ? ` ${config.ranked_option_emote}` : ''}`).join('\n')}`, 'info');
-
-                // eslint-disable-next-line max-len,no-shadow
-                ruleset = await message.channel.awaitMessages(filter, options).then(async (collected) => {
-                  sentMessage.delete();
-
-                  collectedMessage = collected.first();
-                  // eslint-disable-next-line no-shadow
-                  const { content } = collectedMessage;
-
-                  choice = parseInt(content, 10) - 1;
-                  if (rulesets[choice]) {
-                    return choice;
-                  }
-
-                  return 1;
-                });
-              }
-
-              lobby.ruleset = ruleset;
-
-              let region = null;
-              if (custom.includes(CUSTOM_OPTION_REGION)) {
-                sentMessage = await sendAlertMessage(message.channel, `Select region lock. Waiting 1 minute.
-
-${regions.map((r, i) => `${i + 1} - ${r.description} ${config.ranked_option_emote}`).join('\n')}
-${regions.length + 1} - No region lock ${config.ranked_option_emote}`, 'info');
-
-                // eslint-disable-next-line max-len,no-shadow
-                region = await message.channel.awaitMessages(filter, options).then(async (collected) => {
-                  sentMessage.delete();
-
-                  collectedMessage = collected.first();
-                  // eslint-disable-next-line no-shadow
-                  const { content } = collectedMessage;
-
-                  choice = parseInt(content, 10);
-                  if (choice < 4) {
-                    return `region${choice}`;
-                  }
-
-                  return null;
-                }).catch(() => {
-                  sentMessage.delete();
-                  return null;
-                });
-              }
-
-              if (region) {
-                lobby.region = region;
-              }
-
-              let engineRestriction = null;
-              const engineUids = engineStyles.map((e) => e.uid);
-
-              if (!lobby.isBattle() && custom.includes(CUSTOM_OPTION_ENGINE)) {
-                sentMessage = await sendAlertMessage(message.channel, `Select an engine restriction. Waiting 1 minute.
-
-${engineStyles.map((e, i) => `${i + 1} - ${e.name}${e.ranked ? ` ${config.ranked_option_emote}` : ''}`).join('\n')}
-${engineStyles.length + 1} - No engine restriction ${config.ranked_option_emote}`, 'info');
-
-                // eslint-disable-next-line no-shadow,max-len
-                engineRestriction = await message.channel.awaitMessages(filter, options).then(async (collected) => {
-                  sentMessage.delete();
-
-                  collectedMessage = collected.first();
-                  // eslint-disable-next-line no-shadow
-                  const { content } = collectedMessage;
-
-                  choice = parseInt(content, 10);
-                  if (choice > 0 && choice < 6) {
-                    return engineUids[choice - 1];
-                  }
-
-                  return null;
-                }).catch(() => {
-                  sentMessage.delete();
-                  return null;
-                });
-              }
-
-              lobby.engineRestriction = engineRestriction;
-
-              let survivalStyle = 1;
-
-              // eslint-disable-next-line max-len
-              if (lobby.isRacing() && lobby.isSurvival() && custom.includes(CUSTOM_OPTION_SURVIVAL_STYLE)) {
-                sentMessage = await sendAlertMessage(message.channel, `Select a play style. Waiting 1 minute.
-
-${SURVIVAL_STYLES.map((s, i) => `${i + 1} - ${s} ${config.ranked_option_emote}`).join('\n')}`, 'info');
-
-                // eslint-disable-next-line max-len,no-shadow
-                survivalStyle = await message.channel.awaitMessages(filter, options).then(async (collected) => {
-                  sentMessage.delete();
-
-                  collectedMessage = collected.first();
-                  // eslint-disable-next-line no-shadow
-                  const { content } = collectedMessage;
-
-                  choice = parseInt(content, 10) - 1;
-                  if (SURVIVAL_STYLES[choice]) {
-                    return choice;
-                  }
-
-                  return 1;
-                }).catch(() => {
-                  sentMessage.delete();
-                  return 1;
-                });
-              }
-
-              if (!(lobby.isRacing() && lobby.isSurvival())) {
-                survivalStyle = null;
-              }
-
-              lobby.survivalStyle = survivalStyle;
-
-              let limitAndLKDOnly = false;
-              if (lobby.isBattle() && custom.includes(CUSTOM_OPTION_BATTLE_MODES)) {
-                sentMessage = await sendAlertMessage(message.channel, `Do you want to restrict the battle mode selection to Last Kart Driving and Limit Battle? (yes / no) ${config.ranked_option_emote}`, 'info');
-                // eslint-disable-next-line no-unused-vars,no-shadow,max-len
-                limitAndLKDOnly = await message.channel.awaitMessages(filter, options).then(async (collected) => {
-                  sentMessage.delete();
-
-                  collectedMessage = collected.first();
-                  // eslint-disable-next-line no-shadow
-                  const { content } = collectedMessage;
-
-                  return (content.toLowerCase() !== 'no');
-                }).catch(() => {
-                  sentMessage.delete();
-                  return false;
-                });
-              }
-
-              lobby.limitAndLKDOnly = limitAndLKDOnly;
-
-              let allowPremadeTeams = true;
-
-              // eslint-disable-next-line max-len
-              if (lobby.isTeams() && custom.includes(CUSTOM_OPTION_PREMADE_TEAMS)) {
-                sentMessage = await sendAlertMessage(message.channel, `Do you want to allow premade teams? (yes / no) ${config.ranked_option_emote}`, 'info');
-                // eslint-disable-next-line max-len,no-shadow
-                allowPremadeTeams = await message.channel.awaitMessages(filter, options).then(async (collected) => {
-                  sentMessage.delete();
-
-                  collectedMessage = collected.first();
-                  // eslint-disable-next-line no-shadow
-                  const { content } = collectedMessage;
-
-                  return (content.toLowerCase() !== 'no');
-                }).catch(() => {
-                  sentMessage.delete();
-                  return true;
-                });
-              }
-
-              lobby.allowPremadeTeams = allowPremadeTeams;
-
-              let reservedTeam = null;
-
-              // eslint-disable-next-line max-len
-              if (lobby.isWar() && !lobby.is1v1() && allowPremadeTeams && custom.includes(CUSTOM_OPTION_RESERVE)) {
-                sentMessage = await sendAlertMessage(message.channel, `Do you want to reserve the lobby for an existing team? (yes / no) ${config.ranked_option_emote}`, 'info');
-                // eslint-disable-next-line max-len,no-shadow
-                const reserveLobby = await message.channel.awaitMessages(filter, options).then(async (collected) => {
-                  sentMessage.delete();
-
-                  collectedMessage = collected.first();
-                  // eslint-disable-next-line no-shadow
-                  const { content } = collectedMessage;
-
-                  return (content.toLowerCase() === 'yes');
-                }).catch(() => {
-                  sentMessage.delete();
-                  return false;
-                });
-
-                if (reserveLobby) {
-                  sentMessage = await sendAlertMessage(message.channel, `Please mention one of the team members. ${config.ranked_option_emote}`, 'info');
-                  // eslint-disable-next-line max-len,no-shadow
-                  const discordId = await message.channel.awaitMessages(filter, options).then(async (collected) => {
-                    sentMessage.delete();
-
-                    collectedMessage = collected.first();
-                    const mentionedUser = collectedMessage.mentions.users.first();
-
-                    if (!mentionedUser) {
-                      return null;
-                    }
-
-                    return mentionedUser.id;
-                  }).catch(() => {
-                    sentMessage.delete();
+                  collectedOption = collected.first();
+                  collectedOption.reply.defer();
+
+                  const mentionedUser = collectedOption.mentions.users.first();
+                  if (!mentionedUser) {
                     return null;
-                  });
-
-                  if (!discordId) {
-                    return sendAlertMessage(message.channel, 'You need to mention a user.', 'warning');
-                  } if (discordId === message.author.id) {
-                    return sendAlertMessage(message.channel, 'You cannot mention yourself', 'warning');
                   }
 
-                  reservedTeam = discordId;
+                  return mentionedUser.id;
+                }).catch(() => {
+                  sentMessage.delete();
+                  return null;
+                });
+
+                if (!discordId) {
+                  return sendAlertMessage(message.channel, 'You need to mention a user.', 'warning');
+                } if (discordId === message.author.id) {
+                  return sendAlertMessage(message.channel, 'You cannot mention yourself.', 'warning');
                 }
+
+                reservedTeam = discordId;
               }
+            }
 
-              lobby.reservedTeam = reservedTeam;
+            lobby.reservedTeam = reservedTeam;
 
-              let anonymous = false;
+            let anonymous = false;
 
-              if (custom.includes(CUSTOM_OPTION_ANONYMOUS)) {
-                sentMessage = await sendAlertMessage(message.channel, `Do you want to create an anonymous lobby? (yes / no) ${config.ranked_option_emote}`, 'info');
-                // eslint-disable-next-line max-len,no-shadow
-                anonymous = await message.channel.awaitMessages(filter, options).then(async (collected) => {
-                  sentMessage.delete();
+            if (custom.includes(CUSTOM_OPTION_ANONYMOUS)) {
+              sentMessage = await sendAlertMessage(message.channel, 'Do you want to create an anonymous lobby?', 'info', [], [yesButton, noButton, maybeButton]);
 
-                  collectedMessage = collected.first();
-                  // eslint-disable-next-line no-shadow
-                  const { content } = collectedMessage;
+              // eslint-disable-next-line max-len,no-shadow
+              anonymous = await sentMessage.awaitButtons(actionFilter, filterOptions).then(async (collected) => {
+                sentMessage.delete();
 
-                  if (content.toLowerCase() === 'maybe') {
-                    return Boolean(Math.round(Math.random()));
-                  }
+                collectedOption = collected.first();
+                collectedOption.reply.defer();
 
-                  return (content.toLowerCase() !== 'no');
-                }).catch(() => {
-                  sentMessage.delete();
-                  return false;
-                });
-              }
-
-              lobby.anonymous = anonymous;
-
-              let ranked = lobby.canBeRanked();
-              if (lobby.canBeRanked() && custom.includes(CUSTOM_OPTION_TYPE)) {
-                sentMessage = await sendAlertMessage(message.channel, `Do you want to create a ranked lobby? (yes / no) ${config.ranked_option_emote}`, 'info');
-                // eslint-disable-next-line max-len,no-shadow
-                ranked = await message.channel.awaitMessages(filter, options).then(async (collected) => {
-                  sentMessage.delete();
-
-                  collectedMessage = collected.first();
-                  // eslint-disable-next-line no-shadow
-                  const { content } = collectedMessage;
-
-                  if (content.toLowerCase() === 'maybe') {
-                    return Boolean(Math.round(Math.random()));
-                  }
-
-                  return (content.toLowerCase() !== 'no');
-                }).catch(() => {
-                  sentMessage.delete();
-                  return lobby.canBeRanked();
-                });
-              }
-
-              lobby.ranked = ranked;
-
-              let mmrLock = false;
-              let rankDiff = null;
-              let playerRank = null;
-
-              if (ranked && custom.includes(CUSTOM_OPTION_MMR_LOCK)) {
-                sentMessage = await sendAlertMessage(message.channel, `Do you want to put a rank restriction on your lobby? (yes / no) ${config.ranked_option_emote}`, 'info');
-                // eslint-disable-next-line max-len,no-shadow
-                mmrLock = await message.channel.awaitMessages(filter, options).then(async (collected) => {
-                  sentMessage.delete();
-
-                  collectedMessage = collected.first();
-                  // eslint-disable-next-line no-shadow
-                  const { content } = collectedMessage;
-
-                  return (content.toLowerCase() === 'yes');
-                }).catch(() => {
-                  sentMessage.delete();
-                  return false;
-                });
-
-                if (mmrLock) {
-                  const diffMin = 200;
-                  const diffMax = 500;
-                  const diffDefault = 350;
-
-                  sentMessage = await sendAlertMessage(message.channel, `Select allowed rank difference. Waiting 1 minute.
-The value should be in the range of \`${diffMin} to ${diffMax}\`. The value defaults to \`${diffDefault}\` on any other input. ${config.ranked_option_emote}`, 'info');
-
-                  // eslint-disable-next-line max-len,no-shadow
-                  rankDiff = await message.channel.awaitMessages(filter, options).then(async (collected) => {
-                    sentMessage.delete();
-
-                    collectedMessage = collected.first();
-                    // eslint-disable-next-line no-shadow
-                    const { content } = collectedMessage;
-
-                    let diff = parseInt(content, 10);
-
-                    if (Number.isNaN(diff) || diff < diffMin || diff > diffMax) {
-                      diff = diffDefault;
-                    }
-
-                    return diff;
-                  }).catch(() => {
-                    sentMessage.delete();
-                    return diffDefault;
-                  });
-
-                  playerRank = lobby.getDefaultRank();
-
-                  const player = await Player.findOne({ discordId: message.author.id });
-                  if (player && player.rankedName) {
-                    const rank = await Rank.findOne({ name: player.rankedName });
-
-                    if (rank && rank[type] && rank[type].rank) {
-                      playerRank = rank[type].rank;
-                    }
-                  }
+                if (collectedOption.id === 'maybe') {
+                  return getRandomArrayElement([true, false]);
                 }
-              }
+
+                return (collectedOption.id === 'yes');
+              }).catch(() => {
+                sentMessage.delete();
+                return false;
+              });
+            }
+
+            lobby.anonymous = anonymous;
+
+            let ranked = lobby.canBeRanked();
+            if (lobby.canBeRanked() && custom.includes(CUSTOM_OPTION_TYPE)) {
+              sentMessage = await sendAlertMessage(message.channel, 'Do you want to create a ranked lobby?', 'info', [], [yesButton, noButton, maybeButton]);
+
+              // eslint-disable-next-line max-len,no-shadow
+              ranked = await sentMessage.awaitButtons(actionFilter, filterOptions).then(async (collected) => {
+                sentMessage.delete();
+
+                collectedOption = collected.first();
+                collectedOption.reply.defer();
+
+                if (collectedOption.id === 'maybe') {
+                  return getRandomArrayElement([true, false]);
+                }
+
+                return (collectedOption.id === 'yes');
+              }).catch(() => {
+                sentMessage.delete();
+                return lobby.canBeRanked();
+              });
+            }
+
+            lobby.ranked = ranked;
+
+            let mmrLock = false;
+            let rankDiff = null;
+            let playerRank = null;
+
+            if (ranked && custom.includes(CUSTOM_OPTION_MMR_LOCK)) {
+              sentMessage = await sendAlertMessage(message.channel, 'Do you want to put a rank restriction on your lobby?', 'info', [], [yesButton, noButton, maybeButton]);
+
+              // eslint-disable-next-line max-len,no-shadow
+              mmrLock = await sentMessage.awaitButtons(actionFilter, filterOptions).then(async (collected) => {
+                sentMessage.delete();
+
+                collectedOption = collected.first();
+                collectedOption.reply.defer();
+
+                if (collectedOption.id === 'maybe') {
+                  return getRandomArrayElement([true, false]);
+                }
+
+                return (collectedOption.id === 'yes');
+              }).catch(() => {
+                sentMessage.delete();
+                return false;
+              });
 
               if (mmrLock) {
-                lobby.locked = {
-                  rank: playerRank,
-                  shift: Number(rankDiff),
-                };
+                const diffMin = 200;
+                const diffMax = 500;
+                const diffDefault = 350;
+
+                sentMessage = await sendAlertMessage(message.channel, `Select allowed rank difference. Waiting 1 minute.
+The value should be in the range of \`${diffMin} to ${diffMax}\`. The value defaults to \`${diffDefault}\` on any other input.`, 'info');
+
+                // eslint-disable-next-line max-len,no-shadow
+                rankDiff = await message.channel.awaitMessages(messageFilter, filterOptions).then(async (collected) => {
+                  sentMessage.delete();
+
+                  const collectedMessage = collected.first();
+                  // eslint-disable-next-line no-shadow
+                  const { content } = collectedMessage;
+                  collectedMessage.delete();
+
+                  let diff = parseInt(content, 10);
+                  if (Number.isNaN(diff) || diff < diffMin || diff > diffMax) {
+                    diff = diffDefault;
+                  }
+
+                  return diff;
+                }).catch(() => {
+                  sentMessage.delete();
+                  return diffDefault;
+                });
+
+                playerRank = lobby.getDefaultRank();
+
+                const player = await Player.findOne({ discordId: message.author.id });
+                if (player && player.rankedName) {
+                  const rank = await Rank.findOne({ name: player.rankedName });
+
+                  if (rank && rank[type] && rank[type].rank) {
+                    playerRank = rank[type].rank;
+                  }
+                }
+              }
+            }
+
+            if (mmrLock) {
+              lobby.locked = {
+                rank: playerRank,
+                shift: Number(rankDiff),
+              };
+            }
+
+            await Cooldown.findOneAndUpdate(
+              { guildId: guild.id, discordId: message.author.id, name: 'lobby' },
+              { $inc: { count: 1 }, $set: { updatedAt: now } },
+              { upsert: true, new: true },
+            );
+
+            lobby.save().then(async (doc) => {
+              let role = null;
+
+              if (lobby.ranked) {
+                role = await createAndFindRole(guild, lobby.getRoleName());
               }
 
-              await Cooldown.findOneAndUpdate(
-                { guildId: guild.id, discordId: message.author.id, name: 'lobby' },
-                { $inc: { count: 1 }, $set: { updatedAt: now } },
-                { upsert: true, new: true },
-              );
+              let channel;
+              if (lobby.ranked) {
+                // eslint-disable-next-line max-len
+                channel = guild.channels.cache.find((c) => c.name === config.channels.ranked_lobbies_channel);
+              } else {
+                // eslint-disable-next-line max-len
+                channel = guild.channels.cache.find((c) => c.name === config.channels.unranked_lobbies_channel);
+              }
 
-              lobby.save().then(async (doc) => {
-                let role = null;
+              const buttonRow = new MessageActionRow()
+                .addComponent(joinLobbyButton)
+                .addComponent(leaveLobbyButton)
+                .addComponent(deleteLobbyButton);
 
-                if (lobby.ranked) {
-                  role = await createAndFindRole(guild, lobby.getRoleName());
-                }
-
-                let channel;
-                if (lobby.ranked) {
-                  // eslint-disable-next-line max-len
-                  channel = guild.channels.cache.find((c) => c.name === config.channels.ranked_lobbies_channel);
-                } else {
-                  // eslint-disable-next-line max-len
-                  channel = guild.channels.cache.find((c) => c.name === config.channels.unranked_lobbies_channel);
-                }
-
-                const joinButton = new MessageButton()
-                  .setStyle('grey')
-                  .setLabel('Join')
-                  .setEmoji('✅')
-                  .setID('join_lobby');
-
-                const leaveButton = new MessageButton()
-                  .setStyle('grey')
-                  .setLabel('Leave')
-                  .setEmoji('❌')
-                  .setID('leave_lobby');
-
-                const deleteButton = new MessageButton()
-                  .setStyle('grey')
-                  .setLabel('Delete')
-                  .setEmoji('🗑️')
-                  .setID('delete_lobby');
-
-                const buttonRow = new MessageActionRow()
-                  .addComponent(joinButton)
-                  .addComponent(leaveButton)
-                  .addComponent(deleteButton);
-
-                channel.send({
-                  content: role,
-                  embed: await getEmbed(doc),
-                  components: [buttonRow],
-                }).then((m) => {
-                  doc.channel = m.channel.id;
-                  doc.message = m.id;
-                  doc.save().then(() => {
-                    sendAlertMessage(message.channel, `${lobby.getTitle()} has been created. Don't forget to react with ${lobby.getReactionEmote()}`, 'success');
-                  });
+              channel.send({
+                content: role,
+                embed: await getEmbed(doc),
+                components: [buttonRow],
+              }).then((m) => {
+                doc.channel = m.channel.id;
+                doc.message = m.id;
+                doc.save().then(() => {
+                  sendAlertMessage(message.channel, `${lobby.getTitle()} has been created. Don't forget to click on the ✅ button!`, 'success');
                 });
               });
-            } else {
-              return sendAlertMessage(message.channel, 'Command cancelled.', 'error').then((m) => m.delete({ timeout: 5000 }));
-            }
+            });
           }).catch(() => sendAlertMessage(message.channel, 'Command cancelled.', 'error').then((m) => m.delete({ timeout: 5000 })));
         }).catch(() => sendAlertMessage(message.channel, 'Command cancelled.', 'error').then((m) => m.delete({ timeout: 5000 })));
 
@@ -2311,14 +2169,18 @@ async function mogi(reaction, user, removed = false) {
             errors.push('You need to set your PSN. Example: `!set_psn ctr_tourney_bot`.');
           }
 
-          if (doc.region) {
+          if (doc.regions.length > 0) {
             if (!player || !player.region) {
               errors.push('You need to set your region because the lobby you are trying to join is region locked. Use `!set_region` and then follow the bot instructions.');
-            } else if (player.region !== doc.region) {
-              const lobbyRegion = regions.find((r) => r.uid === doc.region);
-              const playerRegion = regions.find((r) => r.uid === player.region);
+            } else if (!doc.regions.includes(player.region)) {
+              const lobbyRegions = [];
+              doc.regions.forEach((dr) => {
+                const region = regions.find((r) => r.uid === dr);
+                lobbyRegions.push(region.name);
+              });
 
-              errors.push(`The lobby you are trying to join is locked to ${lobbyRegion.name} and you are from ${playerRegion.name}.`);
+              const playerRegion = regions.find((r) => r.uid === player.region);
+              errors.push(`The lobby you are trying to join is locked to ${lobbyRegions.join(', ')} and you are from ${playerRegion.name}.`);
             }
           }
 
@@ -2414,14 +2276,18 @@ async function mogi(reaction, user, removed = false) {
                   errors.push('Your partner needs to set their ranked name. Example: `!set_ranked_name your_ranked_name`.');
                 }
 
-                if (doc.region) {
+                if (doc.regions.length > 0) {
                   if (!partner || !partner.region) {
                     errors.push('Your partner needs to set their region. Use `!set_region` and then follow the bot instructions.');
-                  } else if (partner.region !== doc.region) {
-                    const lobbyRegion = regions.find((r) => r.uid === doc.region);
-                    const partnerRegion = regions.find((r) => r.uid === partner.region);
+                  } else if (!doc.regions.includes(partner.region)) {
+                    const lobbyRegions = [];
+                    doc.regions.forEach((dr) => {
+                      const region = regions.find((r) => r.uid === dr);
+                      lobbyRegions.push(region.name);
+                    });
 
-                    errors.push(`The lobby you are trying to join is locked to ${lobbyRegion.name} and your partner is from ${partnerRegion.name}.`);
+                    const partnerRegion = regions.find((r) => r.uid === partner.region);
+                    errors.push(`The lobby you are trying to join is locked to ${lobbyRegions.join(', ')} and your partner is from ${partnerRegion.name}.`);
                   }
                 }
 
@@ -2544,14 +2410,18 @@ async function mogi(reaction, user, removed = false) {
                     errors.push(`Your teammate ${teammate.psn} needs to set their ranked name. Example: \`!set_ranked_name your_ranked_name\`.`);
                   }
 
-                  if (doc.region) {
+                  if (doc.regions.length > 0) {
                     if (!teammate.region) {
                       errors.push(`Your teammate ${teammate.psn} needs to set their region. Use \`!set_region\` and then follow the bot instructions.`);
-                    } else if (teammate.region !== doc.region) {
-                      const lobbyRegion = regions.find((r) => r.uid === doc.region);
-                      const teammateRegion = regions.find((r) => r.uid === teammate.region);
+                    } else if (!doc.region.includes(teammate.region)) {
+                      const lobbyRegions = [];
+                      doc.regions.forEach((dr) => {
+                        const region = regions.find((r) => r.uid === dr);
+                        lobbyRegions.push(region.name);
+                      });
 
-                      errors.push(`The lobby you are trying to join is locked to ${lobbyRegion.name} and your teammate ${teammate.psn} is from ${teammateRegion.name}.`);
+                      const teammateRegion = regions.find((r) => r.uid === teammate.region);
+                      errors.push(`The lobby you are trying to join is locked to ${lobbyRegions.join(', ')} and your teammate ${teammate.psn} is from ${teammateRegion.name}.`);
                     }
                   }
 

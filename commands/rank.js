@@ -7,7 +7,6 @@ const sendAlertMessage = require('../utils/sendAlertMessage');
 
 const {
   RACE_FFA,
-  RACE_SURVIVAL,
   RACE_ITEMLESS_FFA,
   BATTLE_FFA,
 } = require('../db/models/lobby');
@@ -16,7 +15,6 @@ const ranks = {
   [RACE_FFA]: 'Items Racing',
   [RACE_ITEMLESS_FFA]: 'Itemless Racing',
   [BATTLE_FFA]: 'Battle Mode',
-  [RACE_SURVIVAL]: 'Survival',
 };
 
 function sendMessage(message, rank) {

@@ -1,3 +1,7 @@
+const {
+  MessageMenu,
+  MessageMenuOption,
+} = require('discord-buttons');
 const { Player } = require('../db/models/player');
 const isStaffMember = require('../utils/isStaffMember');
 const sendAlertMessage = require('../utils/sendAlertMessage');
@@ -28,12 +32,6 @@ module.exports = {
       return;
     }
 
-    const voiceChats = [
-      'Discord',
-      'PS4',
-      'Discord & PS4',
-    ];
-
     const isStaff = isStaffMember(message.member);
 
     let user;
@@ -44,54 +42,54 @@ module.exports = {
       user = message.author;
     }
 
+    const voiceChatMenu = new MessageMenu()
+      .setID('select_voice_chat')
+      .setPlaceholder('Choose ...')
+      .setMaxValues(2)
+      .setMinValues(1)
+      .addOption(new MessageMenuOption()
+        .setLabel('Discord')
+        .setValue('discord'))
+      .addOption(new MessageMenuOption()
+        .setLabel('PS4')
+        .setValue('ps4'));
+
     // eslint-disable-next-line consistent-return
-    return sendAlertMessage(message.channel, `Select voice chat option. Waiting 1 minute.\n
-\`\`\`1 - Discord
-2 - PS4
-3 - Discord & PS4\`\`\``, 'info').then((confirmMessage) => {
-      const filter = (m) => m.author.id === message.author.id;
+    return sendAlertMessage(message.channel, 'Select your voice chat option(s).', 'info', [], [], [voiceChatMenu]).then((confirmMessage) => {
+      const filter = (m) => m.clicker.user.id === message.author.id;
       const options = { max: 1, time: 60000, errors: ['time'] };
 
-      message.channel.awaitMessages(filter, options).then((collectedMessages) => {
-        const collectedMessage = collectedMessages.first();
-        const { content } = collectedMessage;
+      confirmMessage.awaitMenus(filter, options).then((collectedOptios) => {
+        const collectedOption = collectedOptios.first();
 
-        confirmMessage.delete();
-        collectedMessage.delete();
+        Player.findOne({ discordId: user.id }).then((player) => {
+          if (!player) {
+            player = new Player();
+            player.discordId = user.id;
+          }
 
-        if (['1', '2', '3'].includes(content)) {
-          const index = Number(content) - 1;
+          player.discordVc = false;
+          player.ps4Vc = false;
 
-          Player.findOne({ discordId: user.id }).then((player) => {
-            if (!player) {
-              player = new Player();
-              player.discordId = user.id;
-            }
+          const voiceChatOptions = [];
+          if (collectedOption.values.includes('discord')) {
+            player.discordVc = true;
+            voiceChatOptions.push('Discord');
+          }
 
-            if (index === 0) {
-              player.discordVc = true;
-              player.ps4Vc = null;
-            }
+          if (collectedOption.values.includes('ps4')) {
+            player.ps4Vc = true;
+            voiceChatOptions.push('PS4');
+          }
 
-            if (index === 1) {
-              player.discordVc = null;
-              player.ps4Vc = true;
-            }
-
-            if (index === 2) {
-              player.discordVc = true;
-              player.ps4Vc = true;
-            }
-
-            player.save().then(() => {
-              sendAlertMessage(message.channel, `Your voice chat options have been set to \`${voiceChats[index]}\`.`, 'success');
-            }).catch((error) => {
-              sendAlertMessage(message.channel, `Unable to update player. Error: ${error}`, 'error');
-            });
+          player.save().then(() => {
+            sendAlertMessage(message.channel, `Your voice chat options have been set to \`${voiceChatOptions.join(', ')}\`.`, 'success');
+          }).catch((error) => {
+            sendAlertMessage(message.channel, `Unable to update player. Error: ${error}`, 'error');
           });
-        } else {
-          sendAlertMessage(message.channel, 'Command cancelled.', 'error');
-        }
+
+          confirmMessage.delete();
+        });
       }).catch(() => sendAlertMessage(message.channel, 'Command cancelled.', 'error'));
     });
   },

@@ -9,7 +9,6 @@ const { regions } = require('../db/regions');
 
 const {
   RACE_FFA,
-  RACE_SURVIVAL,
   RACE_ITEMLESS_FFA,
   BATTLE_FFA,
 } = require('../db/models/lobby');
@@ -271,20 +270,17 @@ module.exports = {
                 '**Items Racing**: -',
                 '**Itemless Racing**: -',
                 '**Battle Mode**: -',
-                '**Survival**: -',
                 '**Super Score**: -',
               ];
             } else {
               const itemsRanking = getRankingPosition(rank, RACE_FFA);
               const itemlessRanking = getRankingPosition(rank, RACE_ITEMLESS_FFA);
               const battleModeRanking = getRankingPosition(rank, BATTLE_FFA);
-              const survivalRanking = getRankingPosition(rank, RACE_SURVIVAL);
 
               playerRanks = [
                 `**Items Racing**: ${itemsRanking !== '-' ? `#${itemsRanking} - ${getRankingRating(rank, RACE_FFA)}` : '-'}`,
                 `**Itemless Racing**: ${itemlessRanking !== '-' ? `#${itemlessRanking} - ${getRankingRating(rank, RACE_ITEMLESS_FFA)}` : '-'}`,
                 `**Battle Mode**: ${battleModeRanking !== '-' ? `#${battleModeRanking} - ${getRankingRating(rank, BATTLE_FFA)}` : '-'}`,
-                `**Survival**: ${survivalRanking !== '-' ? `#${survivalRanking} - ${getRankingRating(rank, RACE_SURVIVAL)}` : '-'}`,
                 `**Super Score**: ${superScoreEntry ? `#${superScoreEntry.rank} - ${superScoreEntry.superScore}` : '-'}`,
               ];
             }
