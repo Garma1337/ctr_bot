@@ -727,10 +727,14 @@ function startLobby(docId) {
       generateTracks(doc).then((tracks) => {
         findRoom(doc).then((room) => {
           findRoomChannel(doc.guild, room.number).then(async (roomChannel) => {
+            const joinLobbyButtonCopy = JSON.parse(JSON.stringify(joinLobbyButton));
+            const leaveLobbyButtonCopy = JSON.parse(JSON.stringify(joinLobbyButton));
+            const deleteLobbyButtonCopy = JSON.parse(JSON.stringify(joinLobbyButton));
+
             const buttonRow = new MessageActionRow()
-              .addComponent(joinLobbyButton.setDisabled(true))
-              .addComponent(leaveLobbyButton.setDisabled(true))
-              .addComponent(deleteLobbyButton.setDisabled(true));
+              .addComponent(joinLobbyButtonCopy.setDisabled(true))
+              .addComponent(leaveLobbyButtonCopy.setDisabled(true))
+              .addComponent(deleteLobbyButtonCopy.setDisabled(true));
 
             if (doc.isTournament()) {
               sendAlertMessage(roomChannel, `The ${doc.getTitle()} is starting!`, 'info', doc.players).then(async () => {
