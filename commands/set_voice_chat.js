@@ -89,6 +89,7 @@ module.exports = {
           });
 
           confirmMessage.delete();
+          collectedOption.reply.defer(false).then();
         });
       }).catch(() => sendAlertMessage(message.channel, 'Command cancelled.', 'error'));
     });

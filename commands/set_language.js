@@ -85,7 +85,7 @@ module.exports = {
             sendAlertMessage(message.channel, `Unable to update player. Error: ${error}`, 'error');
           });
 
-          collectedOption.reply.defer();
+          collectedOption.reply.defer(false).then();
         }).catch(() => sendAlertMessage(message.channel, 'Command cancelled.', 'error'));
       }).catch(() => sendAlertMessage(message.channel, 'Command cancelled.', 'error'));
     }).catch(() => sendAlertMessage(message.channel, 'Command cancelled.', 'error'));
