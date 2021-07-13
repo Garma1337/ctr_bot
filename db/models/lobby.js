@@ -490,7 +490,7 @@ Lobby.methods = {
       title = 'Unranked ';
     }
 
-    if (this.region) {
+    if (this.regions.length > 0) {
       title += 'Region Locked ';
     }
 
@@ -804,7 +804,7 @@ Lobby.methods = {
   },
   getBannedTracks() {
     let bannedTracks;
-    if (!this.region) {
+    if (this.regions.length <= 0) {
       bannedTracks = {
         [RACE_ITEMS_FFA]: [TRACK_HYPER_SPACEWAY, TRACK_SPYRO_CIRCUIT],
         [RACE_ITEMS_DUOS]: [TRACK_HYPER_SPACEWAY, TRACK_SPYRO_CIRCUIT],

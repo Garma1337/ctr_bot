@@ -14,7 +14,7 @@ function removeBannedTracks(pool, doc) {
 /**
  * Generates tracks from pools
  * @param doc
- * @returns Array
+ * @returns Promise
  */
 async function generateTracks(doc) {
   const pools = doc.getTrackPools();

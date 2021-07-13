@@ -62,10 +62,12 @@ const generateTemplate = require('../utils/generateTemplate');
 const generateTracks = require('../utils/generateTracks');
 const getConfigValue = require('../utils/getConfigValue');
 const getRandomArrayElement = require('../utils/getRandomArrayElement');
-const greedyPartition = require('../utils/greedyPartition');
 const isServerSupporter = require('../utils/isServerSupporter');
 const isStaffMember = require('../utils/isStaffMember');
-const optimalPartition = require('../utils/optimalPartition');
+const {
+  optimalPartition3,
+  optimalPartition4,
+} = require('../utils/optimalPartition');
 const sendAlertMessage = require('../utils/sendAlertMessage');
 const sendLogMessage = require('../utils/sendLogMessage');
 const shuffleArray = require('../utils/shuffleArray');
@@ -609,9 +611,9 @@ async function createBalancedTeams(doc, soloPlayers) {
       let result;
 
       if (!doc.is4v4()) {
-        result = greedyPartition(playerRanks, doc.getTeamSize(), 'rank');
+        result = optimalPartition3(playerRanks, doc.getTeamSize(), 'rank');
       } else {
-        result = optimalPartition(playerRanks, doc.getTeamSize(), 'rank');
+        result = optimalPartition4(playerRanks, doc.getTeamSize(), 'rank');
       }
 
       const playersA = result.A.map((a) => a.discordId);
@@ -1267,7 +1269,7 @@ module.exports = {
                 sentMessage.delete();
 
                 collectedOption = collected.first();
-                collectedOption.reply.defer();
+                await collectedOption.reply.defer(false);
 
                 return collectedOption.values.shift();
               }).catch(() => {
@@ -1319,7 +1321,7 @@ module.exports = {
                 sentMessage.delete();
 
                 collectedOption = collected.first();
-                collectedOption.reply.defer();
+                await collectedOption.reply.defer(false);
 
                 return collectedOption.values.shift();
               }).catch(() => {
@@ -1357,7 +1359,7 @@ module.exports = {
                 sentMessage.delete();
 
                 collectedOption = collected.first();
-                collectedOption.reply.defer();
+                await collectedOption.reply.defer(false);
 
                 return collectedOption.values.shift();
               }).catch(() => {
@@ -1393,7 +1395,7 @@ module.exports = {
                 sentMessage.delete();
 
                 collectedOption = collected.first();
-                collectedOption.reply.defer();
+                await collectedOption.reply.defer(false);
 
                 let value = collectedOption.values;
                 if (value.includes('regionFree')) {
@@ -1423,7 +1425,7 @@ module.exports = {
                 sentMessage.delete();
 
                 collectedOption = collected.first();
-                collectedOption.reply.defer();
+                await collectedOption.reply.defer(false);
 
                 if (collectedOption.id === 'maybe') {
                   return getRandomArrayElement([true, false]);
@@ -1449,7 +1451,7 @@ module.exports = {
                 sentMessage.delete();
 
                 collectedOption = collected.first();
-                collectedOption.reply.defer();
+                await collectedOption.reply.defer(false);
 
                 if (collectedOption.id === 'maybe') {
                   return getRandomArrayElement([true, false]);
@@ -1475,7 +1477,7 @@ module.exports = {
                 sentMessage.delete();
 
                 collectedOption = collected.first();
-                collectedOption.reply.defer();
+                await collectedOption.reply.defer(false);
 
                 if (collectedOption.id === 'maybe') {
                   return getRandomArrayElement([true, false]);
@@ -1495,7 +1497,7 @@ module.exports = {
                   sentMessage.delete();
 
                   collectedOption = collected.first();
-                  collectedOption.reply.defer();
+                  await collectedOption.reply.defer(false);
 
                   const mentionedUser = collectedOption.mentions.users.first();
                   if (!mentionedUser) {
@@ -1530,7 +1532,7 @@ module.exports = {
                 sentMessage.delete();
 
                 collectedOption = collected.first();
-                collectedOption.reply.defer();
+                await collectedOption.reply.defer(false);
 
                 if (collectedOption.id === 'maybe') {
                   return getRandomArrayElement([true, false]);
@@ -1554,7 +1556,7 @@ module.exports = {
                 sentMessage.delete();
 
                 collectedOption = collected.first();
-                collectedOption.reply.defer();
+                await collectedOption.reply.defer(false);
 
                 if (collectedOption.id === 'maybe') {
                   return getRandomArrayElement([true, false]);
@@ -1581,7 +1583,7 @@ module.exports = {
                 sentMessage.delete();
 
                 collectedOption = collected.first();
-                collectedOption.reply.defer();
+                await collectedOption.reply.defer(false);
 
                 if (collectedOption.id === 'maybe') {
                   return getRandomArrayElement([true, false]);
@@ -2413,7 +2415,7 @@ async function mogi(reaction, user, removed = false) {
                   if (doc.regions.length > 0) {
                     if (!teammate.region) {
                       errors.push(`Your teammate ${teammate.psn} needs to set their region. Use \`!set_region\` and then follow the bot instructions.`);
-                    } else if (!doc.region.includes(teammate.region)) {
+                    } else if (!doc.regions.includes(teammate.region)) {
                       const lobbyRegions = [];
                       doc.regions.forEach((dr) => {
                         const region = regions.find((r) => r.uid === dr);
