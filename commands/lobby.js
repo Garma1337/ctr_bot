@@ -1191,8 +1191,7 @@ module.exports = {
           const option = new MessageMenuOption()
             .setLabel(l.name)
             .setValue(l.uid)
-            .setDefault(l.default)
-            .setDescription(l.description !== null ? l.description : '');
+            .setDefault(l.default);
 
           lobbyMenu.addOption(option);
         });
