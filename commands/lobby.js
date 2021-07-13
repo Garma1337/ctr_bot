@@ -731,10 +731,14 @@ function startLobby(docId) {
             const leaveLobbyButtonCopy = JSON.parse(JSON.stringify(leaveLobbyButton));
             const deleteLobbyButtonCopy = JSON.parse(JSON.stringify(deleteLobbyButton));
 
+            joinLobbyButtonCopy.disabled = true;
+            leaveLobbyButtonCopy.disabled = true;
+            deleteLobbyButtonCopy.disabled = true;
+
             const buttonRow = new MessageActionRow()
-              .addComponent(joinLobbyButtonCopy.setDisabled(true))
-              .addComponent(leaveLobbyButtonCopy.setDisabled(true))
-              .addComponent(deleteLobbyButtonCopy.setDisabled(true));
+              .addComponent(joinLobbyButtonCopy)
+              .addComponent(leaveLobbyButtonCopy)
+              .addComponent(deleteLobbyButtonCopy);
 
             if (doc.isTournament()) {
               sendAlertMessage(roomChannel, `The ${doc.getTitle()} is starting!`, 'info', doc.players).then(async () => {
