@@ -728,8 +728,8 @@ function startLobby(docId) {
         findRoom(doc).then((room) => {
           findRoomChannel(doc.guild, room.number).then(async (roomChannel) => {
             const joinLobbyButtonCopy = JSON.parse(JSON.stringify(joinLobbyButton));
-            const leaveLobbyButtonCopy = JSON.parse(JSON.stringify(joinLobbyButton));
-            const deleteLobbyButtonCopy = JSON.parse(JSON.stringify(joinLobbyButton));
+            const leaveLobbyButtonCopy = JSON.parse(JSON.stringify(leaveLobbyButton));
+            const deleteLobbyButtonCopy = JSON.parse(JSON.stringify(deleteLobbyButton));
 
             const buttonRow = new MessageActionRow()
               .addComponent(joinLobbyButtonCopy.setDisabled(true))
