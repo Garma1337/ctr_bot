@@ -51,7 +51,7 @@ module.exports = {
     serverLanguages.forEach((l) => {
       const option = new MessageMenuOption()
         .setLabel(l.name)
-        .setValue(l.char)
+        .setValue(l.emote)
         .setEmoji(l.char);
 
       languageMenu.addOption(option);
